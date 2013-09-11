@@ -47,7 +47,9 @@ module Lev
     end
 
     def mark_error_if_present(method, options)
-      (options[:class] ||= '') << ' error' if has_error?(method) # TODO make the error class configurable
+      if has_error?(method)
+        options[:class] = [options[:class], Lev.configuration.form_error_class].compact.join(' ')
+      end
     end
 
   end
