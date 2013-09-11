@@ -38,7 +38,7 @@ module Lev
     end
 
     def has_error?(name)
-      @options[:errors].present? ? @options[:errors].includes?(@object_name, name) : false
+      @options[:errors].present? ? @options[:errors].has_offending_param?([@object_name, name]) : false
     end
 
     def set_value_if_available(method, options)

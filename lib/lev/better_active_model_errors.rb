@@ -62,7 +62,7 @@ module Lev
   #   p.validate!             # => ["can not be nil"]
   #   p.errors.full_messages  # => ["name can not be nil"]
   #   # etc..
-  class BetterErrors
+  class BetterActiveModelErrors
     include Enumerable
 
     CALLBACKS_OPTIONS = [:if, :unless, :on, :allow_nil, :allow_blank, :strict]
@@ -338,10 +338,10 @@ module Lev
     # * <tt>errors.messages.blank</tt>
     #
     def generate_message(attribute, type = :invalid, options = {})
-      BetterError.generate_message(attribute, type, @base, options)
+      self.class.generate_message(@base, attribute, type, options)
     end
 
-    def self.generate_message(attribute, type = :invalid, model, options = {})
+    def self.generate_message(model, attribute, type = :invalid, options = {})
       type = options.delete(:message) if options[:message].is_a?(Symbol)
 
       if model.class.respond_to?(:i18n_scope)
@@ -395,7 +395,7 @@ end
 module ActiveModel
   module Validations
     def errors
-      @errors ||= Lev::BetterErrors.new(self)
+      @errors ||= Lev::BetterActiveModelErrors.new(self)
     end
   end
 end
