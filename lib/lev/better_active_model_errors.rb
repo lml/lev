@@ -303,9 +303,13 @@ module Lev
     #   company.errors.full_message(:name, "is invalid")  # =>
     #     "Name is invalid"
     def full_message(attribute, message)
+      self.class.full_message(@base, attribute, message)
+    end
+
+    def self.full_message(model, attribute, message)
       return message if attribute == :base
       attr_name = attribute.to_s.gsub('.', '_').humanize
-      attr_name = @base.class.human_attribute_name(attribute, :default => attr_name)
+      attr_name = model.class.human_attribute_name(attribute, :default => attr_name)
       I18n.t(:"errors.format", {
         :default   => "%{attribute} %{message}",
         :attribute => attr_name,
