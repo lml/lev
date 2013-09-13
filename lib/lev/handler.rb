@@ -14,6 +14,9 @@ module Lev
   #   1) implement the 'setup' method which runs before
   #      'authorized?' and 'exec'.  This method can do anything, and will likely
   #      include setting up some instance objects based on the params.
+  #   2) implement the 'default_transaction_isolation' method to say whether or not
+  #      the handler's code should be run in a transaction, and if so which
+  #      isolation level to use.
   #
   # All handler instance methods have the following available to them:
   #   1) 'params' --  the params from the input
@@ -21,7 +24,19 @@ module Lev
   #   3) 'errors' --  an object in which to store errors
   #   4) 'results' -- a hash in which to store results for return to calling code
   #   
-  # this module, e.g.:
+  # The handle methods take the caller and the params objects, which should be 
+  # self-explanatory.  They also take an optional options hash, which can contain
+  # the following key/value pairs:
+  #
+  #   :transaction_isolation -- the transaction isolation to use (overriding the 
+  #     handler's default).  One of:
+  #       :no_transaction -- do not run this handler's code inside a transaction
+  #       :serializable
+  #       :repeatable_read
+  #       :read_committed
+  #       :read_uncommitted
+  #
+  # Example:
   # 
   #   class MyHandler
   #     include Lev::Handler
@@ -40,15 +55,47 @@ module Lev
       base.extend(ClassMethods)
     end
 
-    def handle(caller, params)
-      containing_handler.present? ?
-        handle_guts(caller, params) :
-        ActiveRecord::Base.transaction { handle_guts(caller, params) }
+    def handle(caller, params, options={})
+      options[:transaction_isolation] ||= default_transaction_isolation
+
+      if containing_handler.present? || options[:transaction_isolation] == :no_transaction
+        handle_guts(caller, params)
+      else
+        ActiveRecord::Base.isolation_level( options[:transaction_isolation] ) do
+          ActiveRecord::Base.transaction { handle_guts(caller, params) }
+        end
+      end
     end
 
     module ClassMethods
-      def handle(caller, params)
-        new.handle(caller, params)
+      def handle(caller, params, options={})
+        new.handle(caller, params, options)
+      end
+
+      def paramify(key, options={}, &block)
+        method_name = "#{key.to_s}_params"
+        variable_sym = "@#{method_name}".to_sym
+
+        @@paramify_classes ||= {}
+
+        if @@paramify_classes[key].nil?
+          @@paramify_classes[key] = Class.new do
+            include ActiveAttr::Model
+          end
+          @@paramify_classes[key].class_eval(&block)
+
+          const_set("#{key.to_s.capitalize}Paramifier", 
+                    @@paramify_classes[key])
+        end
+
+        define_method method_name.to_sym do
+          if !instance_variable_get(variable_sym)
+            instance_variable_set(variable_sym, 
+                                  @@paramify_classes[key].new(params[key]))
+          end
+          instance_variable_get(variable_sym)
+        end
+
       end
     end
 
@@ -65,8 +112,8 @@ module Lev
     attr_accessor :results
 
     def handle_guts(caller, params)
-      self.caller = caller
       self.params = params
+      self.caller = caller
       self.errors = Errors.new
       self.results = {}
 
@@ -94,6 +141,11 @@ module Lev
 
       other_handler.containing_handler = self
       other_handler.handle(caller, params)
+    end
+
+    def default_transaction_isolation
+      # MySQL default per https://blog.engineyard.com/2010/a-gentle-introduction-to-isolation-levels
+      :repeatable_read 
     end
 
   end
