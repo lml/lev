@@ -24,10 +24,14 @@ module Lev
   # respectively.  Alternatively, if you supply a 'complete' lambda, that lambda
   # will be called regardless of whether there are any errors.
   #
+  # Specifying 'params' is optional.  If you don't specify it, HandleWith will
+  # use the entire params hash from the request.
+  #
   module HandleWith
     def handle_with(handler, options)
       options[:success] ||= lambda {}
       options[:failure] ||= lambda {}
+      options[:params] ||= params
 
       @results, @errors = handler.handle(current_user, options[:params])
 
