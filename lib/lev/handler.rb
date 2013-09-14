@@ -141,6 +141,7 @@ module Lev
 
       setup
       raise SecurityTransgression unless authorized?
+      validate_paramified_params
       exec unless errors?
 
       [self.results, self.errors]
@@ -152,11 +153,14 @@ module Lev
       false # default for safety, forces implementation in the handler
     end
 
-    def errors?
+    def validate_paramified_params
       self.class.paramify_methods.each do |method|
         params = send(method)
         transfer_errors_from(params, params.group) if !params.valid?
       end
+    end
+
+    def errors?
       errors.any?
     end
 
