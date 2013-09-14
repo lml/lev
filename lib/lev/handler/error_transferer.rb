@@ -4,8 +4,8 @@ module Lev::Handler
 
     def self.transfer(source, handler_target, param_group)
       case source
-      when ActiveRecord::Base
-        source.errors.each_type do |attribute, type|
+      when ActiveRecord::Base, Lev::Paramifier
+        source.errors.each_with_type_and_message do |attribute, type, message|
           handler_target.errors.add(
             code: type, 
             data: {
@@ -13,6 +13,7 @@ module Lev::Handler
               attribute: attribute
             }, 
             kind: :activerecord,
+            message: message,
             offending_params: [param_group].flatten << attribute
           )
         end

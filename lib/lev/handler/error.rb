@@ -7,6 +7,7 @@ module Lev::Handler
     attr_accessor :code
     attr_accessor :data
     attr_accessor :kind
+    attr_accessor :message
     attr_accessor :offending_params
 
     def initialize(args={})
@@ -15,6 +16,7 @@ module Lev::Handler
       self.code = args[:code]
       self.data = args[:data]
       self.kind = args[:kind]
+      self.message = args[:message]
       
       self.offending_params = args[:offending_params]
       self.offending_params = [self.offending_params] if !(self.offending_params.is_a? Array)

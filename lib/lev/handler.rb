@@ -1,6 +1,9 @@
 
 module Lev
 
+  class Paramifier
+  end
+
   # Common methods for all input handlers.  Input handlers are classes that are
   # responsible for taking input data from a form or other widget and doing something
   # with it.
@@ -72,30 +75,49 @@ module Lev
         new.handle(caller, params, options)
       end
 
-      def paramify(key, options={}, &block)
-        method_name = "#{key.to_s}_params"
+      def paramify(group, options={}, &block)
+        method_name = "#{group.to_s}_params"
         variable_sym = "@#{method_name}".to_sym
 
-        @@paramify_classes ||= {}
+        # Generate the dynamic ActiveAttr class given
+        # the paramify block; I think the caching of the class
+        # in paramify_classes is only necessary to maintain
+        # the name of the class set in the const_set statement
 
-        if @@paramify_classes[key].nil?
-          @@paramify_classes[key] = Class.new do
+        if paramify_classes[group].nil?
+          paramify_classes[group] = Class.new(Lev::Paramifier) do
             include ActiveAttr::Model
+            cattr_accessor :group
           end
-          @@paramify_classes[key].class_eval(&block)
+          paramify_classes[group].class_eval(&block)
+          paramify_classes[group].group = group
 
-          const_set("#{key.to_s.capitalize}Paramifier", 
-                    @@paramify_classes[key])
+          # Attach a name to this dynamic class
+          const_set("#{group.to_s.capitalize}Paramifier", 
+                    paramify_classes[group])
         end
 
+        # Define the "#{group}_params" method to get the paramifier 
+        # instance wrapping the params
         define_method method_name.to_sym do
           if !instance_variable_get(variable_sym)
             instance_variable_set(variable_sym, 
-                                  @@paramify_classes[key].new(params[key]))
+                                  self.class.paramify_classes[group].new(params[group]))
           end
           instance_variable_get(variable_sym)
         end
 
+        # Keep track of the accessor for the params so we can check
+        # errors in it later
+        paramify_methods.push(method_name.to_sym)
+      end
+
+      def paramify_methods
+        @paramify_methods ||= []
+      end
+
+      def paramify_classes
+        @paramify_classes ||= {}
       end
     end
 
@@ -119,7 +141,7 @@ module Lev
 
       setup
       raise SecurityTransgression unless authorized?
-      exec
+      exec unless errors?
 
       [self.results, self.errors]
     end
@@ -128,6 +150,14 @@ module Lev
 
     def authorized?
       false # default for safety, forces implementation in the handler
+    end
+
+    def errors?
+      self.class.paramify_methods.each do |method|
+        params = send(method)
+        transfer_errors_from(params, params.group) if !params.valid?
+      end
+      errors.any?
     end
 
     # don't know if we really need this nesting capability like in algorithm

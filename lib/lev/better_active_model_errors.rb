@@ -167,9 +167,11 @@ module Lev
       end
     end
 
-    def each_type
+    def each_with_type_and_message
       types.each_key do |attribute|
-        self.types[attribute].each { |type| yield attribute, type }
+        for ii in 0..self.types[attribute].size-1
+          yield attribute, self.types[attribute][ii], self.messages[attribute][ii]
+        end
       end
     end
 
@@ -345,6 +347,7 @@ module Lev
       self.class.generate_message(@base, attribute, type, options)
     end
 
+    # TODO maybe don't need this method split out any more?
     def self.generate_message(model, attribute, type = :invalid, options = {})
       type = options.delete(:message) if options[:message].is_a?(Symbol)
 
