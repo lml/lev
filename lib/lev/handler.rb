@@ -33,11 +33,11 @@ module Lev
   #
   #   :transaction_isolation -- the transaction isolation to use (overriding the 
   #     handler's default).  One of:
-  #       :no_transaction -- do not run this handler's code inside a transaction
-  #       :serializable
-  #       :repeatable_read
-  #       :read_committed
-  #       :read_uncommitted
+  #       Lev::TransactionIsolation.no_transaction -- do not run this handler's code inside a transaction
+  #       Lev::TransactionIsolation.serializable
+  #       Lev::TransactionIsolation.repeatable_read
+  #       Lev::TransactionIsolation.read_committed
+  #       Lev::TransactionIsolation.read_uncommitted
   #
   # Example:
   # 
@@ -54,19 +54,17 @@ module Lev
   #
   module Handler
 
+    include Lev::TransactionIsolatable
+
     def self.included(base)
       base.extend(ClassMethods)
     end
 
     def handle(caller, params, options={})
-      options[:transaction_isolation] ||= default_transaction_isolation
+      init_transaction_isolation(options[:transaction_isolation])
 
-      if containing_handler.present? || options[:transaction_isolation] == :no_transaction
+      run_in_transaction disable_transaction_if: runner.present? do
         handle_guts(caller, params)
-      else
-        ActiveRecord::Base.isolation_level( options[:transaction_isolation] ) do
-          ActiveRecord::Base.transaction { handle_guts(caller, params) }
-        end
       end
     end
 
@@ -164,22 +162,31 @@ module Lev
       errors.any?
     end
 
-    # don't know if we really need this nesting capability like in algorithm
-    attr_accessor :containing_handler
+    # Remains to be seen if we'll have handlers running other handlers, but
+    # I guess it could happen.
+    attr_accessor :runner
 
-    def handle_nested(other_handler, caller, params)
+    # Should be able to combine run_handler and run_algorithm into one
+    # common method at some point
+
+    def run_handler(other_handler, caller, params, options={})
       other_handler = other_handler.new if other_handler.is_a? Class
 
-      raise IllegalArgument, "A handler can only nestedly handle another handler" \
-        if !(other_handler.eigenclass.included_modules.include? InputHandler)
+      raise IllegalArgument, "Provided argument is not a handler" \
+        if !(other_handler.eigenclass.included_modules.include? Lev::Handler)
 
-      other_handler.containing_handler = self
-      other_handler.handle(caller, params)
+      other_handler.runner = self
+      other_handler.handle(caller, params, options)
     end
 
-    def default_transaction_isolation
-      # MySQL default per https://blog.engineyard.com/2010/a-gentle-introduction-to-isolation-levels
-      :repeatable_read 
+    def run_algorithm(algorithm, *args, &block)
+      algorithm = algorithm.new if algorithm.is_a? Class
+
+      raise IllegalArgument, "Provided argument is not an 'Algorithm'" \
+        if !(algorithm.eigenclass.included_modules.include? Lev::Algorithm)
+
+      algorithm.runner = self
+      algorithm.call(*args, &block)
     end
 
   end

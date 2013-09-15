@@ -3,6 +3,7 @@ require "transaction_retry"
 require "active_attr"
 
 require "lev/version"
+require "lev/transaction_isolatable"
 require "lev/better_active_model_errors"
 require "lev/handler"
 require "lev/handle_with"
@@ -12,6 +13,10 @@ require "lev/handler/errors"
 require "lev/handler/error_transferer"
 require "lev/handler/error_translator"
 require "lev/form_builder"
+require "lev/algorithm"
+require "lev/delegate_to_algorithm"
+require "lev/transaction_isolation"
+
 
 module Lev
   class << self
