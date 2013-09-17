@@ -1,13 +1,6 @@
 module Lev
   class TransactionIsolation
 
-    def replace_if_more_isolated(other_transaction_isolation)
-      if other_transaction_isolation.isolation_level > self.isolation_level
-        self.symbol = other_transaction_isolation.symbol
-      end
-      self
-    end
-
     def initialize(symbol)
       raise IllegalArgument, "Invalid isolation symbol" if !@@symbols_to_isolation_levels.has_key?(symbol)
       @symbol = symbol
@@ -18,6 +11,18 @@ module Lev
     def self.read_committed;   new(:read_committed);   end
     def self.repeatable_read;  new(:repeatable_read);  end
     def self.serializable;     new(:serializable);     end
+
+
+    def replace_if_more_isolated(other_transaction_isolation)
+      if other_transaction_isolation.isolation_level > self.isolation_level
+        self.symbol = other_transaction_isolation.symbol
+      end
+      self
+    end
+
+    def weaker_than(other)
+      self.isolation_level < other.isolation_level
+    end
 
     def self.mysql_default
       # MySQL default per https://blog.engineyard.com/2010/a-gentle-introduction-to-isolation-levels

@@ -5,32 +5,21 @@ module Lev
 
     def self.included(base)
       base.extend(ClassMethods)
+      base.class_eval do
+        include Lev::RoutineNesting
+      end
     end
 
     def call(*args, &block)
-      containing_algorithm.present? ?
-        exec(*args, &block) :
-        ActiveRecord::Base.transaction {exec(*args, &block)}
+      in_transaction do
+        exec(*args, &block)
+      end
     end
 
     module ClassMethods
       def call(*args, &block)
         new.call(*args, &block)
       end
-    end
-
-  protected
-
-    attr_accessor :containing_algorithm
-
-    def run(other_algorithm, *args, &block)
-      other_algorithm = other_algorithm.new if other_algorithm.is_a? Class
-
-      raise IllegalArgument, "A algorithm can only 'run' another algorithm" \
-        if !(other_algorithm.eigenclass.included_modules.include? Algorithm)
-
-      other_algorithm.containing_algorithm = self
-      other_algorithm.call(*args, &block)
     end
 
   end

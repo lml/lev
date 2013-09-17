@@ -4,22 +4,56 @@ module Lev
   class Paramifier
   end
 
-  # Common methods for all input handlers.  Input handlers are classes that are
-  # responsible for taking input data from a form or other widget and doing something
+  # Common methods for all handlers.  Handlers are classes that are responsible 
+  # for taking input data from a form or other widget and doing something
   # with it.
   #
-  # All input handlers must:
+  # All handlers must:
   #   2) include this module ("include Lev::Handler")
-  #   3) implement the 'exec' method
-  #   4) implement the 'authorized?' method
+  #   3) implement the 'exec' method which takes no arguments and does the 
+  #      work the handler is charged with
+  #   4) implement the 'authorized?' method which returns true iff the 
+  #      caller is authorized to do what the handler is charged with
   #
-  # Input handlers may:
-  #   1) implement the 'setup' method which runs before
-  #      'authorized?' and 'exec'.  This method can do anything, and will likely
-  #      include setting up some instance objects based on the params.
-  #   2) implement the 'default_transaction_isolation' method to say whether or not
-  #      the handler's code should be run in a transaction, and if so which
-  #      isolation level to use.
+  # Handlers may:
+  #   1) implement the 'setup' method which runs before 'authorized?' and 'exec'.
+  #      This method can do anything, and will likely include setting up some 
+  #      instance objects based on the params.
+  #   2) Call the class method "paramify" to declare, cast, and validate parts of
+  #      the params hash. The first argument to paramify is the key in params
+  #      which points to a hash of params to be paramified.  The block passed to
+  #      paramify looks just like the guts of an ActiveAttr model.  Examples:
+  #      
+  #      when the incoming params includes :search => {:type, :terms, :num_results}
+  #      the Handler class would look like:
+  #
+  #      class MyHandler
+  #        include Lev::Handler
+  #
+  #        paramify :search do
+  #          attribute :search_type, type: String
+  #          validates :search_type, presence: true,
+  #                                  inclusion: { in: %w(Name Username Any),
+  #                                               message: "is not valid" }
+  #
+  #          attribute :search_terms, type: String
+  #          validates :search_terms, presence: true
+  #
+  #          attribute :num_results, type: Integer
+  #          validates :num_results, numericality: { only_integer: true,
+  #                                            greater_than_or_equal_to: 0 }                               
+  #        end
+  #        
+  #        def exec
+  #          # By this time, if there were any errors the handler would have
+  #          # already populated the errors object and returned.
+  #          #
+  #          # Paramify makes a 'search_params' attribute available through
+  #          # which you can access the paramified params, e.g.
+  #          x = search_params.num_results
+  #          ...
+  #        end
+  #      end
   #
   # All handler instance methods have the following available to them:
   #   1) 'params' --  the params from the input
@@ -27,17 +61,11 @@ module Lev
   #   3) 'errors' --  an object in which to store errors
   #   4) 'results' -- a hash in which to store results for return to calling code
   #   
-  # The handle methods take the caller and the params objects, which should be 
-  # self-explanatory.  They also take an optional options hash, which can contain
-  # the following key/value pairs:
+  # See the documentation for Lev::RoutineNesting about other requirements and 
+  # capabilities of handler classes.
   #
-  #   :transaction_isolation -- the transaction isolation to use (overriding the 
-  #     handler's default).  One of:
-  #       Lev::TransactionIsolation.no_transaction -- do not run this handler's code inside a transaction
-  #       Lev::TransactionIsolation.serializable
-  #       Lev::TransactionIsolation.repeatable_read
-  #       Lev::TransactionIsolation.read_committed
-  #       Lev::TransactionIsolation.read_uncommitted
+  # The handle methods take the caller and the params objects, which should be 
+  # self-explanatory.  
   #
   # Example:
   # 
@@ -54,23 +82,22 @@ module Lev
   #
   module Handler
 
-    include Lev::TransactionIsolatable
-
     def self.included(base)
       base.extend(ClassMethods)
+      base.class_eval do
+        include Lev::RoutineNesting
+      end
     end
 
-    def handle(caller, params, options={})
-      init_transaction_isolation(options[:transaction_isolation])
-
-      run_in_transaction disable_transaction_if: runner.present? do
+    def call(caller, params, options={})
+      in_transaction do
         handle_guts(caller, params)
       end
     end
 
     module ClassMethods
       def handle(caller, params, options={})
-        new.handle(caller, params, options)
+        new.call(caller, params, options)
       end
 
       def paramify(group, options={}, &block)
@@ -160,33 +187,6 @@ module Lev
 
     def errors?
       errors.any?
-    end
-
-    # Remains to be seen if we'll have handlers running other handlers, but
-    # I guess it could happen.
-    attr_accessor :runner
-
-    # Should be able to combine run_handler and run_algorithm into one
-    # common method at some point
-
-    def run_handler(other_handler, caller, params, options={})
-      other_handler = other_handler.new if other_handler.is_a? Class
-
-      raise IllegalArgument, "Provided argument is not a handler" \
-        if !(other_handler.eigenclass.included_modules.include? Lev::Handler)
-
-      other_handler.runner = self
-      other_handler.handle(caller, params, options)
-    end
-
-    def run_algorithm(algorithm, *args, &block)
-      algorithm = algorithm.new if algorithm.is_a? Class
-
-      raise IllegalArgument, "Provided argument is not an 'Algorithm'" \
-        if !(algorithm.eigenclass.included_modules.include? Lev::Algorithm)
-
-      algorithm.runner = self
-      algorithm.call(*args, &block)
     end
 
   end
