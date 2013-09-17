@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Lev::VERSION
   spec.authors       = ["JP Slavinsky"]
   spec.email         = ["jps@kindlinglabs.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.description   = %q{Ride the rails but don't touch them.}
+  spec.summary       = %q{Ride the rails but don't touch them.}
+  spec.homepage      = "http://github.com/lml/lev"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
