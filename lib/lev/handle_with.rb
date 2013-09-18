@@ -29,18 +29,22 @@ module Lev
   #
   module HandleWith
     def handle_with(handler, options)
-      options[:success] ||= lambda {}
-      options[:failure] ||= lambda {}
-      options[:params] ||= params
+      success_action = options.delete(:success) || lambda {}
+      failure_action = options.delete(:failure) || lambda {}
+      complete_action = options.delete(:complete) || lambda {}
 
-      @results, @errors = handler.handle(current_user, options[:params])
+      options[:params]  ||= params
+      options[:request] ||= request
+      options[:caller] ||= current_user
 
-      if options[:complete].nil?
+      @results, @errors = handler.handle(options)
+
+      if complete_action.nil?
         @errors.empty? ?
-          options[:success].call :
-          options[:failure].call    
+          success_action.call :
+          failure_action.call    
       else
-        options[:complete].call
+        complete_action.call
       end
     end
   end

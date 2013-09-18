@@ -72,7 +72,7 @@ module Lev
     end
 
     def in_transaction(options={}) 
-      if self == topmost_runner || self.class.transaction_isolation == TransactionIsolation.no_transaction
+      if self != topmost_runner || self.class.transaction_isolation == TransactionIsolation.no_transaction
         yield
       else
         ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do

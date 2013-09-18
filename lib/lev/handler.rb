@@ -64,8 +64,14 @@ module Lev
   # See the documentation for Lev::RoutineNesting about other requirements and 
   # capabilities of handler classes.
   #
-  # The handle methods take the caller and the params objects, which should be 
-  # self-explanatory.  
+  # The handle methods take a hash of arguments.  
+  #   caller: the calling user
+  #   params: the params object
+  #   request: the http request object
+  # 
+  # These arguments are optional or required depending on the implementation of
+  # the specific handler, i.e. if a handler wants to use the 'caller' method, it 
+  # must have been supplied to the handle method.  
   #
   # Example:
   # 
@@ -89,15 +95,17 @@ module Lev
       end
     end
 
-    def call(caller, params, options={})
+    def handle(options={})
       in_transaction do
-        handle_guts(caller, params)
+        handle_guts(options)
       end
     end
 
+    alias_method :call, :handle
+
     module ClassMethods
-      def handle(caller, params, options={})
-        new.call(caller, params, options)
+      def handle(options={})
+        new.handle(options)
       end
 
       def paramify(group, options={}, &block)
@@ -155,17 +163,21 @@ module Lev
   protected
 
     attr_accessor :params
+    attr_accessor :request
+    attr_accessor :options
     attr_accessor :caller
     attr_accessor :results
 
-    def handle_guts(caller, params)
-      self.params = params
-      self.caller = caller
+    def handle_guts(options)
+      self.params = options.delete(:params)
+      self.request = options.delete(:request)
+      self.caller = options.delete(:caller)
+      self.options = options
       self.errors = Errors.new
       self.results = {}
 
       setup
-      raise SecurityTransgression unless authorized?
+      raise Lev.configuration.security_transgression_error unless authorized?
       validate_paramified_params
       exec unless errors?
 

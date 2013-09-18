@@ -46,9 +46,11 @@ module Lev
     class Configuration
       # This HTML class is added to form fields that caused errors
       attr_accessor :form_error_class
+      attr_accessor :security_transgression_error
       
       def initialize      
         @form_error_class = 'error'
+        @security_transgression_error = Lev::SecurityTransgression
         super
       end
     end
