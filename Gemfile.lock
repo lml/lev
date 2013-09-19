@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lev (0.0.2)
+    lev (0.0.3)
       active_attr
       transaction_isolation
       transaction_retry

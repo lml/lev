@@ -60,7 +60,14 @@ module Lev
   #   2) 'caller' --  the user submitting the input
   #   3) 'errors' --  an object in which to store errors
   #   4) 'results' -- a hash in which to store results for return to calling code
+  #   5) 'options' -- a hash containing the options passed in, useful for other
+  #                   nonstandard data.
   #   
+  # Handler 'exec' methods don't return anything; they just set values in 
+  # the errors and results objects.  The documentation for each handler
+  # should explain what the results will be and any nonstandard data required
+  # to be passed in in the options.
+  #
   # See the documentation for Lev::RoutineNesting about other requirements and 
   # capabilities of handler classes.
   #

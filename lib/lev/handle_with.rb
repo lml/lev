@@ -20,18 +20,23 @@ module Lev
   # handle_with takes care of calling the handler and populates
   # @errors and @results objects with the return values from the handler
   #
+  #
   # The 'success' and 'failure' lambdas are called if there aren't or are errors,
   # respectively.  Alternatively, if you supply a 'complete' lambda, that lambda
-  # will be called regardless of whether there are any errors.
+  # will be called regardless of whether there are any errors.  Inside these lambdas
+  # (and inside the views they connect to), there will be @errors and @results 
+  # variables containing the errors and results from the handler.
   #
   # Specifying 'params' is optional.  If you don't specify it, HandleWith will
   # use the entire params hash from the request.
   #
   module HandleWith
     def handle_with(handler, options)
-      success_action = options.delete(:success) || lambda {}
-      failure_action = options.delete(:failure) || lambda {}
-      complete_action = options.delete(:complete) || lambda {}
+      success_action = options.delete(:success)
+      failure_action = options.delete(:failure)
+      complete_action = options.delete(:complete)
+
+      complete_action ||= lambda { render } if !(success_action || failure_action)
 
       options[:params]  ||= params
       options[:request] ||= request
