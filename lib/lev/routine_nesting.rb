@@ -62,7 +62,7 @@ module Lev
       end
 
       def default_transaction_isolation
-        TransactionIsolation.no_transaction 
+        TransactionIsolation.mysql_default
       end
 
       def nested_routines
@@ -72,13 +72,21 @@ module Lev
     end
 
     def in_transaction(options={}) 
-      if self != topmost_runner || self.class.transaction_isolation == TransactionIsolation.no_transaction
+      if !transaction_required?
         yield
       else
         ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do
           ActiveRecord::Base.transaction { yield }
         end
       end
+    end
+
+    def rollback_transaction
+      raise ActiveRecord::Rollback if transaction_required?
+    end
+
+    def transaction_required?
+      self == topmost_runner && self.class.transaction_isolation != TransactionIsolation.no_transaction
     end
 
     def run(other_routine, *args, &block)

@@ -2,6 +2,10 @@
 module Lev
 
   class Paramifier
+    def as_hash(keys)
+      keys = [keys].flatten.compact
+      Hash[keys.collect { |key| [key, self.send(key)] }]
+    end
   end
 
   # Common methods for all handlers.  Handlers are classes that are responsible 
@@ -106,6 +110,8 @@ module Lev
       in_transaction do
         handle_guts(options)
       end
+
+      [self.results, self.errors]
     end
 
     alias_method :call, :handle
@@ -180,15 +186,18 @@ module Lev
       self.request = options.delete(:request)
       self.caller = options.delete(:caller)
       self.options = options
-      self.errors = Errors.new
       self.results = {}
+
+      self.errors = (runner && runner.includes_module?(Lev::Handler)) ? 
+                    runner.errors : 
+                    Errors.new
 
       setup
       raise Lev.configuration.security_transgression_error unless authorized?
       validate_paramified_params
       exec unless errors?
-
-      [self.results, self.errors]
+debugger
+      rollback_transaction if errors?
     end
 
     def setup; end

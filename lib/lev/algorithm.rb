@@ -22,5 +22,28 @@ module Lev
       end
     end
 
+    # Adds error code to the list of ignored errors (making raise_error not do
+    # anything for that code), and returns self so calls can be chained
+    def ignore_error(code)
+      ignored_errors.push(code)
+      self
+    end
+
+  protected
+
+    def ignored_errors
+      @ignored_errors ||= []
+    end
+
+    # Raises an exception where the message is an array of symbols that target
+    # the raised error code, e.g. if ModuleA::Algorithm4 raises a :foo error code
+    # the exception's message will be [:module_a, :algorithm4, :foo].  This code
+    # can then be used in locale translations (TBD).
+    def raise_error(code, options={})
+      return if ignored_errors.include?(code)
+      full_code = self.class.name.underscore.split("/").collect{|part| part.to_sym}.push(code)
+      raise (options[:exception] || Lev::AlgorithmError), full_code
+    end
+
   end
 end
