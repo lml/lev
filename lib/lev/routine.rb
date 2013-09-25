@@ -68,11 +68,9 @@ module Lev
 
       in_transaction do
         catch :fatal_errors_encountered do
-          debugger
           exec(*args, &block)
         end
-        debugger
-        rollback_transaction if errors? # unless runner?
+        # rollback_transaction if errors? # unless runner?
       end
 
       # [self.results, self.errors]
@@ -82,7 +80,10 @@ module Lev
     def in_transaction(options={}) 
       if transaction_run_by?(self)
         ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do
-          ActiveRecord::Base.transaction { yield }
+          ActiveRecord::Base.transaction { 
+            yield 
+            raise ActiveRecord::Rollback if errors?
+          }
         end
       else
         yield

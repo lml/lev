@@ -1,3 +1,3 @@
 def handler_errors
-  @handler_outcome.try(:errors) || Lev::Errors.new
+  @errors || (@handler_outcome ? @handler_outcome.errors : Lev::Errors.new)
 end

@@ -38,7 +38,7 @@ module Lev
     end
 
     def has_error?(name)
-      @options[:errors].present? ? @options[:errors].has_offending_param?([@object_name, name]) : false
+      @options[:errors].present? ? @options[:errors].has_offending_input?([@object_name, name]) : false
     end
 
     def set_value_if_available(method, options)
@@ -58,6 +58,6 @@ end
 def lev_form_for(record_or_name_or_array, *args, &proc)
   options = args.extract_options!
   options[:params] = params
-  options[:errors] = @errors || []
+  options[:errors] = handler_errors # @errors || (@handler_outcome ? @handler_outcome.errors : [])
   form_for(record_or_name_or_array, *(args << options.merge(:builder => Lev::FormBuilder)), &proc)
 end
