@@ -1,4 +1,4 @@
-module Lev::Handler
+module Lev
 
   class ErrorTranslator
 

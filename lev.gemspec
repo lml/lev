@@ -18,10 +18,16 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "transaction_isolation"
-  spec.add_dependency "transaction_retry"
-  spec.add_dependency "active_attr"
+  spec.add_runtime_dependency(%q<activemodel>, [">= 3.0"])
+  spec.add_runtime_dependency(%q<activerecord>, [">= 3.0"])
+  spec.add_runtime_dependency(%q<actionpack>, [">= 3.0"])
+  spec.add_runtime_dependency "transaction_isolation"
+  spec.add_runtime_dependency "transaction_retry"
+  spec.add_runtime_dependency "active_attr"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "rspec"
+  spec.add_development_dependency "debugger"
+
 end

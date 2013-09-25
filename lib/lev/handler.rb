@@ -102,23 +102,15 @@ module Lev
     def self.included(base)
       base.extend(ClassMethods)
       base.class_eval do
-        include Lev::RoutineNesting
+        include Lev::Routine
       end
     end
-
-    def handle(options={})
-      in_transaction do
-        handle_guts(options)
-      end
-
-      [self.results, self.errors]
-    end
-
-    alias_method :call, :handle
 
     module ClassMethods
+  
+
       def handle(options={})
-        new.handle(options)
+        call(options)
       end
 
       def paramify(group, options={}, &block)
@@ -167,11 +159,9 @@ module Lev
       end
     end
 
-    def transfer_errors_from(source, param_group)
-      ErrorTransferer.transfer(source, self, param_group)
-    end
-
-    attr_accessor :errors
+    # def transfer_errors_from(source, param_group)
+    #   ErrorTransferer.transfer(source, self, param_group)
+    # end
 
   protected
 
@@ -179,25 +169,17 @@ module Lev
     attr_accessor :request
     attr_accessor :options
     attr_accessor :caller
-    attr_accessor :results
 
-    def handle_guts(options)
+    def exec(options)
       self.params = options.delete(:params)
       self.request = options.delete(:request)
       self.caller = options.delete(:caller)
       self.options = options
-      self.results = {}
-
-      self.errors = (runner && runner.includes_module?(Lev::Handler)) ? 
-                    runner.errors : 
-                    Errors.new
 
       setup
       raise Lev.configuration.security_transgression_error unless authorized?
       validate_paramified_params
-      exec unless errors?
-debugger
-      rollback_transaction if errors?
+      handle unless errors?
     end
 
     def setup; end
@@ -211,10 +193,6 @@ debugger
         params = send(method)
         transfer_errors_from(params, params.group) if !params.valid?
       end
-    end
-
-    def errors?
-      errors.any?
     end
 
   end
