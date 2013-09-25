@@ -42,10 +42,10 @@ module Lev
       options[:request] ||= request
       options[:caller] ||= current_user
 
-      @results, @errors = handler.handle(options)
+      @handler_outcome = handler.handle(options)
 
       if complete_action.nil?
-        @errors.empty? ?
+        @handler_outcome.errors.empty? ?
           success_action.call :
           failure_action.call    
       else

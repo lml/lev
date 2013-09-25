@@ -6,7 +6,6 @@ module Lev
       case source
       when ActiveRecord::Base, Lev::Paramifier
         source.errors.each_with_type_and_message do |attribute, type, message|
-          debugger
           target_routine.errors.add(
             code: type, 
             data: {

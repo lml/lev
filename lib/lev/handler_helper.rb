@@ -1,3 +1,3 @@
 def handler_errors
-  @errors || Lev::Handler::Errors.new
+  @handler_outcome.try(:errors) || Lev::Errors.new
 end

@@ -61,17 +61,22 @@ module Lev
     end
 
     def call(*args, &block)
-      self.results = {}
-      self.errors = Errors.new
+      # self.results = {}
+      # self.errors = Errors.new
+
+      self.outcome = Outcome.new
 
       in_transaction do
         catch :fatal_errors_encountered do
+          debugger
           exec(*args, &block)
         end
-        rollback_transaction if errors?
+        debugger
+        rollback_transaction if errors? # unless runner?
       end
 
-      [self.results, self.errors]
+      # [self.results, self.errors]
+      self.outcome
     end
 
     def in_transaction(options={}) 
@@ -95,6 +100,7 @@ module Lev
     end
 
     def run_with_options(other_routine, options, *args, &block)
+    debugger
       options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
 
       symbol = case other_routine
@@ -122,12 +128,13 @@ module Lev
         if !(other_routine.includes_module? Lev::Routine)
 
       other_routine.runner = self
-      run_results, run_errors = other_routine.call(*args, &block)
-      
-      transfer_errors_from(run_errors, input_mapper)
+      # run_results, run_errors = other_routine.call(*args, &block)
+      run_outcome = other_routine.call(*args, &block)
+     debugger 
+      transfer_errors_from(run_outcome.errors, input_mapper)
       throw :fatal_errors_encountered if errors.any? && options[:errors_are_fatal]
 
-      [run_results, run_errors]
+      run_outcome
     end
 
     def run(other_routine, *args, &block)
@@ -143,14 +150,23 @@ module Lev
     #   self
     # end
 
-    attr_accessor :errors
+    # attr_accessor :errors
+
+    def errors
+      outcome.errors
+    end
 
     def errors?
-      errors.any?
+      outcome.errors.any?
     end
 
     # Job of this method is to put errors in the source context into self's context.
     def transfer_errors_from(source, input_mapper=InputMapper.new)
+
+      if input_mapper.is_a? Hash
+        input_mapper = InputMapper.new(input_mapper[:scope], input_mapper[:mapping])
+      end
+
       ErrorTransferer.transfer(source, self, input_mapper)
     end
 
@@ -158,7 +174,12 @@ module Lev
 
     attr_accessor :outcome
     
-    attr_accessor :results
+    # attr_accessor :results
+
+
+    def results
+      outcome.results
+    end
 
     def fail_if_errors!
       throw :fail_if_errors if errors.any?
