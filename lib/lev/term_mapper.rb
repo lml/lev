@@ -28,10 +28,11 @@ module Lev
 
       def map(inputs)
         inputs = [inputs].flatten.compact
-        inputs.collect do |input|
+        result = inputs.collect do |input|
           mapped = (@mapping || {})[input] || input
           @scope.nil? ? mapped : [@scope, mapped].flatten
         end
+        result.size == 1 ? result.first : result
       end
     end
 

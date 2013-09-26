@@ -354,6 +354,10 @@ module Lev
     # will throw an error condition that causes execution of this routine to stop
     # *after* having transfered all of the errors.
     def transfer_errors_from(source, input_mapper, fail_if_errors=false)
+      if input_mapper.is_a? Hash
+        input_mapper = new_term_mapper(input_mapper)
+      end
+
       ErrorTransferer.transfer(source, self, input_mapper, fail_if_errors)
     end
 
