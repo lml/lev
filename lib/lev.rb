@@ -4,6 +4,7 @@ require "transaction_retry"
 require "active_attr"
 
 require "lev/version"
+require "lev/utilities"
 require "lev/exceptions"
 require "lev/better_active_model_errors"
 require "lev/term_mapper"

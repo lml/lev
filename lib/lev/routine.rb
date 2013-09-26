@@ -58,6 +58,23 @@ module Lev
   # enforce that only one transaction be used and that it be rolled back 
   # appropriately if any errors occur.
   #
+  # Once a routine has been registered with the "uses_routine" call, it can
+  # be run by passing run the routine's Class or a symbol identifying the 
+  # routine.  This symbol can be set with the :as option.  If not set, the
+  # symbol will be automatically set by converting the routine class' full
+  # name to a symbol. e.g:
+  #
+  #   uses_routine CreateUser
+  #                as: :cu
+  #
+  # and then you can say either:
+  #
+  #   run(:cu, ...)
+  #
+  # or
+  #
+  #   run(:create_user, ...)
+  #
   # uses_routine also provides a way to specify how errors relate to routine 
   # inputs. Take the following example.  A user calls Routine1 which calls 
   # Routine2.
@@ -91,8 +108,10 @@ module Lev
   #
   # Translations can also be supplied for "outputs" in addition to "inputs".
   # Output translations control how a called routine's Result outputs are 
-  # transfered to the calling routine's outputs.  The contents of the "inputs"
-  # and "outputs" hashes can be of the following form:
+  # transfered to the calling routine's outputs.  Note if multiple outputs are
+  # transferred into the same named output, an array of those outputs will be 
+  # store.  The contents of the "inputs" and "outputs" hashes can be of the 
+  # following form:
   #
   # 1) Scoped.  Appends the provided scoping symbol (or symbol array) to
   #    the input symbol.  
@@ -114,6 +133,24 @@ module Lev
   #
   # 4) Scoped and mapped.  Give an explicit mapping, and also scope the 
   #    translated terms.  Just use scope: and map: from above in the same hash.
+  #
+  # Via the uses_routine call, you can also ignore specified errors that occur
+  # in the called routine. e.g.:
+  #
+  #   uses_routine DestroyUser,
+  #                ignored_errors: [:cannot_destroy_non_temp_user]
+  #
+  # ignores errors with the provided code.  The ignore_errors key must point
+  # to an array of code symbols or procs.  If a proc is given, the proc will
+  # be called with the error that the routine is trying to add.  If the proc
+  # returns true, the error will be ignored.
+  #
+  # Any option passed to uses_routine can also be passed directly to the run
+  # method.  To achieve this, pass an array as the first argument to "run".
+  # The array should have the routine class or symbol as the first argument,
+  # and the hash of options as the second argument.  Options passed in this
+  # manner override any options provided in uses_routine (though those options
+  # are still used if not replaced in the run call).
   #
   # Routine class have access to a few other methods:
   #
@@ -137,6 +174,11 @@ module Lev
         @outputs = {}
         @errors = Errors.new
       end
+
+      def add_output(name, value)
+        outputs[name] = [outputs[name], value].flatten.compact
+        outputs[name] = outputs[name].first if outputs[name].size == 1
+      end
     end
 
     def self.included(base)
@@ -157,37 +199,12 @@ module Lev
         raise IllegalArgument, "Routine #{routine_class} has already been registered" \
           if nested_routines[symbol]
 
-        options[:translations] ||= {}
-
-        input_mapper  = new_term_mapper(options[:translations][:inputs])
-        output_mapper = new_term_mapper(options[:translations][:outputs])
-
         nested_routines[symbol] = {
           routine_class: routine_class,
-          input_mapper:  input_mapper,
-          output_mapper: output_mapper
+          options: options
         }
 
         transaction_isolation.replace_if_more_isolated(routine_class.transaction_isolation)
-      end
-
-      def new_term_mapper(options)
-        return nil if options.nil?
-
-        if options[:type]
-          case options[:type]
-          when :verbatim
-            return TermMapper.verbatim
-          else
-            raise IllegalArgument, "unknown :type value: #{options[:type]}"
-          end
-        end
-
-        if options[:scope] || options[:map]
-          return TermMapper.scope_and_map(options[:scope], options[:map])
-        end
-
-        nil
       end
 
       def transaction_isolation
@@ -227,8 +244,17 @@ module Lev
       who == topmost_runner && who.class.transaction_isolation != TransactionIsolation.no_transaction
     end
 
-    def run_with_options(other_routine, options, *args, &block)
-      options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
+    def run(other_routine, *args, &block)
+      options = {}
+
+      if other_routine.is_a? Array
+        if other_routine.size != 2
+          raise IllegalArgument, "when first arg to run is an array, it must have two arguments" 
+        end
+
+        other_routine = other_routine[0]
+        options = other_routine[1]
+      end
 
       symbol = case other_routine
                when Symbol
@@ -246,29 +272,60 @@ module Lev
               "Routine symbol #{other_routine} does not point to a registered routine"
       end      
 
+      #
+      # Get an instance of the routine and make sure it is a routine
+      #
+
       other_routine = nested_routine[:routine_class] || other_routine
       other_routine = other_routine.new if other_routine.is_a? Class
-
-      input_mapper  = nested_routine[:input_mapper]  || new_term_mapper({ scope: symbol })
-      output_mapper = nested_routine[:output_mapper] || new_term_mapper({ scope: symbol })
 
       raise IllegalArgument, "Can only run another nested routine" \
         if !(other_routine.includes_module? Lev::Routine)
 
+      #
+      # Merge passed-in options with those set in uses_routine, the former taking
+      # priority.
+      #
+
+      nested_routine_options = nested_routine[:options]
+      options = Lev::Utilities.deep_merge(nested_routine_options, options)
+
+      #
+      # Setup the input/output mappers
+      #
+
+      options[:translations] ||= {}
+
+      input_mapper  = new_term_mapper(options[:translations][:inputs]) || 
+                      new_term_mapper({ scope: symbol })
+
+      output_mapper = new_term_mapper(options[:translations][:outputs]) || 
+                      new_term_mapper({ scope: symbol })
+
+      #
+      # Set up the ignored errors in the routine instance
+      #
+
+      (options[:ignored_errors] || []).each do |ignored_error|
+        other_routine.ignore_error(ignored_error)
+      end
+
+      #
+      # Attach the subroutine to self, call it, transfer errors and results
+      #
+
       other_routine.runner = self
       run_result = other_routine.call(*args, &block)
       transfer_errors_from(run_result.errors, input_mapper)
+
+      options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
       throw :fatal_errors_encountered if errors.any? && options[:errors_are_fatal]
 
-      run_result.outputs.each do |output_name, output_value|
-        self.outputs[output_mapper.map(output_name)] = output_value
+      run_result.outputs.each do |name, value|
+        self.result.add_output(output_mapper.map(name), value)
       end
 
       run_result
-    end
-
-    def run(other_routine, *args, &block)
-      run_with_options(other_routine, {}, *args, &block)
     end
 
     # Convenience accessor for errors object
@@ -281,8 +338,22 @@ module Lev
       result.errors.any?
     end
 
-    def add_error(args={}) 
-      raise IllegalArgument "must supply a :code" if args[:code].nil?
+    def ignore_error(arg)
+      proc = arg.is_a?(Symbol) ?
+               Proc.new{|error| error.code == arg} :
+               arg
+      
+      raise IllegalArgument if !proc.respond_to?(:call)
+
+      ignored_error_procs.push(proc)
+    end
+
+    def fatal_error(args={})
+      add_error(true, args)
+    end
+
+    def nonfatal_error(args={})
+      add_error(false, args)
     end
 
     # Job of this method is to put errors in the source context into self's context.
@@ -330,6 +401,37 @@ module Lev
       else
         yield
       end
+    end
+
+    def new_term_mapper(options)
+      return nil if options.nil?
+
+      if options[:type]
+        case options[:type]
+        when :verbatim
+          return TermMapper.verbatim
+        else
+          raise IllegalArgument, "unknown :type value: #{options[:type]}"
+        end
+      end
+
+      if options[:scope] || options[:map]
+        return TermMapper.scope_and_map(options[:scope], options[:map])
+      end
+
+      nil
+    end
+
+    def add_error(fail, args={}) 
+      args[:kind] ||= :lev
+      error = Error.new(args)
+      return if ignored_error_procs.any?{|proc| proc.call(error)}
+      errors.push(error)
+      throw :fatal_errors_encountered if fail
+    end
+
+    def ignored_error_procs
+      @ignored_error_procs ||= []
     end
 
   end
