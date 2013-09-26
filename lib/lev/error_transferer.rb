@@ -2,7 +2,7 @@ module Lev
 
   class ErrorTransferer
 
-    def self.transfer(source, target_routine, input_mapper=InputMapper.new)
+    def self.transfer(source, target_routine, input_mapper)
       case source
       when ActiveRecord::Base, Lev::Paramifier
         source.errors.each_with_type_and_message do |attribute, type, message|

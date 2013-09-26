@@ -4,6 +4,7 @@ module Lev
   #
   class Errors < Array
     def add(args)
+      args[:kind] ||= :lev
       push(Error.new(args))
     end
 
@@ -15,5 +16,6 @@ module Lev
     def has_offending_input?(input)
       self.any? {|error| error.offending_inputs.include? input}
     end
+
   end
 end

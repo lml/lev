@@ -24,7 +24,10 @@ module Lev
   #
   # Other than that, all a routine has to do is implement an "exec" method 
   # that takes arbitrary arguments and that adds errors to an internal
-  # array-like "errors" object and results to a "results" hash.
+  # array-like "errors" object and outputs to a "outputs" hash.
+  #
+  # A routine returns an "Result" object, which is just a simple wrapper
+  # of the outputs and errors objects. 
   #
   # A routine will automatically get both class- and instance-level "call"
   # methods that take the same arguments as the "exec" method.  The class-level
@@ -73,7 +76,9 @@ module Lev
   #   class Routine1
   #     include Lev::Routine
   #     uses_routine Routine2,
-  #                  translation: { mapping: {bar: :foo} }
+  #                  translations: { 
+  #                    inputs: { map: {bar: :foo} }
+  #                  }
   #     def exec(options)
   #       run(Routine2, bar: options[:foo])
   #     end
@@ -84,10 +89,31 @@ module Lev
   # as being related to :foo.  In this way, the caller of Routine1 will see
   # errors related to the arguments he understands.
   #
-  # Manages running of routines inside other routines.  In the Lev context, 
-  # Handlers and Algorithms are routines.  A routine and any routines nested
-  # inside of it are executed within a single transaction, or depending on the
-  # requirements of all the routines, no transaction at all.
+  # Translations can also be supplied for "outputs" in addition to "inputs".
+  # Output translations control how a called routine's Result outputs are 
+  # transfered to the calling routine's outputs.  The contents of the "inputs"
+  # and "outputs" hashes can be of the following form:
+  #
+  # 1) Scoped.  Appends the provided scoping symbol (or symbol array) to
+  #    the input symbol.  
+  #
+  #    {scope: SCOPING_SYMBOL_OR_SYMBOL_ARRAY}
+  #
+  #    e.g. with {scope: :register} and a call to a routine that has an input
+  #    named :first_name, an error in that called routine related to its 
+  #    :first_name input will be translated so that the offending input is 
+  #    [:register, :first_name].
+  #
+  # 2) Verbatim.  Uses the same term in the caller as the callee.
+  #
+  #    {type: :verbatim}
+  #
+  # 3) Mapped.  Give an explicit, custom mapping:
+  #
+  #    {map: {called_input1: caller_input1, called_input2: :caller_input2}}
+  #
+  # 4) Scoped and mapped.  Give an explicit mapping, and also scope the 
+  #    translated terms.  Just use scope: and map: from above in the same hash.
   #
   # Routine class have access to a few other methods:
   #
@@ -97,21 +123,18 @@ module Lev
   # 
   #  2) a "topmost_runner" which points to the highest routine in the calling
   #     hierarchy (that routine whose 'runner' is nil)
-  #
-  # A routine returns an "outcome" object, which is just a simple wrapper
-  # of the results and errors objects. 
   #   
   # References:
   #   http://ducktypo.blogspot.com/2010/08/why-inheritance-sucks.html
   #
   module Routine
 
-    class Outcome
-      attr_reader :results
+    class Result
+      attr_reader :outputs
       attr_reader :errors
 
       def initialize
-        @results = {}
+        @outputs = {}
         @errors = Errors.new
       end
     end
@@ -134,16 +157,37 @@ module Lev
         raise IllegalArgument, "Routine #{routine_class} has already been registered" \
           if nested_routines[symbol]
 
-        options[:translation] ||= {}
-        input_mapper = InputMapper.new(options[:translation][:scope],
-                                       options[:translation][:mapping])
+        options[:translations] ||= {}
+
+        input_mapper  = new_term_mapper(options[:translations][:inputs])
+        output_mapper = new_term_mapper(options[:translations][:outputs])
 
         nested_routines[symbol] = {
           routine_class: routine_class,
-          input_mapper: input_mapper
+          input_mapper:  input_mapper,
+          output_mapper: output_mapper
         }
 
         transaction_isolation.replace_if_more_isolated(routine_class.transaction_isolation)
+      end
+
+      def new_term_mapper(options)
+        return nil if options.nil?
+
+        if options[:type]
+          case options[:type]
+          when :verbatim
+            return TermMapper.verbatim
+          else
+            raise IllegalArgument, "unknown :type value: #{options[:type]}"
+          end
+        end
+
+        if options[:scope] || options[:map]
+          return TermMapper.scope_and_map(options[:scope], options[:map])
+        end
+
+        nil
       end
 
       def transaction_isolation
@@ -166,7 +210,7 @@ module Lev
     attr_reader :runner
 
     def call(*args, &block)
-      self.outcome = Outcome.new
+      self.result = Result.new
 
       in_transaction do
         catch :fatal_errors_encountered do
@@ -174,7 +218,7 @@ module Lev
         end
       end
 
-      self.outcome
+      self.result
     end
 
     # Returns true iff the given instance is responsible for running itself in a
@@ -205,17 +249,22 @@ module Lev
       other_routine = nested_routine[:routine_class] || other_routine
       other_routine = other_routine.new if other_routine.is_a? Class
 
-      input_mapper = nested_routine[:input_mapper] || InputMapper.new
+      input_mapper  = nested_routine[:input_mapper]  || new_term_mapper({ scope: symbol })
+      output_mapper = nested_routine[:output_mapper] || new_term_mapper({ scope: symbol })
 
       raise IllegalArgument, "Can only run another nested routine" \
         if !(other_routine.includes_module? Lev::Routine)
 
       other_routine.runner = self
-      run_outcome = other_routine.call(*args, &block)
-      transfer_errors_from(run_outcome.errors, input_mapper)
+      run_result = other_routine.call(*args, &block)
+      transfer_errors_from(run_result.errors, input_mapper)
       throw :fatal_errors_encountered if errors.any? && options[:errors_are_fatal]
 
-      run_outcome
+      run_result.outputs.each do |output_name, output_value|
+        self.outputs[output_mapper.map(output_name)] = output_value
+      end
+
+      run_result
     end
 
     def run(other_routine, *args, &block)
@@ -224,12 +273,16 @@ module Lev
 
     # Convenience accessor for errors object
     def errors
-      outcome.errors
+      result.errors
     end
 
     # Convenience test for presence of errors
     def errors?
-      outcome.errors.any?
+      result.errors.any?
+    end
+
+    def add_error(args={}) 
+      raise IllegalArgument "must supply a :code" if args[:code].nil?
     end
 
     # Job of this method is to put errors in the source context into self's context.
@@ -244,11 +297,11 @@ module Lev
 
   protected
 
-    attr_accessor :outcome
+    attr_accessor :result
     attr_writer :runner
 
-    def results
-      outcome.results
+    def outputs
+      result.outputs
     end
 
     def topmost_runner
