@@ -10,6 +10,10 @@ module Lev
       ScopedAndMapped.new(scope, mapping)
     end
 
+    def self.scope(scope)
+      ScopedAndMapped.new(scope, nil)
+    end
+
     def map(inputs)
       raise AbstractMethodCalled
     end

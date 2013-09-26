@@ -152,6 +152,11 @@ module Lev
   # manner override any options provided in uses_routine (though those options
   # are still used if not replaced in the run call).
   #
+  # Two methods are provided for adding errors: "fatal_error" and "nonfatal_error".
+  # Both take a hash of args used to create an Error and the former stops routine
+  # execution.  In its current implementation, "nonfatal_error" may still cause
+  # a routine higher up in the execution hierarchy to halt running.
+  #
   # Routine class have access to a few other methods:
   #
   #  1) a "runner" accessor which points to the routine which called it. If
@@ -227,15 +232,13 @@ module Lev
     attr_reader :runner
 
     def call(*args, &block)
-      self.result = Result.new
-
       in_transaction do
         catch :fatal_errors_encountered do
           exec(*args, &block)
         end
       end
 
-      self.result
+      result
     end
 
     # Returns true iff the given instance is responsible for running itself in a
@@ -307,7 +310,7 @@ module Lev
       #
 
       (options[:ignored_errors] || []).each do |ignored_error|
-        other_routine.ignore_error(ignored_error)
+        other_routine.errors.ignore(ignored_error)
       end
 
       #
@@ -316,10 +319,9 @@ module Lev
 
       other_routine.runner = self
       run_result = other_routine.call(*args, &block)
-      transfer_errors_from(run_result.errors, input_mapper)
 
       options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
-      throw :fatal_errors_encountered if errors.any? && options[:errors_are_fatal]
+      transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
 
       run_result.outputs.each do |name, value|
         self.result.add_output(output_mapper.map(name), value)
@@ -338,37 +340,29 @@ module Lev
       result.errors.any?
     end
 
-    def ignore_error(arg)
-      proc = arg.is_a?(Symbol) ?
-               Proc.new{|error| error.code == arg} :
-               arg
-      
-      raise IllegalArgument if !proc.respond_to?(:call)
-
-      ignored_error_procs.push(proc)
-    end
-
     def fatal_error(args={})
-      add_error(true, args)
+      errors.add(true, args)
     end
 
     def nonfatal_error(args={})
-      add_error(false, args)
+      errors.add(false, args)
     end
 
-    # Job of this method is to put errors in the source context into self's context.
-    def transfer_errors_from(source, input_mapper=InputMapper.new)
-
-      if input_mapper.is_a? Hash
-        input_mapper = InputMapper.new(input_mapper[:scope], input_mapper[:mapping])
-      end
-
-      ErrorTransferer.transfer(source, self, input_mapper)
+    # Utility method to transfer errors from a source to this routine.  The 
+    # provided input_mapper maps the language of the errors in the source to
+    # the language of this routine.  If fail_if_errors is true, this routine
+    # will throw an error condition that causes execution of this routine to stop
+    # *after* having transfered all of the errors.
+    def transfer_errors_from(source, input_mapper, fail_if_errors=false)
+      ErrorTransferer.transfer(source, self, input_mapper, fail_if_errors)
     end
 
   protected
 
-    attr_accessor :result
+    def result
+      @result ||= Result.new
+    end
+
     attr_writer :runner
 
     def outputs
@@ -420,18 +414,6 @@ module Lev
       end
 
       nil
-    end
-
-    def add_error(fail, args={}) 
-      args[:kind] ||= :lev
-      error = Error.new(args)
-      return if ignored_error_procs.any?{|proc| proc.call(error)}
-      errors.push(error)
-      throw :fatal_errors_encountered if fail
-    end
-
-    def ignored_error_procs
-      @ignored_error_procs ||= []
     end
 
   end
