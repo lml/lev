@@ -8,27 +8,27 @@ module Lev
     end
   end
 
-  # Common methods for all handlers.  Handlers are classes that are responsible 
-  # for taking input data from a form or other widget and doing something
-  # with it.
+  # Common methods for all handlers.  Handlers are extensions of Routines 
+  # and are responsible for taking input data from a form or other widget and 
+  # doing something with it.  See Lev::Routine for more information.
   #
   # All handlers must:
   #   2) include this module ("include Lev::Handler")
-  #   3) implement the 'exec' method which takes no arguments and does the 
+  #   3) implement the 'handle' method which takes no arguments and does the 
   #      work the handler is charged with
   #   4) implement the 'authorized?' method which returns true iff the 
   #      caller is authorized to do what the handler is charged with
   #
   # Handlers may:
-  #   1) implement the 'setup' method which runs before 'authorized?' and 'exec'.
+  #   1) implement the 'setup' method which runs before 'authorized?' and 'handle'.
   #      This method can do anything, and will likely include setting up some 
   #      instance objects based on the params.
   #   2) Call the class method "paramify" to declare, cast, and validate parts of
   #      the params hash. The first argument to paramify is the key in params
   #      which points to a hash of params to be paramified.  The block passed to
-  #      paramify looks just like the guts of an ActiveAttr model.  Examples:
+  #      paramify looks just like the guts of an ActiveAttr model.
   #      
-  #      when the incoming params includes :search => {:type, :terms, :num_results}
+  #      When the incoming params includes :search => {:type, :terms, :num_results}
   #      the Handler class would look like:
   #
   #      class MyHandler
@@ -48,7 +48,7 @@ module Lev
   #                                            greater_than_or_equal_to: 0 }                               
   #        end
   #        
-  #        def exec
+  #        def handle
   #          # By this time, if there were any errors the handler would have
   #          # already populated the errors object and returned.
   #          #
@@ -64,26 +64,27 @@ module Lev
   #   2) 'caller' --  the user submitting the input
   #   3) 'errors' --  an object in which to store errors
   #   4) 'results' -- a hash in which to store results for return to calling code
-  #   5) 'options' -- a hash containing the options passed in, useful for other
+  #   5) 'request' -- the HTTP request
+  #   6) 'options' -- a hash containing the options passed in, useful for other
   #                   nonstandard data.
-  #   
-  # Handler 'exec' methods don't return anything; they just set values in 
+  #
+  # These methods are available iff these data were supplied in the call
+  # to the handler (not all handlers need all of this).  However, note that
+  # the Lev::HandleWith module supplies an easy way to call Handlers from 
+  # controllers -- when this way is used, all of the methods above are available.
+  #
+  # Handler 'handle' methods don't return anything; they just set values in 
   # the errors and results objects.  The documentation for each handler
   # should explain what the results will be and any nonstandard data required
   # to be passed in in the options.
   #
-  # See the documentation for Lev::RoutineNesting about other requirements and 
-  # capabilities of handler classes.
-  #
-  # The handle methods take a hash of arguments.  
-  #   caller: the calling user
-  #   params: the params object
-  #   request: the http request object
+  # In addition to the class- and instance-level "call" methods provided by 
+  # Lev::Routine, Handlers have a class-level "handle" method (an alias of
+  # the class-level "call" method).  The convention for handlers is that the
+  # call methods take a hash of options/inputs.  The instance-level handle
+  # method doesn't take any arguments since the arguments have been stored
+  # as instance variables by the time the instance-level handle method is called.
   # 
-  # These arguments are optional or required depending on the implementation of
-  # the specific handler, i.e. if a handler wants to use the 'caller' method, it 
-  # must have been supplied to the handle method.  
-  #
   # Example:
   # 
   #   class MyHandler
@@ -92,7 +93,7 @@ module Lev
   #     def authorized?
   #       # return true iff exec is allowed to be called, e.g. might
   #       # check the caller against the params
-  #     def exec
+  #     def handle
   #       # do the work, add errors to errors object and results to the results hash as needed
   #     end
   #   end
@@ -108,7 +109,6 @@ module Lev
 
     module ClassMethods
   
-
       def handle(options={})
         call(options)
       end
@@ -159,10 +159,6 @@ module Lev
       end
     end
 
-    # def transfer_errors_from(source, param_group)
-    #   ErrorTransferer.transfer(source, self, param_group)
-    # end
-
   protected
 
     attr_accessor :params
@@ -170,6 +166,8 @@ module Lev
     attr_accessor :options
     attr_accessor :caller
 
+    # This is a method required by Lev::Routine.  It enforces the steps common
+    # to all handlers.  
     def exec(options)
       self.params = options.delete(:params)
       self.request = options.delete(:request)
@@ -182,12 +180,18 @@ module Lev
       handle unless errors?
     end
 
+    # Default setup implementation -- a no-op
     def setup; end
 
+    # Default authorized? implementation.  It returns true so that every 
+    # handler realization has to make a conscious decision about who is authorized
+    # to call the handler.
     def authorized?
-      false # default for safety, forces implementation in the handler
+      false
     end
 
+    # Helper method to validate paramified params and to transfer any errors
+    # into the handler.
     def validate_paramified_params
       self.class.paramify_methods.each do |method|
         params = send(method)

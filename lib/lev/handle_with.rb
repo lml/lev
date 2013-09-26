@@ -18,14 +18,13 @@ module Lev
   #               failure: lambda { render 'new', alert: 'Error' })
   #
   # handle_with takes care of calling the handler and populates
-  # @errors and @results objects with the return values from the handler
-  #
+  # a @handler_outcome object with the return value from the handler
   #
   # The 'success' and 'failure' lambdas are called if there aren't or are errors,
   # respectively.  Alternatively, if you supply a 'complete' lambda, that lambda
   # will be called regardless of whether there are any errors.  Inside these lambdas
-  # (and inside the views they connect to), there will be @errors and @results 
-  # variables containing the errors and results from the handler.
+  # (and inside the views they connect to), there will be the @handler_outcome 
+  # variable containing the errors and results from the handler.
   #
   # Specifying 'params' is optional.  If you don't specify it, HandleWith will
   # use the entire params hash from the request.

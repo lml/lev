@@ -1,6 +1,109 @@
 module Lev
+  
+  # A "routine" in the Lev world is a piece of code that is responsible for
+  # doing one thing, normally acting on one or more other objects.  Routines
+  # are particularly useful when the thing that needs to be done involves 
+  # making changes to multiple other objects.  In an OO/MVC world, an operation
+  # that involves multiple objects might be implemented by spreading that logic
+  # among those objects.  However, that leads to classes having more
+  # responsibilities than they should (and more knowlege of other classes than
+  # they should) as well as making the code hard to follow.
+  #
+  # Routines typically don't have any persistent state that is used over and 
+  # over again; they are created, used, and forgotten.  A routine is a glorified
+  # function with a special single-responsibility purpose.
+  #
+  # Routines can be nested -- there is built-in functionality for calling
+  # one routine inside another.
+  #
+  # A class becomes a routine by adding:
+  #
+  #   include Lev::Routine
+  #
+  # in its definition.
+  #
+  # Other than that, all a routine has to do is implement an "exec" method 
+  # that takes arbitrary arguments and that adds errors to an internal
+  # array-like "errors" object and results to a "results" hash.
+  #
+  # A routine will automatically get both class- and instance-level "call"
+  # methods that take the same arguments as the "exec" method.  The class-level
+  # call method simply instantiates a new instance of the routine and calls 
+  # the instance-level call method (side note here is that this means that 
+  # routines aren't typically instantiated with state).
+  # 
+  # A routine is automatically run within a transaction.  The isolation level
+  # of the routine can be set by overriding the "default_transaction_isolation"
+  # class method and having it return an instance of Lev::TransactionIsolation.
+  # This is also how routines can be set to not be run in a transaction.
+  #
+  # As mentioned above, routines can call other routines.  While this is of
+  # course possible just by calling the other routine's call method directly,
+  # it is strongly recommended that one routine call another routine using the
+  # provided "run" method.  This method takes the name of the routine class 
+  # and the arguments/block it expects in its call/exec methods.  By using the
+  # run method, the called routine will be hooked into the common error and 
+  # transaction mechanisms.
+  #
+  # When one routine is called within another using the run method, there is
+  # only one transaction used (barring any explicitly made in the code) and
+  # its isolation level is sufficiently strict for all routines involved.
+  #
+  # It is highly recommend, though not required, to call the "uses_routine"
+  # method to let the routine know which subroutines will be called within it.
+  # This will let a routine set its isolation level appropriately, and will
+  # enforce that only one transaction be used and that it be rolled back 
+  # appropriately if any errors occur.
+  #
+  # uses_routine also provides a way to specify how errors relate to routine 
+  # inputs. Take the following example.  A user calls Routine1 which calls 
+  # Routine2.
+  #
+  #   User --> Routine1.call(foo: "abcd4") --> Routine2.call(bar: "abcd4")
+  #
+  # An error occurs in Routine2, and Routine2 notes that the error is related
+  # to its "bar" input.  If that error and its metadata bubble up to the User,
+  # the User won't have any idea what "bar" relates to -- the User only knows
+  # about the interface to Routine1 and the "foo" parameter it gave it.
+  #
+  # Routine1 knows that it will call Routine2 and knows what its interface is.  
+  # It can then specify how to map terminology from Routine2 into Routine1's 
+  # context.  E.g., in the following class:
+  #
+  #   class Routine1
+  #     include Lev::Routine
+  #     uses_routine Routine2,
+  #                  translation: { mapping: {bar: :foo} }
+  #     def exec(options)
+  #       run(Routine2, bar: options[:foo])
+  #     end
+  #   end
+  #
+  # Routine1 notes that any errors coming back from the call to Routine2 
+  # related to :bar should be transfered into Routine1's errors object
+  # as being related to :foo.  In this way, the caller of Routine1 will see
+  # errors related to the arguments he understands.
+  #
+  # Manages running of routines inside other routines.  In the Lev context, 
+  # Handlers and Algorithms are routines.  A routine and any routines nested
+  # inside of it are executed within a single transaction, or depending on the
+  # requirements of all the routines, no transaction at all.
+  #
+  # Routine class have access to a few other methods:
+  #
+  #  1) a "runner" accessor which points to the routine which called it. If
+  #     runner is nil that means that no other routine called it (some other 
+  #     code did)
+  # 
+  #  2) a "topmost_runner" which points to the highest routine in the calling
+  #     hierarchy (that routine whose 'runner' is nil)
+  #
+  # A routine returns an "outcome" object, which is just a simple wrapper
+  # of the results and errors objects. 
+  #   
+  # References:
   #   http://ducktypo.blogspot.com/2010/08/why-inheritance-sucks.html
-  #   http://stackoverflow.com/a/1328093/1664216
+  #
   module Routine
 
     class Outcome
@@ -60,38 +163,18 @@ module Lev
       end
     end
 
-    def call(*args, &block)
-      # self.results = {}
-      # self.errors = Errors.new
+    attr_reader :runner
 
+    def call(*args, &block)
       self.outcome = Outcome.new
 
       in_transaction do
         catch :fatal_errors_encountered do
           exec(*args, &block)
         end
-        # rollback_transaction if errors? # unless runner?
       end
 
-      # [self.results, self.errors]
       self.outcome
-    end
-
-    def in_transaction(options={}) 
-      if transaction_run_by?(self)
-        ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do
-          ActiveRecord::Base.transaction { 
-            yield 
-            raise ActiveRecord::Rollback if errors?
-          }
-        end
-      else
-        yield
-      end
-    end
-
-    def rollback_transaction
-      raise ActiveRecord::Rollback if transaction_run_by?(topmost_runner)
     end
 
     # Returns true iff the given instance is responsible for running itself in a
@@ -101,7 +184,6 @@ module Lev
     end
 
     def run_with_options(other_routine, options, *args, &block)
-    debugger
       options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
 
       symbol = case other_routine
@@ -129,9 +211,7 @@ module Lev
         if !(other_routine.includes_module? Lev::Routine)
 
       other_routine.runner = self
-      # run_results, run_errors = other_routine.call(*args, &block)
       run_outcome = other_routine.call(*args, &block)
-     debugger 
       transfer_errors_from(run_outcome.errors, input_mapper)
       throw :fatal_errors_encountered if errors.any? && options[:errors_are_fatal]
 
@@ -142,21 +222,12 @@ module Lev
       run_with_options(other_routine, {}, *args, &block)
     end
 
-    attr_reader :runner
-
-    # # Adds error code to the list of ignored errors (making raise_error not do
-    # # anything for that code), and returns self so calls can be chained
-    # def ignore_error(code)
-    #   ignored_errors.push(code)
-    #   self
-    # end
-
-    # attr_accessor :errors
-
+    # Convenience accessor for errors object
     def errors
       outcome.errors
     end
 
+    # Convenience test for presence of errors
     def errors?
       outcome.errors.any?
     end
@@ -174,33 +245,11 @@ module Lev
   protected
 
     attr_accessor :outcome
-    
-    # attr_accessor :results
-
+    attr_writer :runner
 
     def results
       outcome.results
     end
-
-    def fail_if_errors!
-      throw :fail_if_errors if errors.any?
-    end
-
-    # def ignored_errors
-    #   @ignored_errors ||= []
-    # end
-
-    # # Raises an exception where the message is an array of symbols that target
-    # # the raised error code, e.g. if ModuleA::Algorithm4 raises a :foo error code
-    # # the exception's message will be [:module_a, :algorithm4, :foo].  This code
-    # # can then be used in locale translations (TBD).
-    # def raise_error(code, options={})
-    #   return if ignored_errors.include?(code)
-    #   full_code = self.class.name.underscore.split("/").collect{|part| part.to_sym}.push(code)
-    #   raise (options[:exception] || Lev::AlgorithmError), full_code
-    # end
-
-    attr_writer :runner
 
     def topmost_runner
       runner.nil? ? self : runner.topmost_runner
@@ -214,6 +263,19 @@ module Lev
               "The routine being run has a stronger isolation requirement than " + 
               "the isolation being used by the routine(s) running it; call the " +
               "'uses' method in the running routine's initializer"
+      end
+    end
+
+    def in_transaction(options={}) 
+      if transaction_run_by?(self)
+        ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do
+          ActiveRecord::Base.transaction do 
+            yield 
+            raise ActiveRecord::Rollback if errors?
+          end
+        end
+      else
+        yield
       end
     end
 
