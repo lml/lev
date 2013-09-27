@@ -18,7 +18,7 @@ module Lev
   #               failure: lambda { render 'new', alert: 'Error' })
   #
   # handle_with takes care of calling the handler and populates
-  # a @handler_outcome object with the return value from the handler
+  # a @handler_result object with the return value from the handler
   #
   # The 'success' and 'failure' lambdas are called if there aren't or are errors,
   # respectively.  Alternatively, if you supply a 'complete' lambda, that lambda
@@ -41,10 +41,10 @@ module Lev
       options[:request] ||= request
       options[:caller] ||= current_user
 
-      @handler_outcome = handler.handle(options)
+      @handler_result = handler.handle(options)
 
       if complete_action.nil?
-        @handler_outcome.errors.empty? ?
+        @handler_result.errors.empty? ?
           success_action.call :
           failure_action.call    
       else

@@ -290,7 +290,7 @@ module Lev
       # priority.
       #
 
-      nested_routine_options = nested_routine[:options]
+      nested_routine_options = nested_routine[:options] || {}
       options = Lev::Utilities.deep_merge(nested_routine_options, options)
 
       #
