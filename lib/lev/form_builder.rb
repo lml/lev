@@ -26,7 +26,7 @@ module Lev
     def fields_for(record_name, record_object = nil, fields_options = {}, &block)
       raise "Didn't put fields_for into LevitateFormBuilder yet"
     end
-
+ 
   protected
 
     def get_form_params_entry(name)

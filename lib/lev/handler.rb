@@ -166,6 +166,10 @@ module Lev
     attr_accessor :options
     attr_accessor :caller
 
+    # Provided for development / debugging purposes -- gives a way to pass
+    # information in a raised security transgression when authorized? is false
+    attr_accessor :auth_error_details
+
     # This is a method required by Lev::Routine.  It enforces the steps common
     # to all handlers.  
     def exec(options)
@@ -175,7 +179,7 @@ module Lev
       self.options = options
 
       setup
-      raise Lev.configuration.security_transgression_error unless authorized?
+      raise Lev.configuration.security_transgression_error, auth_error_details unless authorized?
       validate_paramified_params
       handle unless errors?
     end
@@ -185,10 +189,17 @@ module Lev
 
     # Default authorized? implementation.  It returns true so that every 
     # handler realization has to make a conscious decision about who is authorized
-    # to call the handler.
+    # to call the handler. To help the common error of forgetting to override this 
+    # method in a handler instance, we provide an error message when this default
+    # implementation is called.
     def authorized?
+      self.auth_error_details = 
+        "Access to handlers is prevented by default.  You need to override the " +
+        "'authorized?' in this handler to explicitly grant access."
       false
     end
+
+    
 
     # Helper method to validate paramified params and to transfer any errors
     # into the handler.
