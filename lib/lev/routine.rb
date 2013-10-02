@@ -324,8 +324,8 @@ module Lev
       options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
       transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
 
-      run_result.outputs.each do |name, value|
-        self.result.outputs.add(output_mapper.map(name), value)
+      run_result.outputs.transfer_to(outputs) do |name|
+        output_mapper.map(name)
       end
 
       run_result
