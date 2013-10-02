@@ -1,6 +1,6 @@
 class CreateSprocket
 
-  include Lev::Routine
+  lev_routine
 
 protected
 

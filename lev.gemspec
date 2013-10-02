@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "transaction_isolation"
   spec.add_runtime_dependency "transaction_retry"
   spec.add_runtime_dependency "active_attr"
+  spec.add_runtime_dependency "hashie"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"

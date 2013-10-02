@@ -13,7 +13,7 @@ module Lev
   # doing something with it.  See Lev::Routine for more information.
   #
   # All handlers must:
-  #   2) include this module ("include Lev::Handler")
+  #   2) call "lev_handler"
   #   3) implement the 'handle' method which takes no arguments and does the 
   #      work the handler is charged with
   #   4) implement the 'authorized?' method which returns true iff the 
@@ -32,7 +32,7 @@ module Lev
   #      the Handler class would look like:
   #
   #      class MyHandler
-  #        include Lev::Handler
+  #        lev_handler
   #
   #        paramify :search do
   #          attribute :search_type, type: String
@@ -88,7 +88,7 @@ module Lev
   # Example:
   # 
   #   class MyHandler
-  #     include Lev::Handler
+  #     lev_handler
   #   protected
   #     def authorized?
   #       # return true iff exec is allowed to be called, e.g. might

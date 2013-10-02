@@ -1,11 +1,12 @@
 PATH
   remote: .
   specs:
-    lev (1.0.1)
+    lev (2.0.0)
       actionpack (>= 3.0)
       active_attr
       activemodel (>= 3.0)
       activerecord (>= 3.0)
+      hashie
       transaction_isolation
       transaction_retry
 
@@ -48,6 +49,7 @@ GEM
     debugger-ruby_core_source (1.2.3)
     diff-lcs (1.2.4)
     erubis (2.7.0)
+    hashie (2.0.5)
     i18n (0.6.5)
     minitest (4.7.5)
     multi_json (1.8.0)

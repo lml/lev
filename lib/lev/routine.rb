@@ -18,7 +18,7 @@ module Lev
   #
   # A class becomes a routine by adding:
   #
-  #   include Lev::Routine
+  #   lev_routine
   #
   # in its definition.
   #
@@ -36,9 +36,19 @@ module Lev
   # routines aren't typically instantiated with state).
   # 
   # A routine is automatically run within a transaction.  The isolation level
-  # of the routine can be set by overriding the "default_transaction_isolation"
-  # class method and having it return an instance of Lev::TransactionIsolation.
-  # This is also how routines can be set to not be run in a transaction.
+  # of the routine can be set by passing a :transaction option to the lev_routine
+  # call (or to the lev_handler call, if appropriate).  The value must be one of
+  #
+  #   :no_transaction
+  #   :read_uncommitted
+  #   :read_committed
+  #   :repeatable_read
+  #   :serializable
+  #
+  # e.g.
+  #
+  #   class MyRoutine
+  #     lev_routine transaction: :no_transaction
   #
   # As mentioned above, routines can call other routines.  While this is of
   # course possible just by calling the other routine's call method directly,
@@ -91,7 +101,7 @@ module Lev
   # context.  E.g., in the following class:
   #
   #   class Routine1
-  #     include Lev::Routine
+  #     lev_routine
   #     uses_routine Routine2,
   #                  translations: { 
   #                    inputs: { map: {bar: :foo} }
@@ -176,13 +186,8 @@ module Lev
       attr_reader :errors
 
       def initialize
-        @outputs = {}
+        @outputs = Outputs.new
         @errors = Errors.new
-      end
-
-      def add_output(name, value)
-        outputs[name] = [outputs[name], value].flatten.compact
-        outputs[name] = outputs[name].first if outputs[name].size == 1
       end
     end
 
@@ -213,11 +218,7 @@ module Lev
       end
 
       def transaction_isolation
-        @transaction_isolation ||= default_transaction_isolation
-      end
-
-      def default_transaction_isolation
-        TransactionIsolation.mysql_default
+        @transaction_isolation ||= TransactionIsolation.mysql_default
       end
 
       def nested_routines
@@ -324,7 +325,7 @@ module Lev
       transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
 
       run_result.outputs.each do |name, value|
-        self.result.add_output(output_mapper.map(name), value)
+        self.result.outputs.add(output_mapper.map(name), value)
       end
 
       run_result
@@ -380,7 +381,7 @@ module Lev
     def runner=(runner)
       @runner = runner
 
-      if topmost_runner.class.transaction_isolation.weaker_than(self.class.default_transaction_isolation)
+      if topmost_runner.class.transaction_isolation.weaker_than(self.class.transaction_isolation)
         raise IsolationMismatch, 
               "The routine being run has a stronger isolation requirement than " + 
               "the isolation being used by the routine(s) running it; call the " +
