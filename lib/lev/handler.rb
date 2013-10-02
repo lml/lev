@@ -206,7 +206,7 @@ module Lev
     def validate_paramified_params
       self.class.paramify_methods.each do |method|
         params = send(method)
-        transfer_errors_from(params, TermsMapper.scope(params.group)) if !params.valid?
+        transfer_errors_from(params, TermMapper.scope(params.group)) if !params.valid?
       end
     end
 
