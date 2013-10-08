@@ -2,6 +2,12 @@
 module Lev
 
   class Paramifier
+    include ActiveAttr::Model
+    include ActiveAttr::Typecasting
+
+    # Hack to provide ActiveAttr's Boolean type concisely
+    def self.boolean; ActiveAttr::Typecasting::Boolean; end
+
     def as_hash(keys)
       keys = [keys].flatten.compact
       Hash[keys.collect { |key| [key, self.send(key)] }]
@@ -58,6 +64,9 @@ module Lev
   #          ...
   #        end
   #      end
+  #
+  # Note that if you want to use a "Boolean" type, you need to type it with
+  # a lowercase (type: boolean).
   #
   # All handler instance methods have the following available to them:
   #   1) 'params' --  the params from the input
@@ -124,15 +133,15 @@ module Lev
 
         if paramify_classes[group].nil?
           paramify_classes[group] = Class.new(Lev::Paramifier) do
-            include ActiveAttr::Model
             cattr_accessor :group
           end
-          paramify_classes[group].class_eval(&block)
-          paramify_classes[group].group = group
 
           # Attach a name to this dynamic class
           const_set("#{group.to_s.capitalize}Paramifier", 
                     paramify_classes[group])
+
+          paramify_classes[group].class_eval(&block)
+          paramify_classes[group].group = group
         end
 
         # Define the "#{group}_params" method to get the paramifier 
