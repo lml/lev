@@ -8,7 +8,7 @@ module Lev
     # Hack to provide ActiveAttr's Boolean type concisely
     def self.boolean; ActiveAttr::Typecasting::Boolean; end
 
-    def as_hash(keys)
+    def as_hash(*keys)
       keys = [keys].flatten.compact
       Hash[keys.collect { |key| [key, self.send(key)] }]
     end
