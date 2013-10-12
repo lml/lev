@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lev (2.0.3.alpha)
+    lev (2.0.3)
       actionpack (>= 3.0)
       active_attr
       activemodel (>= 3.0)

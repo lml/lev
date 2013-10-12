@@ -30,7 +30,7 @@ module Lev
   # use the entire params hash from the request.
   #
   module HandleWith
-    def handle_with(handler, options)
+    def handle_with(handler, options={})
       success_action = options.delete(:success)
       failure_action = options.delete(:failure)
       complete_action = options.delete(:complete)
