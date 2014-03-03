@@ -11,7 +11,8 @@ module Lev
         message = error.message || Lev::BetterActiveModelErrors.generate_message(model, attribute, error.code)
         Lev::BetterActiveModelErrors.full_message(model, attribute, message)
       else
-        error.code.to_s
+        message = error.message.to_s
+        message.empty? ? error.code.to_s : message
       end      
     end
 
