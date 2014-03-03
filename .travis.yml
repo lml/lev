@@ -1,0 +1,9 @@
+language: ruby
+rvm:
+  - "1.9.3-p392"
+install:
+  - bundle install
+script:
+  - bundle exec rake
+notifications:
+  email: false

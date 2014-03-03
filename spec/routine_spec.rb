@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Routine do
+describe Lev::Routine do
 
   
 
