@@ -20,3 +20,10 @@ end
 require 'lev'
 
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
+
+ActiveRecord::Base.establish_connection(
+  adapter: :sqlite3,
+  database: ':memory:',
+)
+ActiveRecord::ConnectionAdapters::SQLiteAdapter = ActiveRecord::ConnectionAdapters::SQLite3Adapter
+TransactionIsolation.apply_activerecord_patch
