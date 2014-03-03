@@ -27,3 +27,12 @@ ActiveRecord::Base.establish_connection(
 )
 ActiveRecord::ConnectionAdapters::SQLiteAdapter = ActiveRecord::ConnectionAdapters::SQLite3Adapter
 TransactionIsolation.apply_activerecord_patch
+
+unless Sprocket.table_exists?
+  ActiveRecord::Schema.define do
+    create_table 'sprockets', force: true do |t|
+      t.integer 'integer_gt_2'
+      t.string 'text_only_letters'
+    end
+  end
+end

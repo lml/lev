@@ -1,6 +1,6 @@
 class CreateSprocket
 
-  lev_routine
+  include Lev::Routine
 
 protected
 
@@ -8,7 +8,7 @@ protected
     sprocket = Sprocket.new(integer_gt_2: number, text_only_letters: text)
     sprocket.valid?
 
-    transfer_errors_from(sprocket)
+    transfer_errors_from(sprocket, {scope: :sprocket})
   end
 
 end
