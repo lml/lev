@@ -28,6 +28,7 @@ Handlers...
 1. Help you verify that the calling user is authorized to run the handler
 2. Provide ways to validate incoming parameters in a very ActiveModel-like way (even when the parameters are not associated with a model)
 3. Integrate will with basic routines
+4. Map one-to-one with controller actions; by keeping the logic in each controller action encapsulated in a Handler, the code becomes independently-testable and also prevents the controller from being "fat" with 7 different actions all containing disparate logic touching different models.
 
 In a Lev-oriented Rails app, controllers are just responsible for connecting routes to Handlers.  In fact, controller methods just end up being calls to ```handle_with(MyHandler)```, ```handle_with``` being a helper method provided by Lev.  
 
@@ -45,6 +46,20 @@ When using Lev, model classes have the following responsibilities:
 5. Can create records when those creations only need values internal to this model and take arguments in the language of the internal model state.
 
 The result of the principles above and below, model classes end up being very small.  This is good because a lot of code depends on the models and having the be small normally means they are also stable.
+
+## Naming Conventions
+
+As mentioned above, a handler is intended to replace the logic in one controller action.  As such, one convention that works well is to name a handler based on the controller name and the action name, e.g. for the `ProductsController#show` action, we would have a handler named `ProductsShow`.  
+
+Routines on the other hand are more or less glorified functions that work with multiple models to get something done, so we typically start their names with verbs, e.g. `CreateUser`, `SetPassword`, `ConfirmEmail`, etc.
+
+## Differences between Lev and Rails' Concerns
+
+Both Lev and Concerns remove lines of code from models, but the major difference between the two is that with Concerns, the code still lives logically in the models whereas code in Lev is completely outside of and separate from the models.  
+
+Lev's routines (and handlers) know about models, but the models don't know anything about nor are they dependent on the code in routines.  This makes the models simpler and more stable (a Good Thing).  
+
+Since a Concern's code is essentially embedded in model code, if that Concern breaks it can potentially break other unrelated features, something that can't happen with routines.  
 
 ## Installation
 
