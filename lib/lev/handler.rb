@@ -31,8 +31,10 @@ module Lev
   #      instance objects based on the params.
   #   2) Call the class method "paramify" to declare, cast, and validate parts of
   #      the params hash. The first argument to paramify is the key in params
-  #      which points to a hash of params to be paramified.  The block passed to
-  #      paramify looks just like the guts of an ActiveAttr model.
+  #      which points to a hash of params to be paramified.  If this first argument
+  #      is unspecified (or specified as `:paramify`, a reserved symbol), the entire 
+  #      params hash will be paramified.  The block passed to paramify looks just 
+  #      like the guts of an ActiveAttr model.
   #      
   #      When the incoming params includes :search => {:type, :terms, :num_results}
   #      the Handler class would look like:
@@ -122,7 +124,8 @@ module Lev
         call(options)
       end
 
-      def paramify(group, options={}, &block)
+      def paramify(group = :paramify, options={}, &block)
+
         method_name = "#{group.to_s}_params"
         variable_sym = "@#{method_name}".to_sym
 
@@ -145,11 +148,15 @@ module Lev
         end
 
         # Define the "#{group}_params" method to get the paramifier 
-        # instance wrapping the params
+        # instance wrapping the params.  Choose the subset of params
+        # based on the group, choosing all params if the default group
+        # is used.
+
         define_method method_name.to_sym do
           if !instance_variable_get(variable_sym)
+            params_subset = group == :paramify ? params : params[group]
             instance_variable_set(variable_sym, 
-                                  self.class.paramify_classes[group].new(params[group]))
+                                  self.class.paramify_classes[group].new(params_subset))
           end
           instance_variable_get(variable_sym)
         end
