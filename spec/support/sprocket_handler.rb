@@ -1,3 +1,5 @@
+require 'support/create_sprocket'
+
 class SprocketHandler
 
   include Lev::Handler
