@@ -233,10 +233,16 @@ module Lev
     attr_reader :runner
 
     def call(*args, &block)
+      @after_transaction_blocks = []
+
       in_transaction do
-        catch :fatal_errors_encountered do
+        catch :fatal_errors_encountered do    
           exec(*args, &block)
         end
+      end
+
+      @after_transaction_blocks.each do |block|
+        block.call
       end
 
       result
@@ -362,6 +368,11 @@ module Lev
       ErrorTransferer.transfer(source, self, input_mapper, fail_if_errors)
     end
 
+    def add_after_transaction_block(block)
+      raise IllegalOperation if topmost_runner != self
+      @after_transaction_blocks.push(block)
+    end
+
   protected
 
     def result
@@ -376,6 +387,10 @@ module Lev
 
     def topmost_runner
       runner.nil? ? self : runner.topmost_runner
+    end
+
+    def after_transaction(&block)
+      topmost_runner.add_after_transaction_block(block)
     end
 
     def runner=(runner)
