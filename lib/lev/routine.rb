@@ -406,10 +406,26 @@ module Lev
 
     def in_transaction(options={}) 
       if transaction_run_by?(self)
-        ActiveRecord::Base.isolation_level( self.class.transaction_isolation.symbol ) do
-          ActiveRecord::Base.transaction do 
-            yield 
-            raise ActiveRecord::Rollback if errors?
+        isolation_symbol = self.class.transaction_isolation.symbol
+        if ActiveRecord::VERSION::MAJOR >= 4
+          begin
+            ActiveRecord::Base.transaction(isolation: isolation_symbol) do 
+              yield
+              raise ActiveRecord::Rollback if errors?
+            end
+          rescue ActiveRecord::TransactionIsolationError
+            # Silently ignore isolation errors
+            ActiveRecord::Base.transaction do 
+              yield
+              raise ActiveRecord::Rollback if errors?
+            end
+          end
+        else
+          ActiveRecord::Base.isolation_level(isolation_symbol) do
+            ActiveRecord::Base.transaction do 
+              yield 
+              raise ActiveRecord::Rollback if errors?
+            end
           end
         end
       else
