@@ -52,7 +52,6 @@ a routine higher up in the execution hierarchy to halt running.
       end
     end
   
-  
 A routine will automatically get both class- and instance-level `call`
 methods that take the same arguments as the `exec` method.  The class-level
 call method simply instantiates a new instance of the routine and calls 
@@ -68,6 +67,8 @@ of the outputs and errors objects.
 ### Raising Errors in Routines
 
 ... to be written ..
+
+... `transfer_errors_from` ...
 
 ### Nesting Routines
 
@@ -89,10 +90,6 @@ and then you can call this routine with any of the following:
 * `run(CreateUser, ...)`
 * `CreateUser.call(...)`  (not recommended)
   
-
-
-
-
 #### Errors from Nested Routines
 
 `uses_routine` also provides a way to specify how errors relate to routine 
@@ -217,17 +214,12 @@ A routine is automatically run within a transaction.  The isolation level of the
   
 Note that by setting an isolation level, you are stating the minimum isolation level at which a routine must be run.  When routines are nested inside each other, the highest-specified isolation level from any one of them is used in the one transaction in which all of a routines' subroutines run.
 
+For example, if you write a routine that does a complex query, you might not need any transaction:
 
-
-  
-  
-  A routine is 
-  
-  e.g.
-  
-    class MyRoutine
+    class MyQueryRoutine
       lev_routine transaction: :no_transaction
   
+If unspecified, the default isolation is `:repeatable_read`.
 
 ### delegate_to_routine
 
@@ -246,20 +238,212 @@ Routine class have access to a few other methods:
 
 ## Handlers
 
-(all Handlers are Routines, so most everything for Routines applies here)
-
-Handlers are specialized routines that take user input (e.g. form data) and then take an action based on that input.  
+Handlers are specialized routines that take user input (e.g. form data) and then take an action based on that input.  Because all Handlers are Routines, everything discussed above applies to them.
 
 Handlers...
 
 1. Help you verify that the calling user is authorized to run the handler
 2. Provide ways to validate incoming parameters in a very ActiveModel-like way (even when the parameters are not associated with a model)
-3. Integrate well with basic routines
+3. Can call other Routines using `uses_routine` and `run`
 4. Map one-to-one with controller actions; by keeping the logic in each controller action encapsulated in a Handler, the code becomes independently-testable and also prevents the controller from being "fat" with 7 different actions all containing disparate logic touching different models.
 
-In a Lev-oriented Rails app, controllers are just responsible for connecting routes to Handlers.  In fact, controller methods just end up being calls to ```handle_with(MyHandler)```, ```handle_with``` being a helper method provided by Lev.  
+A class becomes a handler by calling `lev_handler` in its definition, e.g.:
+  
+    class MyHandler
+      lev_handler
+      ...
 
-Lev also provides a ```lev_form_for``` form builder to replace ```form_for```.  This builder integrates well with the error reporting infrastructure in routines and handlers, and in general is a nice way to get away from forms that are very single-model-centric.
+Additionally, a handler **must** implement two instance methods:
+
+1. `handle`, which takes no arguments and does the work the handler is charged with
+2. `authorized?`, which returns true if and only if the caller is authorized to do what the handler is charged with
+
+Handlers **may**...
+
+1. implement the `setup` instance method which runs before `authorized?` and `handle`. This method can do anything, and will likely include setting up some instance objects based on the params.
+2. call the class method `paramify` to declare, cast, and validate parts of the params hash.  See below for more on this.
+
+Any options passed in to a handler's `call` method are made available within the handler via an `options` attribute.  If this options hash includes values for `:params`, `:caller`, and `:request` these values will be available within the code you write by accessors with the same names.  These values are expected to contain the request params, the caller (whatever your application defines as `current_user`), and the entire HTTP request.  See the `handle_with` method below for an easy way to pass these options to your handler.
+
+Additionally, the handler provides attributes to return the `errors` object and the `results` object.
+
+The `handle` method that you define should not return anything; they just set values in the errors and results objects.  The documentation for each handler should explain what the results will be and any nonstandard data required to be passed in in the options.
+
+In addition to the class- and instance-level `call` methods provided by Lev::Routine, Handlers have a class-level `handle` method (an alias of the class-level `call` method).  The convention for handlers is that the `call` methods (and this class-level `handle` method) take a hash of options/inputs.  The instance-level `handle` method doesn't take any arguments since the arguments have been stored as instance variables by the time the instance-level handle method is called.  
+    
+  Example:
+  
+    class MyHandler
+      lev_handler
+    protected
+      def authorized?
+        # return true iff exec is allowed to be called, e.g. might
+        # check the caller against the params
+      def handle
+        # do the work, add errors to errors object and results to the results hash as needed
+      end
+    end
+
+### paramify
+
+By declaring one or more `paramify` blocks in a handler, you can declare, group, cast, and validate parts of the `params` hash.  Think of `paramify` as a way to declare an ad-hoc `ActiveModel` class to wrap incoming parameters.  Normally, you only get easy validation of input parameters when those parameters are passed to an application model that is validated during a save.  `paramify` lets you do this for any arbitrary collection of incoming parameters without requiring those parameters to live in application models.  
+
+The first argument to `paramify` is the key in params which points to a hash of params to be paramified.  If this first argument is unspecified (or specified as `:paramify`, a reserved symbol), the entire params hash will be paramified.  The block passed to paramify looks just like the guts of an ActiveAttr model.
+
+For example, when the incoming params includes :search => {:type, :terms, :num_results}, the `paramify` block might look like:
+
+    paramify :search do
+      attribute :search_type, type: String
+      validates :search_type, presence: true,
+                              inclusion: { in: %w(Name Username Any),
+                                           message: "is not valid" }
+ 
+      attribute :search_terms, type: String
+      validates :search_terms, presence: true
+ 
+      attribute :num_results, type: Integer
+      validates :num_results, numericality: { only_integer: true,
+                                              greater_than_or_equal_to: 0 }                               
+    end
+
+This will result in a `search_params` variable being available.  `search_params.num_results` would be guaranteed to be an integer greater than or equal to zero.  Note that if you want to use a "Boolean" type, you need to type it with a lowercase (`type: boolean`).
+
+The following is a more complete example using the `paramify` block above:
+
+    class MyHandler
+      lev_handler
+
+      paramify :search do
+        attribute :search_type, type: String
+        validates :search_type, presence: true,
+                                inclusion: { in: %w(Name Username Any),
+                                             message: "is not valid" }
+
+        attribute :search_terms, type: String
+        validates :search_terms, presence: true
+
+        attribute :num_results, type: Integer
+        validates :num_results, numericality: { only_integer: true,
+                                          greater_than_or_equal_to: 0 }                               
+      end
+      
+      def handle
+        # By this time, if there were any errors the handler would have
+        # already populated the errors object and returned.
+        #
+        # Paramify makes a 'search_params' attribute available through
+        # which you can access the paramified params, e.g.
+        x = search_params.num_results
+        ...
+      end
+    end
+
+### handle_with
+
+`handle_with` is a utility method for calling handlers from controllers.  To use it, call `include Lev::HandleWith` in your relevant controllers (or in your ApplicationController):
+  
+    class ApplicationController
+      include Lev::HandleWith
+      ...
+    end
+  
+Then, call `handle_with` from your various controller actions, e.g.:
+  
+    handle_with(MyFormHandler,
+                params: params,
+                success: lambda { redirect_to 'show', notice: 'Success!'},
+                failure: lambda { render 'new', alert: 'Error' })
+  
+`handle_with` takes care of calling the handler and populates a `@handler_result` object with results and errors from running the handler.
+  
+The 'success' and 'failure' lambdas are called if there aren't or are errors, respectively.  Alternatively, if you supply a 'complete' lambda, that lambda will be called regardless of whether there are any errors.  Inside these lambdas (and inside the views they connect to), the @handler_outcome variable containing the errors and results from the handler will be available.
+  
+Specifying 'params' is optional.  If you don't specify it, `handle_with` will use the entire params hash from the request.
+
+Handlers help us clean up controllers in our Rails projects.  Instead of having a different piece of application logic in every controller action, a Lev-oriented app's controllers just end up being responsible for connecting routes to handlers, normally via a quick call to `handle_with`.
+
+### lev_form_for
+
+Lev also provides a `lev_form_for` form builder to replace `form_for`.  This builder integrates well with the error reporting infrastructure in routines and handlers, and in general is a nice way to get away from forms that are very single-model-centric.
+
+The first argument passed to `lev_form_for` is a symbol that scopes the form fields.  In a normal `form_for`, the `:url` for the form is autodetermined based on the model instance passed in; since there is no model for `lev_form_for`, you'll need to specify the `:url` option.  Beyond that, any options you can pass to `form_for` you can pass to `lev_form_for`.
+
+Consider the following example:
+
+    <%= lev_form_for :register, url: '/users/register', html: {id: 'register-form'} do |f| %>
+      <p>Please choose a username and password.</p>
+
+      <label>Username</label>
+      <%= f.text_field :username %>
+
+      <label>First Name</label>
+      <%= f.text_field :first_name %>
+
+      <label>Password</label>
+      <%= f.password_field :password %>
+
+      <label>Password (again)</label>
+      <%= f.password_field :password_confirmation %>
+
+      <%= f.submit "Register", id: "register_submit" %>
+    <% end %>
+
+Here, the form parameters will include 
+
+    :register => {:username => 'bob79', :first_name => 'Bob', :password => 'password', :password_confirmation => 'password'}
+
+A route could direct the URL above to a controller action:
+
+    post '/users/register', to: 'users#register'
+
+The `UsersController` could then connect this route to a handler:
+
+    class UsersController < ApplicationController
+      include Lev::HandleWith
+
+      def register
+        handle_with(UsersRegister,
+                    success: lambda { redirect_to root_path },
+                    failure: lambda { render :new })
+      end
+    end
+
+And then the `UsersRegister` handler would exist to process the form parameters and take action.
+
+    class UsersRegister
+      lev_handler
+
+      paramify :register do
+        attribute :username, type: String
+        attribute :first_name, type: String
+        attribute :password, type: String
+        attribute :password_confirmation, type: String
+
+        validates :username, presence: true    # simple validation as an example
+                                               # in this case validation really done
+                                               # in activerecord User model
+      end
+
+      uses_routine CreateUser,
+                   translations: { inputs: {scope: :register} }
+
+    protected
+
+      def authorized?
+        caller.is_anonymous?
+      end
+
+      def handle
+        run(CreateUser, first_name:            register_params.first_name,
+                        username:              register_params.username,
+                        password:              register_params.password,
+                        password_confirmation: register_params.password_confirmation)
+      end
+    end
+
+In the above handler, if the `username` is blank, the validation in the `paramify` block will catch it and add a fatal error to the handler's result object.  This will cause the `failure` block in `handle_with` to be triggered, and `lev_form_for` will watch for these errors in the @handler_result object and mark offending input fields with a configurable CSS class (default to 'error').  If an error occurs during the run of `CreateUser`, the error will be translated back under a `:register` scope (from the call in `uses_routine`), and the error will also be appropriately traced using `lev_form_for`.
+
+If the handler runs error free, the `success` block will be triggered.
 
 ## Writing Models in a Lev-enabled Project
 
@@ -317,17 +501,6 @@ And then execute:
 Or install it yourself as:
 
     $ gem install lev
-
-## Usage
-
-For the moment, details on how to use lev live in big sections of comments at the top of:
-
-* https://github.com/lml/lev/blob/master/lib/lev/routine.rb
-* https://github.com/lml/lev/blob/master/lib/lev/handler.rb
-* https://github.com/lml/lev/blob/master/lib/lev/handle_with.rb
-* https://github.com/lml/lev/blob/master/lib/lev/form_builder.rb
-
-TBD: talk about ```delegate_to_routine```.
 
 ## Contributing
 
