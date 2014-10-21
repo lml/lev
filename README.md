@@ -37,10 +37,21 @@ A class becomes a routine by calling `lev_routine` in its definition, e.g.:
 
 Other than that, all a routine has to do is implement an "exec" method (typically `protected`) that takes arbitrary arguments and that adds errors to an internal array-like "errors" object and outputs to a "outputs" hash.  Two convenience methods are provided for adding errors: 
 
-Two methods are provided for adding errors: `fatal_error` and `nonfatal_error`.
-Both take a hash of args used to create an Error and the former stops routine
-execution.  In its current implementation, `nonfatal_error` may still cause
-a routine higher up in the execution hierarchy to halt running.
+Errors can be recorded in a number of ways.  You can manually add errors to the built-in `errors` object:
+
+    errors.add(true, code: :search_terms_incorrect)
+
+The first parameter to the `add` call says whether or not the error should be fatal for the running of the routine (no more work should be done and the transaction should be rolled back).  Otherwise, the arguments after that are a hash that can contain values for the following keys:
+
+* `:code` A symbol indicating the kind of error that occurred
+* `:data` Any data that is useful for understanding the error (`:code`-specific)
+* `:kind` If you don't set this, it will default to `:lev` for Lev-generated errors, and `:activerecord` for ActiveRecord-generated errors
+* `:message` A human-readable error message
+* `:offending_inputs` An array of symbols indicating which inputs caused the error (if any); if there is only one symbol, you can specify it as a lone symbol instead of a symbol in a one-element array.
+
+Two convenience methods are also provided for adding errors: `fatal_error` and `nonfatal_error`. These have the same interface as `errors#add` except they provide the first `is_fatal` boolean argument for you.  In its current implementation, `nonfatal_error` may still cause a routine higher up in the execution hierarchy to halt running.
+
+Here's an example setting an error and an output:
 
     class MyRoutine
       lev_routine
@@ -52,6 +63,8 @@ a routine higher up in the execution hierarchy to halt running.
       end
     end
   
+Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
+
 A routine will automatically get both class- and instance-level `call`
 methods that take the same arguments as the `exec` method.  The class-level
 call method simply instantiates a new instance of the routine and calls 
@@ -64,11 +77,6 @@ of the outputs and errors objects.
     result = MyRoutine.call(42)
     puts result.outputs[:bar]    # => 84
 
-### Raising Errors in Routines
-
-... to be written ..
-
-... `transfer_errors_from` ...
 
 ### Nesting Routines
 
@@ -202,6 +210,15 @@ are still used if not replaced in the run call).  For example:
       end
     end
 
+### transfer_errors_from
+
+
+When errors are captured inside an `ActiveRecord` errors object, you can use `transfer_errors_from` to pull them into the routine errors object.  This method takes three arguments:
+
+1. The ActiveRecord instance that may have errors to transfer.
+2. A hash describing how to map the error message, using the same options passed to the input translations in a `uses_routine` call, e.g. `transfer_errors_from(myModel, {type: :verbatim})`.
+3. A flag that if `true` will cause the routine to fail fatally if there are any errors transferred.
+
 ### Specifying Transaction Isolations
 
 A routine is automatically run within a transaction.  The isolation level of the routine can be set by passing a `:transaction` option to the `lev_routine` call (or to the `lev_handler` call, if appropriate).  The value must be one of the following:
@@ -223,7 +240,19 @@ If unspecified, the default isolation is `:repeatable_read`.
 
 ### delegate_to_routine
 
-TBD
+Sometimes you'll want to override standard ActiveRecord methods in a model so that they use a routine instead of the default implementation. For this, inside of that ActiveRecord model you can call the class method `delegate_to_routine`, which takes two key-value pairs:
+
+1. `:method` A symbol for the instance method to override (e.g. `:destroy`)
+2. `:options` A hash of options including:
+    * `:routine_class` The class of the routine to delegate to; if not given, the class is autocomputed by concatenating the provided `:method` with the model class name.
+
+When `delegate_to_routine` is called, the provided method will call the routine and the overriden method will be aliased to the original name with `_original` appended to it.  For example:
+
+    class Product < ActiveRecord::Base
+      delegate_to_routine method: :destroy
+    end
+
+will alias the old `destroy` method as `destroy_original` and add a new `destroy` method that calls the `DestroyProduct` routine.
 
 ### Other Routine Methods
   
