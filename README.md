@@ -65,6 +65,18 @@ Here's an example setting an error and an output:
   
 Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
 
+Any `StandardError` raised within a routine will be caught and transformed into a fatal error with `:kind` set to `:exception`.  The caller of this routine can choose to reraise this exception by calling `reraise_exception!` on the returned errors object:
+
+    result = MyRoutine.call(42)
+    result.errors.reraise_exception! # does nothing if there were no exception errors
+
+Relatedly, a convenience method is provided if the caller wants to raise an exception if there were any errors returned (whether or not they themselves were caused by an exception)
+
+    result = MyRoutine.call(42)
+    result.errors.raise_exception_if_any!(MyFavoriteError)
+
+By default `raise_exception_if_any!` will raise a `StandardError` with a message containing the concatenated messages of the errors.  You can pass a different exception class to this method to use something other than `StandardError`.
+
 A routine will automatically get both class- and instance-level `call`
 methods that take the same arguments as the `exec` method.  The class-level
 call method simply instantiates a new instance of the routine and calls 
