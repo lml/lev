@@ -11,7 +11,7 @@ module Lev
     attr_accessor :offending_inputs
 
     def initialize(args={})
-      raise IllegalArgument, "must supply a :code" if args[:code].blank?
+      raise ArgumentError, "must supply a :code" if args[:code].blank?
 
       self.code = args[:code]
       self.data = args[:data]
