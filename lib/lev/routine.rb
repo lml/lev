@@ -236,8 +236,15 @@ module Lev
       @after_transaction_blocks = []
 
       in_transaction do
-        catch :fatal_errors_encountered do    
-          exec(*args, &block)
+        catch :fatal_errors_encountered do   
+          begin 
+            exec(*args, &block)
+          rescue StandardError => standard_error
+            fatal_error(kind: :exception, 
+                        code: standard_error.class.name, 
+                        message: standard_error.message, 
+                        data: standard_error)
+          end
         end
       end
 
