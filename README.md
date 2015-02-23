@@ -334,13 +334,13 @@ The first argument to `paramify` is the key in params which points to a hash of 
 For example, when the incoming params includes :search => {:type, :terms, :num_results}, the `paramify` block might look like:
 
     paramify :search do
-      attribute :search_type, type: String
-      validates :search_type, presence: true,
-                              inclusion: { in: %w(Name Username Any),
-                                           message: "is not valid" }
+      attribute :type, type: String
+      validates :type, presence: true,
+                       inclusion: { in: %w(Name Username Any),
+                                    message: "is not valid" }
  
-      attribute :search_terms, type: String
-      validates :search_terms, presence: true
+      attribute :terms, type: String
+      validates :terms, presence: true
  
       attribute :num_results, type: Integer
       validates :num_results, numericality: { only_integer: true,
@@ -355,17 +355,17 @@ The following is a more complete example using the `paramify` block above:
       lev_handler
 
       paramify :search do
-        attribute :search_type, type: String
-        validates :search_type, presence: true,
-                                inclusion: { in: %w(Name Username Any),
-                                             message: "is not valid" }
+        attribute :type, type: String
+        validates :type, presence: true,
+                         inclusion: { in: %w(Name Username Any),
+                                      message: "is not valid" }
 
-        attribute :search_terms, type: String
-        validates :search_terms, presence: true
+        attribute :terms, type: String
+        validates :terms, presence: true
 
         attribute :num_results, type: Integer
         validates :num_results, numericality: { only_integer: true,
-                                          greater_than_or_equal_to: 0 }                               
+                                                greater_than_or_equal_to: 0 }                               
       end
       
       def handle
