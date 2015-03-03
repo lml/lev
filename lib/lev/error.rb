@@ -23,6 +23,11 @@ module Lev
     def translate
       ErrorTranslator.translate(self)
     end
+
+    def to_s
+      inspect
+    end
+
   end
 
 end

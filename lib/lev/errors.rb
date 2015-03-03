@@ -31,10 +31,6 @@ module Lev
       self.any? {|error| [error.offending_inputs].flatten.include? input}
     end
 
-    def to_s
-      inspect
-    end
-
   protected
 
     def ignored_error_procs
