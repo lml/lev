@@ -31,16 +31,9 @@ module Lev
       self.any? {|error| [error.offending_inputs].flatten.include? input}
     end
 
-    def raise_exception_if_any!(exception_type = StandardError)
-      raise exception_type, collect{|error| error.message}.join('; ') if any?
+    def to_s
+      inspect
     end
-
-    def reraise_exception!
-      exception_error = select{|error| error.kind == :exception}.first
-      return if exception_error.nil?
-      raise exception_error.data
-    end
-
 
   protected
 
