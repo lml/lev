@@ -1,3 +1,3 @@
 module Lev
-  VERSION = "3.0.1.alpha"
+  VERSION = "4.0.0"
 end

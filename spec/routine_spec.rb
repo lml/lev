@@ -3,25 +3,33 @@ require 'spec_helper'
 describe Lev::Routine do
 
   before do
-    stub_const 'RaiseArgumentError', Class.new
-    RaiseArgumentError.class_eval { 
+    stub_const 'RaiseError', Class.new
+    RaiseError.class_eval { 
       lev_routine 
       def exec
-        raise ArgumentError, 'a message'
+        raise 'error message'
+      end
+    }
+
+    stub_const 'RaiseStandardError', Class.new
+    RaiseStandardError.class_eval { 
+      lev_routine 
+      def exec
+        unknown_method_call
       end
     }
   end
-  
-  it "should convert exceptions to fatal errors" do
-    outcome = RaiseArgumentError.call
-    expect(outcome.errors.count).to eq 1
-    expect(outcome.errors.first.kind).to eq :exception
+
+  it "raised errors should propagate" do
+    expect{
+      RaiseArgumentError.call
+    }.to raise_error
   end
 
-  it "should be able to reraise an exception" do
-    outcome = RaiseArgumentError.call
-    expect(outcome.errors.count).to eq 1
-    expect{outcome.errors.reraise_exception!}.to raise_error(ArgumentError, 'a message')
+  it "raised StandardErrors should propagate" do
+    expect {
+      RaiseStandardError.call
+    }.to raise_error(NameError)
   end
 
 end

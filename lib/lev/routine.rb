@@ -237,13 +237,8 @@ module Lev
 
       in_transaction do
         catch :fatal_errors_encountered do   
-          begin 
+          begin
             exec(*args, &block)
-          rescue StandardError => standard_error
-            fatal_error(kind: :exception, 
-                        code: standard_error.class.name, 
-                        message: standard_error.message, 
-                        data: standard_error)
           end
         end
       end
