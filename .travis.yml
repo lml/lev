@@ -1,8 +1,10 @@
+sudo: false
 language: ruby
 rvm:
   - "1.9.3-p545"
+cache: bundler
 install:
-  - bundle install
+  - bundle install --retry=6
 script:
   - bundle exec rake
 notifications:
