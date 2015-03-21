@@ -203,7 +203,7 @@ module Lev
       def [](*args, &block)
         result = call(*args, &block)
         result.errors.raise_exception_if_any!
-        return result.outputs.send(@express_output)
+        result.outputs.send(@express_output)
       end
 
       # Called at a routine's class level to foretell which other routines will
