@@ -271,7 +271,7 @@ will alias the old `destroy` method as `destroy_original` and add a new `destroy
 Routines commonly return one output.  These routines are often named things like `GetUserEmail` or `IsFinalized`.  Particularly
 for boolean queries like `IsBlahBlah`, it is onerous to say:
 
-```
+```ruby
 if IsBlahBlah.call(arg1, arg2).outputs.some_output_containing_the_true_false_value
 ```
 
@@ -285,6 +285,7 @@ class AreArgumentsEqual
   def exec(arg1, arg2)
     outputs[:are_arguments_equal] = (arg1 == arg2)
   end
+end
 ```
 
 you could call it in the normal way:
@@ -316,6 +317,7 @@ class AreArgumentsEqual
   def exec(arg1, arg2)
     outputs[:answer] = (arg1 == arg2)
   end
+end
 ```
 
 When calling with the bracket operator, any errors accumulated by the routine are raised in an exception (have to do this
