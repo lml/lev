@@ -31,6 +31,10 @@ module Lev
       self.any? {|error| [error.offending_inputs].flatten.include? input}
     end
 
+    def raise_exception_if_any!(exception_type = StandardError)
+      raise exception_type, collect{|error| error.message}.join('; ') if any?
+    end
+
   protected
 
     def ignored_error_procs

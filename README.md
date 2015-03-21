@@ -266,6 +266,63 @@ When `delegate_to_routine` is called, the provided method will call the routine 
 
 will alias the old `destroy` method as `destroy_original` and add a new `destroy` method that calls the `DestroyProduct` routine.
 
+### Express Calling of Routines
+
+Routines commonly return one output.  These routines are often named things like `GetUserEmail` or `IsFinalized`.  Particularly
+for boolean queries like `IsBlahBlah`, it is onerous to say:
+
+```ruby
+if IsBlahBlah.call(arg1, arg2).outputs.some_output_containing_the_true_false_value
+```
+
+As a convenience, routines can be called "expressly" (as in compactly) using the bracket operator.  For example with the 
+following routine:
+
+```ruby
+class AreArgumentsEqual
+  lev_routine
+
+  def exec(arg1, arg2)
+    outputs[:are_arguments_equal] = (arg1 == arg2)
+  end
+end
+```
+
+you could call it in the normal way:
+
+```ruby
+if AreArgumentsEqual.call(201, 202).outputs.are_arguments_equal
+  # do something
+end
+```
+
+or you can call it using brackets:
+
+```ruby
+if AreArgumentsEqual[201, 202]
+  # do something
+end
+```
+
+When using this bracket style of calling routines, Lev assumes that the value to be returned is named with the underscored
+version of the routine name, e.g. `AreArgumentsEqual` has a default return value of `are_arguments_equal`.  Module names
+are disregarded when computing the default name.
+
+The `express_output` can be overriden:
+
+```ruby
+class AreArgumentsEqual
+  lev_routine, express_output: :answer
+
+  def exec(arg1, arg2)
+    outputs[:answer] = (arg1 == arg2)
+  end
+end
+```
+
+When calling with the bracket operator, any errors accumulated by the routine are raised in an exception (have to do this
+since you have no other way to pay attention to the errors).
+
 ### Other Routine Methods
   
 Routine class have access to a few other methods:
