@@ -7,6 +7,7 @@ class Object
       # Routine configuration
       options[:transaction] ||= Lev::TransactionIsolation.mysql_default.symbol
       @transaction_isolation = Lev::TransactionIsolation.new(options[:transaction])
+      @express_output = options[:express_output] || self.name.demodulize.underscore
     end
   end
 

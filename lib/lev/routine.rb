@@ -200,6 +200,12 @@ module Lev
         new.call(*args, &block)
       end
 
+      def [](*args, &block)
+        result = call(*args, &block)
+        result.errors.raise_exception_if_any!
+        return result.outputs.send(@express_output)
+      end
+
       # Called at a routine's class level to foretell which other routines will
       # be used when this routine executes.  Helpful for figuring out ahead of
       # time what kind of transaction isolation level should be used.
