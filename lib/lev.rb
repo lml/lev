@@ -27,12 +27,12 @@ require "lev/transaction_isolation"
 
 module Lev
   class << self
-    
+
     ###########################################################################
     #
     # Configuration machinery.
     #
-    # To configure Lev, put the following code in your applications 
+    # To configure Lev, put the following code in your applications
     # initialization logic (eg. in the config/initializers in a Rails app)
     #
     #   Lev.configure do |config|
@@ -40,7 +40,7 @@ module Lev
     #     ...
     #   end
     #
-    
+
     def configure
       yield configuration
     end
@@ -53,13 +53,15 @@ module Lev
       # This HTML class is added to form fields that caused errors
       attr_accessor :form_error_class
       attr_accessor :security_transgression_error
-      
-      def initialize      
+      attr_accessor :illegal_argument_error
+
+      def initialize
         @form_error_class = 'error'
         @security_transgression_error = Lev::SecurityTransgression
+        @illegal_argument_error = Lev::Lev.configuration.illegal_argument_error
         super
       end
     end
-        
+
   end
 end

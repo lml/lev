@@ -2,7 +2,7 @@ module Lev
   class TransactionIsolation
 
     def initialize(symbol)
-      raise IllegalArgument, "Invalid isolation symbol" if !@@symbols_to_isolation_levels.has_key?(symbol)
+      raise Lev.configuration.illegal_argument_error, "Invalid isolation symbol" if !@@symbols_to_isolation_levels.has_key?(symbol)
       @symbol = symbol
     end
 
@@ -36,7 +36,7 @@ module Lev
     def eql?(other)
       self == other
     end
-    
+
     attr_reader :symbol
 
   protected

@@ -1,10 +1,10 @@
 module Lev
 
-  # A collection of Error objects.  
+  # A collection of Error objects.
   #
   class Errors < Array
 
-    def add(fail, args={}) 
+    def add(fail, args={})
       args[:kind] ||= :lev
       error = Error.new(args)
       return if ignored_error_procs.any?{|proc| proc.call(error)}
@@ -16,8 +16,8 @@ module Lev
       proc = arg.is_a?(Symbol) ?
                Proc.new{|error| error.code == arg} :
                arg
-      
-      raise IllegalArgument if !proc.respond_to?(:call)
+
+      raise Lev.configuration.illegal_argument_error if !proc.respond_to?(:call)
 
       ignored_error_procs.push(proc)
     end

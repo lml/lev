@@ -212,7 +212,7 @@ module Lev
       def uses_routine(routine_class, options={})
         symbol = options[:as] || class_to_symbol(routine_class)
 
-        raise IllegalArgument, "Routine #{routine_class} has already been registered" \
+        raise Lev.configuration.illegal_argument_error, "Routine #{routine_class} has already been registered" \
           if nested_routines[symbol]
 
         nested_routines[symbol] = {
@@ -271,7 +271,7 @@ module Lev
 
       if other_routine.is_a? Array
         if other_routine.size != 2
-          raise IllegalArgument, "when first arg to run is an array, it must have two arguments"
+          raise Lev.configuration.illegal_argument_error, "when first arg to run is an array, it must have two arguments"
         end
 
         other_routine = other_routine[0]
@@ -290,7 +290,7 @@ module Lev
       nested_routine = self.class.nested_routines[symbol] || {}
 
       if nested_routine.empty? && other_routine == symbol
-        raise IllegalArgument,
+        raise Lev.configuration.illegal_argument_error,
               "Routine symbol #{other_routine} does not point to a registered routine"
       end
 
@@ -301,7 +301,7 @@ module Lev
       other_routine = nested_routine[:routine_class] || other_routine
       other_routine = other_routine.new if other_routine.is_a? Class
 
-      raise IllegalArgument, "Can only run another nested routine" \
+      raise Lev.configuration.illegal_argument_error, "Can only run another nested routine" \
         if !(other_routine.includes_module? Lev::Routine)
 
       #
@@ -453,7 +453,7 @@ module Lev
         when :verbatim
           return TermMapper.verbatim
         else
-          raise IllegalArgument, "unknown :type value: #{options[:type]}"
+          raise Lev.configuration.illegal_argument_error, "unknown :type value: #{options[:type]}"
         end
       end
 
