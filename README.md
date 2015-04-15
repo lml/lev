@@ -17,7 +17,7 @@ Lev introduces two main constructs to get around these issues: **Routines** and 
 
 ## Routines
 
-Lev's Routines are pieces of code that have all the responsibility for making one thing (one use case) happen, e.g. "add an email to a user", "register a student to a class", etc), normally acting on objects from more than one model.  
+Lev's Routines are pieces of code that have all the responsibility for making one thing (one use case) happen, e.g. "add an email to a user", "register a student to a class", etc), normally acting on objects from more than one model.
 
 Routines...
 
@@ -30,12 +30,12 @@ In an OO/MVC world, an operation that involves multiple objects might be impleme
 Routines typically don't have any persistent state that is used over and over again; they are created, used, and forgotten.  A routine is a glorified function with a special single-responsibility purpose.
 
 A class becomes a routine by calling `lev_routine` in its definition, e.g.:
-  
+
     class MyRoutine
-      lev_routine  
+      lev_routine
       ...
 
-Other than that, all a routine has to do is implement an "exec" method (typically `protected`) that takes arbitrary arguments and that adds errors to an internal array-like "errors" object and outputs to a "outputs" hash.  Two convenience methods are provided for adding errors: 
+Other than that, all a routine has to do is implement an "exec" method (typically `protected`) that takes arbitrary arguments and that adds errors to an internal array-like "errors" object and outputs to a "outputs" hash.  Two convenience methods are provided for adding errors:
 
 Errors can be recorded in a number of ways.  You can manually add errors to the built-in `errors` object:
 
@@ -62,7 +62,7 @@ Here's an example setting an error and an output:
         outputs[:bar] = foo * 2
       end
     end
-  
+
 Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
 
 Any `StandardError` raised within a routine will be caught and transformed into a fatal error with `:kind` set to `:exception`.  The caller of this routine can choose to reraise this exception by calling `reraise_exception!` on the returned errors object:
@@ -79,13 +79,13 @@ By default `raise_exception_if_any!` will raise a `StandardError` with a message
 
 A routine will automatically get both class- and instance-level `call`
 methods that take the same arguments as the `exec` method.  The class-level
-call method simply instantiates a new instance of the routine and calls 
-the instance-level call method (side note here is that this means that 
+call method simply instantiates a new instance of the routine and calls
+the instance-level call method (side note here is that this means that
 routines aren't typically instantiated with state).
 
 When called, a routine returns a `Result` object, which is just a simple wrapper
-of the outputs and errors objects. 
-  
+of the outputs and errors objects.
+
     result = MyRoutine.call(42)
     puts result.outputs[:bar]    # => 84
 
@@ -93,71 +93,71 @@ of the outputs and errors objects.
 ### Nesting Routines
 
 As mentioned above, routines can call other routines.  While this is of course possible just by calling the other routine's call method directly, it is strongly recommended that one routine call another routine using the provided `run` method.  This method takes the name of the routine class and the arguments/block it expects in its call/exec methods.  By using the `run` method, the called routine will be hooked into the common error and transaction mechanisms.
-  
+
 When one routine is called within another using the `run` method, there is only one transaction used (barring any explicitly made in the code) and its isolation level is sufficiently strict for all routines involved.
-  
+
 It is highly recommend, though not required, to call the `uses_routine` method to let the routine know which subroutines will be called within it.  This will let a routine set its isolation level appropriately, and will enforce that only one transaction be used and that it be rolled back appropriately if any errors occur.
-  
+
 Once a routine has been registered with the `uses_routine` call, it can be run by passing run the routine's Class or a symbol identifying the routine.  This symbol can be set with the `:as` option.  If not set, the symbol will be automatically set by converting the routine class' full name to a symbol. e.g:
-  
+
     uses_routine CreateUser
                  as: :cu
-  
+
 and then you can call this routine with any of the following:
 
 * `run(:cu, ...)`
 * `run(:create_user, ...)`
 * `run(CreateUser, ...)`
 * `CreateUser.call(...)`  (not recommended)
-  
+
 #### Errors from Nested Routines
 
-`uses_routine` also provides a way to specify how errors relate to routine 
-inputs. Take the following example.  A `User` model calls `Routine1` which calls 
+`uses_routine` also provides a way to specify how errors relate to routine
+inputs. Take the following example.  A `User` model calls `Routine1` which calls
 `Routine2`.
-  
+
     User --> Routine1.call(foo: "abcd4") --> Routine2.call(bar: "abcd4")
-  
+
 An error occurs in `Routine2`, and Routine2 notes that the error is related
 to its `bar` input.  If that error and its metadata bubble up to the `User`,
 the `User` won't have any idea what `bar` relates to -- the `User` only knows
 about the interface to `Routine1` and the `foo` parameter it gave it.
-  
+
 `Routine1` knows that it will call `Routine2` and knows what its interface is.  It can then specify how to map terminology from `Routine2` into `Routine1`'s context.  E.g., in the following class:
-  
+
     class Routine1
       lev_routine
       uses_routine Routine2,
-                   translations: { 
+                   translations: {
                      inputs: { map: {bar: :foo} }
                    }
       def exec(options)
         run(Routine2, bar: options[:foo])
       end
     end
-  
+
 `Routine1` notes that any errors coming back from the call to `Routine2` related to `:bar` should be transfered into `Routine1`'s errors object as being related to `:foo`.  In this way, the caller of `Routine1` will see errors related to the arguments he understands.
 
 In addition to the `map:` configuration for input transferral, there are three other configurations:
 
-1. **Scoped** - Appends the provided scoping symbol (or symbol array) to the input symbol.  
-  
+1. **Scoped** - Appends the provided scoping symbol (or symbol array) to the input symbol.
+
     `{scope: SCOPING_SYMBOL_OR_SYMBOL_ARRAY}`
-  
+
     e.g. with `{scope: :register}` and a call to a routine that has an input
-    named `:first_name`, an error in that called routine related to its 
-    `:first_name` input will be translated so that the offending input is 
+    named `:first_name`, an error in that called routine related to its
+    `:first_name` input will be translated so that the offending input is
     `[:register, :first_name]`.
-  
+
 2. **Verbatim** - Uses the same term in the caller as the callee.
-  
+
      `{type: :verbatim}`
-  
+
 3. **Mapped** - Give an explicit, custom mapping:
-  
+
      `{map: {called_input1: caller_input1, called_input2: :caller_input2}}`
-  
-4. **Scoped and mapped** - Give an explicit mapping, and also scope the 
+
+4. **Scoped and mapped** - Give an explicit mapping, and also scope the
      translated terms.  Just use `scope:` and `map:` from above in the same hash.
 
 If an input translation is unspecified, the default is scoped, with `SCOPING_SYMBOL_OR_ARRAY` equal to the `as:` option passed to `uses_routine`, if provided, or if that is not provided then the symbolized name of the routine class.  E.g. for:
@@ -170,10 +170,10 @@ an errors generated on the `foo` input in `OtherRoutine` will be transferred up 
 
 Via the `uses_routine` call, you can also ignore specified errors that occur
 in the called routine. e.g.:
-  
+
     uses_routine DestroyUser,
                  ignored_errors: [:cannot_destroy_non_temp_user]
-  
+
 ignores errors with the provided code.  The `ignore_errors` key must point
 to an array of code symbols or procs.  If a proc is given, the proc will
 be called with the error that the routine is trying to add.  If the proc
@@ -187,12 +187,12 @@ In addition to errors being transferred from subroutines to calling routines, a 
     class Routine1
       lev_routine
       uses_routine Routine2,
-                   translations: { 
+                   translations: {
                      outputs: { type: :verbatim }
                    }
 
       def exec(options)
-        run(Routine2, bar: options[:foo])  
+        run(Routine2, bar: options[:foo])
         # Assuming Routine2 generates an output named "x", then outputs[:x] will be
         # available as of this line
       end
@@ -202,7 +202,7 @@ If the output translations are not specified, they will be scoped exactly like h
 
 
 Note if multiple outputs are transferred into the same named output (e.g. by calling the same routine over and over in a loop), an array of those outputs will be stored under that name.
-    
+
 #### Overriding `uses_routine` Options
 
 Any option passed to uses_routine can also be passed directly to the run
@@ -234,20 +234,20 @@ When errors are captured inside an `ActiveRecord` errors object, you can use `tr
 ### Specifying Transaction Isolations
 
 A routine is automatically run within a transaction.  The isolation level of the routine can be set by passing a `:transaction` option to the `lev_routine` call (or to the `lev_handler` call, if appropriate).  The value must be one of the following:
-  
+
 * `:no_transaction`
 * `:read_uncommitted`
 * `:read_committed`
 * `:repeatable_read`
 * `:serializable`
-  
+
 Note that by setting an isolation level, you are stating the minimum isolation level at which a routine must be run.  When routines are nested inside each other, the highest-specified isolation level from any one of them is used in the one transaction in which all of a routines' subroutines run.
 
 For example, if you write a routine that does a complex query, you might not need any transaction:
 
     class MyQueryRoutine
       lev_routine transaction: :no_transaction
-  
+
 If unspecified, the default isolation is `:repeatable_read`.
 
 ### delegate_to_routine
@@ -275,7 +275,7 @@ for boolean queries like `IsBlahBlah`, it is onerous to say:
 if IsBlahBlah.call(arg1, arg2).outputs.some_output_containing_the_true_false_value
 ```
 
-As a convenience, routines can be called "expressly" (as in compactly) using the bracket operator.  For example with the 
+As a convenience, routines can be called "expressly" (as in compactly) using the bracket operator.  For example with the
 following routine:
 
 ```ruby
@@ -323,12 +323,55 @@ end
 When calling with the bracket operator, any errors accumulated by the routine are raised in an exception (have to do this
 since you have no other way to pay attention to the errors).
 
+### Delegates
+
+If you have
+
+```ruby
+class BarRoutine
+  lev_routine
+
+  def exec(alpha:, beta:)
+    # Do work
+  end
+end
+```
+
+you might have a reason to wrap this routine inside another, in which case you could write:
+
+```ruby
+class FooRoutine
+  lev_routine
+
+  uses_routine BarRoutine,
+               translations: {
+                 outputs: { type: :verbatim },
+                 inputs: { type: :verbatim }
+               }
+
+  def exec(alpha:, beta:)
+    run(BarRoutine, alpha: alpha, beta: beta)
+  end
+end
+```
+
+or if you use the `delegates_to:` shortcut, you can instead equivalently wrap `BarRoutine` with:
+
+```ruby
+class ShorterFooRoutine
+  lev_routine delegates_to: BarRoutine
+end
+```
+
+When using `delegates_to`, any `express_output` value set in the delegated routine is automatically
+used again by the delegating routine.
+
 ### Other Routine Methods
-  
+
 Routine class have access to a few other methods:
 
 1. a `runner` accessor which points to the routine which called it. If
-   runner is nil that means that no other routine called it (some other 
+   runner is nil that means that no other routine called it (some other
    code did)
 2. a `topmost_runner` accessor which points to the highest routine in the calling
    hierarchy (that routine whose 'runner' is nil)
@@ -346,7 +389,7 @@ Handlers...
 4. Map one-to-one with controller actions; by keeping the logic in each controller action encapsulated in a Handler, the code becomes independently-testable and also prevents the controller from being "fat" with 7 different actions all containing disparate logic touching different models.
 
 A class becomes a handler by calling `lev_handler` in its definition, e.g.:
-  
+
     class MyHandler
       lev_handler
       ...
@@ -367,10 +410,10 @@ Additionally, the handler provides attributes to return the `errors` object and 
 
 The `handle` method that you define should not return anything; they just set values in the errors and results objects.  The documentation for each handler should explain what the results will be and any nonstandard data required to be passed in in the options.
 
-In addition to the class- and instance-level `call` methods provided by Lev::Routine, Handlers have a class-level `handle` method (an alias of the class-level `call` method).  The convention for handlers is that the `call` methods (and this class-level `handle` method) take a hash of options/inputs.  The instance-level `handle` method doesn't take any arguments since the arguments have been stored as instance variables by the time the instance-level handle method is called.  
-    
+In addition to the class- and instance-level `call` methods provided by Lev::Routine, Handlers have a class-level `handle` method (an alias of the class-level `call` method).  The convention for handlers is that the `call` methods (and this class-level `handle` method) take a hash of options/inputs.  The instance-level `handle` method doesn't take any arguments since the arguments have been stored as instance variables by the time the instance-level handle method is called.
+
   Example:
-  
+
     class MyHandler
       lev_handler
     protected
@@ -384,7 +427,7 @@ In addition to the class- and instance-level `call` methods provided by Lev::Rou
 
 ### paramify
 
-By declaring one or more `paramify` blocks in a handler, you can declare, group, cast, and validate parts of the `params` hash.  Think of `paramify` as a way to declare an ad-hoc `ActiveModel` class to wrap incoming parameters.  Normally, you only get easy validation of input parameters when those parameters are passed to an application model that is validated during a save.  `paramify` lets you do this for any arbitrary collection of incoming parameters without requiring those parameters to live in application models.  
+By declaring one or more `paramify` blocks in a handler, you can declare, group, cast, and validate parts of the `params` hash.  Think of `paramify` as a way to declare an ad-hoc `ActiveModel` class to wrap incoming parameters.  Normally, you only get easy validation of input parameters when those parameters are passed to an application model that is validated during a save.  `paramify` lets you do this for any arbitrary collection of incoming parameters without requiring those parameters to live in application models.
 
 The first argument to `paramify` is the key in params which points to a hash of params to be paramified.  If this first argument is unspecified (or specified as `:paramify`, a reserved symbol), the entire params hash will be paramified.  The block passed to paramify looks just like the guts of an ActiveAttr model.
 
@@ -395,13 +438,13 @@ For example, when the incoming params includes :search => {:type, :terms, :num_r
       validates :type, presence: true,
                        inclusion: { in: %w(Name Username Any),
                                     message: "is not valid" }
- 
+
       attribute :terms, type: String
       validates :terms, presence: true
- 
+
       attribute :num_results, type: Integer
       validates :num_results, numericality: { only_integer: true,
-                                              greater_than_or_equal_to: 0 }                               
+                                              greater_than_or_equal_to: 0 }
     end
 
 This will result in a `search_params` variable being available.  `search_params.num_results` would be guaranteed to be an integer greater than or equal to zero.  Note that if you want to use a "Boolean" type, you need to type it with a lowercase (`type: boolean`).
@@ -422,9 +465,9 @@ The following is a more complete example using the `paramify` block above:
 
         attribute :num_results, type: Integer
         validates :num_results, numericality: { only_integer: true,
-                                                greater_than_or_equal_to: 0 }                               
+                                                greater_than_or_equal_to: 0 }
       end
-      
+
       def handle
         # By this time, if there were any errors the handler would have
         # already populated the errors object and returned.
@@ -439,23 +482,23 @@ The following is a more complete example using the `paramify` block above:
 ### handle_with
 
 `handle_with` is a utility method for calling handlers from controllers.  To use it, call `include Lev::HandleWith` in your relevant controllers (or in your ApplicationController):
-  
+
     class ApplicationController
       include Lev::HandleWith
       ...
     end
-  
+
 Then, call `handle_with` from your various controller actions, e.g.:
-  
+
     handle_with(MyFormHandler,
                 params: params,
                 success: lambda { redirect_to 'show', notice: 'Success!'},
                 failure: lambda { render 'new', alert: 'Error' })
-  
+
 `handle_with` takes care of calling the handler and populates a `@handler_result` object with results and errors from running the handler.
-  
+
 The 'success' and 'failure' lambdas are called if there aren't or are errors, respectively.  Alternatively, if you supply a 'complete' lambda, that lambda will be called regardless of whether there are any errors.  Inside these lambdas (and inside the views they connect to), the @handler_outcome variable containing the errors and results from the handler will be available.
-  
+
 Specifying 'params' is optional.  If you don't specify it, `handle_with` will use the entire params hash from the request.
 
 Handlers help us clean up controllers in our Rails projects.  Instead of having a different piece of application logic in every controller action, a Lev-oriented app's controllers just end up being responsible for connecting routes to handlers, normally via a quick call to `handle_with`.
@@ -486,7 +529,7 @@ Consider the following example:
       <%= f.submit "Register", id: "register_submit" %>
     <% end %>
 
-Here, the form parameters will include 
+Here, the form parameters will include
 
     :register => {:username => 'bob79', :first_name => 'Bob', :password => 'password', :password_confirmation => 'password'}
 
@@ -564,17 +607,17 @@ When these guidelines are followed, model classes end up being very small and si
 
 ## Naming Conventions
 
-As mentioned above, a handler is intended to replace the logic in one controller action.  As such, one convention that works well is to name a handler based on the controller name and the action name, e.g. for the `ProductsController#show` action, we would have a handler named `ProductsShow`.  
+As mentioned above, a handler is intended to replace the logic in one controller action.  As such, one convention that works well is to name a handler based on the controller name and the action name, e.g. for the `ProductsController#show` action, we would have a handler named `ProductsShow`.
 
 Routines on the other hand are more or less glorified functions that work with multiple models to get something done, so we typically start their names with verbs, e.g. `CreateUser`, `SetPassword`, `ConfirmEmail`, etc.
 
 ## Differences between Lev and Rails' Concerns
 
-Both Lev and Concerns remove lines of code from models, but the major difference between the two is that with Concerns, the code still lives logically in the models whereas code in Lev is completely outside of and separate from the models.  
+Both Lev and Concerns remove lines of code from models, but the major difference between the two is that with Concerns, the code still lives logically in the models whereas code in Lev is completely outside of and separate from the models.
 
-Lev's routines (and handlers) know about models, but the models don't know anything about nor are they dependent on the code in routines*.  This makes the models simpler and more stable (a Good Thing).  
+Lev's routines (and handlers) know about models, but the models don't know anything about nor are they dependent on the code in routines*.  This makes the models simpler and more stable (a Good Thing).
 
-Since a Concern's code is essentially embedded in model code, if that Concern breaks it can potentially break other unrelated features, something that can't happen with routines.  
+Since a Concern's code is essentially embedded in model code, if that Concern breaks it can potentially break other unrelated features, something that can't happen with routines.
 
 Routines are especially good when some use case needs to query or change multiple models.  With a routine all of the logic for that use case is in one file.  With a concern, that code could be in multiple models and multiple concerns.
 
