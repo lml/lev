@@ -12,3 +12,15 @@ module Lev
 
   end
 end
+
+module Kernel
+  def eigenclass
+    class << self
+      self
+    end
+  end
+
+  def includes_module?(mod)
+    eigenclass.included_modules.include?(mod)
+  end
+end

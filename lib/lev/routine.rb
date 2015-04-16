@@ -1,15 +1,15 @@
 module Lev
-  
+
   # A "routine" in the Lev world is a piece of code that is responsible for
   # doing one thing, normally acting on one or more other objects.  Routines
-  # are particularly useful when the thing that needs to be done involves 
+  # are particularly useful when the thing that needs to be done involves
   # making changes to multiple other objects.  In an OO/MVC world, an operation
   # that involves multiple objects might be implemented by spreading that logic
   # among those objects.  However, that leads to classes having more
   # responsibilities than they should (and more knowlege of other classes than
   # they should) as well as making the code hard to follow.
   #
-  # Routines typically don't have any persistent state that is used over and 
+  # Routines typically don't have any persistent state that is used over and
   # over again; they are created, used, and forgotten.  A routine is a glorified
   # function with a special single-responsibility purpose.
   #
@@ -22,19 +22,19 @@ module Lev
   #
   # in its definition.
   #
-  # Other than that, all a routine has to do is implement an "exec" method 
+  # Other than that, all a routine has to do is implement an "exec" method
   # that takes arbitrary arguments and that adds errors to an internal
   # array-like "errors" object and outputs to a "outputs" hash.
   #
   # A routine returns an "Result" object, which is just a simple wrapper
-  # of the outputs and errors objects. 
+  # of the outputs and errors objects.
   #
   # A routine will automatically get both class- and instance-level "call"
   # methods that take the same arguments as the "exec" method.  The class-level
-  # call method simply instantiates a new instance of the routine and calls 
-  # the instance-level call method (side note here is that this means that 
+  # call method simply instantiates a new instance of the routine and calls
+  # the instance-level call method (side note here is that this means that
   # routines aren't typically instantiated with state).
-  # 
+  #
   # A routine is automatically run within a transaction.  The isolation level
   # of the routine can be set by passing a :transaction option to the lev_routine
   # call (or to the lev_handler call, if appropriate).  The value must be one of
@@ -53,9 +53,9 @@ module Lev
   # As mentioned above, routines can call other routines.  While this is of
   # course possible just by calling the other routine's call method directly,
   # it is strongly recommended that one routine call another routine using the
-  # provided "run" method.  This method takes the name of the routine class 
+  # provided "run" method.  This method takes the name of the routine class
   # and the arguments/block it expects in its call/exec methods.  By using the
-  # run method, the called routine will be hooked into the common error and 
+  # run method, the called routine will be hooked into the common error and
   # transaction mechanisms.
   #
   # When one routine is called within another using the run method, there is
@@ -65,11 +65,11 @@ module Lev
   # It is highly recommend, though not required, to call the "uses_routine"
   # method to let the routine know which subroutines will be called within it.
   # This will let a routine set its isolation level appropriately, and will
-  # enforce that only one transaction be used and that it be rolled back 
+  # enforce that only one transaction be used and that it be rolled back
   # appropriately if any errors occur.
   #
   # Once a routine has been registered with the "uses_routine" call, it can
-  # be run by passing run the routine's Class or a symbol identifying the 
+  # be run by passing run the routine's Class or a symbol identifying the
   # routine.  This symbol can be set with the :as option.  If not set, the
   # symbol will be automatically set by converting the routine class' full
   # name to a symbol. e.g:
@@ -85,8 +85,8 @@ module Lev
   #
   #   run(:create_user, ...)
   #
-  # uses_routine also provides a way to specify how errors relate to routine 
-  # inputs. Take the following example.  A user calls Routine1 which calls 
+  # uses_routine also provides a way to specify how errors relate to routine
+  # inputs. Take the following example.  A user calls Routine1 which calls
   # Routine2.
   #
   #   User --> Routine1.call(foo: "abcd4") --> Routine2.call(bar: "abcd4")
@@ -96,14 +96,14 @@ module Lev
   # the User won't have any idea what "bar" relates to -- the User only knows
   # about the interface to Routine1 and the "foo" parameter it gave it.
   #
-  # Routine1 knows that it will call Routine2 and knows what its interface is.  
-  # It can then specify how to map terminology from Routine2 into Routine1's 
+  # Routine1 knows that it will call Routine2 and knows what its interface is.
+  # It can then specify how to map terminology from Routine2 into Routine1's
   # context.  E.g., in the following class:
   #
   #   class Routine1
   #     lev_routine
   #     uses_routine Routine2,
-  #                  translations: { 
+  #                  translations: {
   #                    inputs: { map: {bar: :foo} }
   #                  }
   #     def exec(options)
@@ -111,26 +111,26 @@ module Lev
   #     end
   #   end
   #
-  # Routine1 notes that any errors coming back from the call to Routine2 
+  # Routine1 notes that any errors coming back from the call to Routine2
   # related to :bar should be transfered into Routine1's errors object
   # as being related to :foo.  In this way, the caller of Routine1 will see
   # errors related to the arguments he understands.
   #
   # Translations can also be supplied for "outputs" in addition to "inputs".
-  # Output translations control how a called routine's Result outputs are 
+  # Output translations control how a called routine's Result outputs are
   # transfered to the calling routine's outputs.  Note if multiple outputs are
-  # transferred into the same named output, an array of those outputs will be 
-  # store.  The contents of the "inputs" and "outputs" hashes can be of the 
+  # transferred into the same named output, an array of those outputs will be
+  # store.  The contents of the "inputs" and "outputs" hashes can be of the
   # following form:
   #
   # 1) Scoped.  Appends the provided scoping symbol (or symbol array) to
-  #    the input symbol.  
+  #    the input symbol.
   #
   #    {scope: SCOPING_SYMBOL_OR_SYMBOL_ARRAY}
   #
   #    e.g. with {scope: :register} and a call to a routine that has an input
-  #    named :first_name, an error in that called routine related to its 
-  #    :first_name input will be translated so that the offending input is 
+  #    named :first_name, an error in that called routine related to its
+  #    :first_name input will be translated so that the offending input is
   #    [:register, :first_name].
   #
   # 2) Verbatim.  Uses the same term in the caller as the callee.
@@ -141,7 +141,7 @@ module Lev
   #
   #    {map: {called_input1: caller_input1, called_input2: :caller_input2}}
   #
-  # 4) Scoped and mapped.  Give an explicit mapping, and also scope the 
+  # 4) Scoped and mapped.  Give an explicit mapping, and also scope the
   #    translated terms.  Just use scope: and map: from above in the same hash.
   #
   # Via the uses_routine call, you can also ignore specified errors that occur
@@ -170,12 +170,12 @@ module Lev
   # Routine class have access to a few other methods:
   #
   #  1) a "runner" accessor which points to the routine which called it. If
-  #     runner is nil that means that no other routine called it (some other 
+  #     runner is nil that means that no other routine called it (some other
   #     code did)
-  # 
+  #
   #  2) a "topmost_runner" which points to the highest routine in the calling
   #     hierarchy (that routine whose 'runner' is nil)
-  #   
+  #
   # References:
   #   http://ducktypo.blogspot.com/2010/08/why-inheritance-sucks.html
   #
@@ -212,7 +212,7 @@ module Lev
       def uses_routine(routine_class, options={})
         symbol = options[:as] || class_to_symbol(routine_class)
 
-        raise IllegalArgument, "Routine #{routine_class} has already been registered" \
+        raise Lev.configuration.illegal_argument_error, "Routine #{routine_class} has already been registered" \
           if nested_routines[symbol]
 
         nested_routines[symbol] = {
@@ -225,6 +225,14 @@ module Lev
 
       def transaction_isolation
         @transaction_isolation ||= TransactionIsolation.mysql_default
+      end
+
+      def express_output
+        @express_output
+      end
+
+      def delegates_to
+        @delegates_to
       end
 
       def nested_routines
@@ -242,9 +250,13 @@ module Lev
       @after_transaction_blocks = []
 
       in_transaction do
-        catch :fatal_errors_encountered do   
+        catch :fatal_errors_encountered do
           begin
-            exec(*args, &block)
+            if self.class.delegates_to
+              run(self.class.delegates_to, *args, &block)
+            else
+              exec(*args, &block)
+            end
           end
         end
       end
@@ -267,7 +279,7 @@ module Lev
 
       if other_routine.is_a? Array
         if other_routine.size != 2
-          raise IllegalArgument, "when first arg to run is an array, it must have two arguments" 
+          raise Lev.configuration.illegal_argument_error, "when first arg to run is an array, it must have two arguments"
         end
 
         other_routine = other_routine[0]
@@ -279,16 +291,16 @@ module Lev
                  other_routine
                when Class
                  self.class.class_to_symbol(other_routine)
-               else 
+               else
                  self.class.class_to_symbol(other_routine.class)
                end
 
       nested_routine = self.class.nested_routines[symbol] || {}
 
       if nested_routine.empty? && other_routine == symbol
-        raise IllegalArgument, 
+        raise Lev.configuration.illegal_argument_error,
               "Routine symbol #{other_routine} does not point to a registered routine"
-      end      
+      end
 
       #
       # Get an instance of the routine and make sure it is a routine
@@ -297,8 +309,9 @@ module Lev
       other_routine = nested_routine[:routine_class] || other_routine
       other_routine = other_routine.new if other_routine.is_a? Class
 
-      raise IllegalArgument, "Can only run another nested routine" \
-        if !(other_routine.includes_module? Lev::Routine)
+      if !(other_routine.includes_module? Lev::Routine)
+        raise Lev.configuration.illegal_argument_error, "Can only run another nested routine"
+      end
 
       #
       # Merge passed-in options with those set in uses_routine, the former taking
@@ -314,10 +327,10 @@ module Lev
 
       options[:translations] ||= {}
 
-      input_mapper  = new_term_mapper(options[:translations][:inputs]) || 
+      input_mapper  = new_term_mapper(options[:translations][:inputs]) ||
                       new_term_mapper({ scope: symbol })
 
-      output_mapper = new_term_mapper(options[:translations][:outputs]) || 
+      output_mapper = new_term_mapper(options[:translations][:outputs]) ||
                       new_term_mapper({ scope: symbol })
 
       #
@@ -363,7 +376,7 @@ module Lev
       errors.add(false, args)
     end
 
-    # Utility method to transfer errors from a source to this routine.  The 
+    # Utility method to transfer errors from a source to this routine.  The
     # provided input_mapper maps the language of the errors in the source to
     # the language of this routine.  If fail_if_errors is true, this routine
     # will throw an error condition that causes execution of this routine to stop
@@ -405,33 +418,33 @@ module Lev
       @runner = runner
 
       if topmost_runner.class.transaction_isolation.weaker_than(self.class.transaction_isolation)
-        raise IsolationMismatch, 
-              "The routine being run has a stronger isolation requirement than " + 
+        raise IsolationMismatch,
+              "The routine being run has a stronger isolation requirement than " +
               "the isolation being used by the routine(s) running it; call the " +
               "'uses' method in the running routine's initializer"
       end
     end
 
-    def in_transaction(options={}) 
+    def in_transaction(options={})
       if transaction_run_by?(self)
         isolation_symbol = self.class.transaction_isolation.symbol
         if ActiveRecord::VERSION::MAJOR >= 4
           begin
-            ActiveRecord::Base.transaction(isolation: isolation_symbol) do 
+            ActiveRecord::Base.transaction(isolation: isolation_symbol) do
               yield
               raise ActiveRecord::Rollback if errors?
             end
           rescue ActiveRecord::TransactionIsolationError
             # Silently ignore isolation errors
-            ActiveRecord::Base.transaction do 
+            ActiveRecord::Base.transaction do
               yield
               raise ActiveRecord::Rollback if errors?
             end
           end
         else
           ActiveRecord::Base.isolation_level(isolation_symbol) do
-            ActiveRecord::Base.transaction do 
-              yield 
+            ActiveRecord::Base.transaction do
+              yield
               raise ActiveRecord::Rollback if errors?
             end
           end
@@ -449,7 +462,7 @@ module Lev
         when :verbatim
           return TermMapper.verbatim
         else
-          raise IllegalArgument, "unknown :type value: #{options[:type]}"
+          raise Lev.configuration.illegal_argument_error, "unknown :type value: #{options[:type]}"
         end
       end
 
