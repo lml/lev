@@ -1,5 +1,4 @@
 class DelegatedRoutine
-
   lev_routine express_output: :answer
 
   protected

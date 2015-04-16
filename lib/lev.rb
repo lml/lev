@@ -58,7 +58,7 @@ module Lev
       def initialize
         @form_error_class = 'error'
         @security_transgression_error = Lev::SecurityTransgression
-        @illegal_argument_error = Lev::Lev.configuration.illegal_argument_error
+        @illegal_argument_error = Lev::IllegalArgument
         super
       end
     end

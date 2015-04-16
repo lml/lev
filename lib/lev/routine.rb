@@ -231,6 +231,10 @@ module Lev
         @express_output
       end
 
+      def delegates_to
+        @delegates_to
+      end
+
       def nested_routines
         @nested_routines ||= {}
       end
@@ -248,7 +252,11 @@ module Lev
       in_transaction do
         catch :fatal_errors_encountered do
           begin
-            exec(*args, &block)
+            if self.class.delegates_to
+              run(self.class.delegates_to, *args, &block)
+            else
+              exec(*args, &block)
+            end
           end
         end
       end
@@ -301,8 +309,9 @@ module Lev
       other_routine = nested_routine[:routine_class] || other_routine
       other_routine = other_routine.new if other_routine.is_a? Class
 
-      raise Lev.configuration.illegal_argument_error, "Can only run another nested routine" \
-        if !(other_routine.includes_module? Lev::Routine)
+      if !(other_routine.includes_module? Lev::Routine)
+        raise Lev.configuration.illegal_argument_error, "Can only run another nested routine"
+      end
 
       #
       # Merge passed-in options with those set in uses_routine, the former taking
