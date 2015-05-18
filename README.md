@@ -71,6 +71,8 @@ Lev.configure do |config|
 end
 ```
 
+So if you `fatal_error(name: :is_blank)` it will raise `StandardError: "name is blank"`, or `fatal_error(thing: :is_broken, and: :messed_up)` it will raise `StandardError: "thing is broken - and messed up"`
+
 Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
 
 Any `StandardError` raised within a routine will be caught and transformed into a fatal error with `:kind` set to `:exception`.  The caller of this routine can choose to reraise this exception by calling `reraise_exception!` on the returned errors object:
