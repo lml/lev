@@ -51,14 +51,14 @@ module Lev
 
     class Configuration
       # This HTML class is added to form fields that caused errors
-      attr_accessor :form_error_class
-      attr_accessor :security_transgression_error
-      attr_accessor :illegal_argument_error
+      attr_accessor :form_error_class, :security_transgression_error,
+        :illegal_argument_error, :raise_fatal_errors
 
       def initialize
         @form_error_class = 'error'
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
+        @raise_fatal_errors = false
         super
       end
     end

@@ -397,7 +397,11 @@ module Lev
     end
 
     def fatal_error(args={})
-      raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
+      if Lev.configuration.raise_fatal_errors
+        raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
+      else
+        errors.add(true, args)
+      end
     end
 
     def nonfatal_error(args={})
