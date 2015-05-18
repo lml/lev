@@ -397,7 +397,7 @@ module Lev
     end
 
     def fatal_error(args={})
-      errors.add(true, args)
+      raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
     end
 
     def nonfatal_error(args={})
