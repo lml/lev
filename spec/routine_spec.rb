@@ -40,19 +40,29 @@ describe Lev::Routine do
     }.to raise_error(NameError)
   end
 
-  it 'raises an exception on fatal_error if configured' do
-    Lev.configure do |config|
-      config.raise_fatal_errors = true
+  context 'when raise_fatal_errors is configured true' do
+    before do
+      Lev.configure do |config|
+        config.raise_fatal_errors = true
+      end
     end
 
-    expect {
-      RaiseFatalError.call
-    }.to raise_error
+    after do
+      Lev.configure do |config|
+        config.raise_fatal_errors = false
+      end
+    end
 
-    begin
-      RaiseFatalError.call
-    rescue => e
-      expect(e.message).to eq('code broken - such disaster')
+    it 'raises an exception on fatal_error if configured' do
+      expect {
+        RaiseFatalError.call
+      }.to raise_error
+
+      begin
+        RaiseFatalError.call
+      rescue => e
+        expect(e.message).to eq('code broken - such disaster')
+      end
     end
   end
 
