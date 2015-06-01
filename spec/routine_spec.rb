@@ -18,14 +18,6 @@ describe Lev::Routine do
         unknown_method_call
       end
     }
-
-    stub_const 'RaiseFatalError', Class.new
-    RaiseFatalError.class_eval {
-      lev_routine
-      def exec
-        fatal_error(code: :broken, such: :disaster)
-      end
-    }
   end
 
   it "raised errors should propagate" do
@@ -40,11 +32,49 @@ describe Lev::Routine do
     }.to raise_error(NameError)
   end
 
+  it 'allows not raising fatal errors to be overridden' do
+    stub_const 'SpecialFatalErrorOption', Class.new
+    SpecialFatalErrorOption.class_eval {
+      lev_routine raise_fatal_errors: true
+      def exec
+        fatal_error(wow: :its_broken)
+      end
+    }
+
+    expect {
+      Lev.configure { |c| c.raise_fatal_errors = false }
+      SpecialFatalErrorOption.call
+    }.to raise_error
+  end
+
+  it 'allows raising fatal errors config to be overridden' do
+    stub_const 'SpecialNoFatalErrorOption', Class.new
+    SpecialNoFatalErrorOption.class_eval {
+      lev_routine raise_fatal_errors: false
+      def exec
+        fatal_error(wow: :its_broken)
+      end
+    }
+
+    expect {
+      Lev.configure { |c| c.raise_fatal_errors = true }
+      SpecialNoFatalErrorOption.call
+    }.not_to raise_error
+  end
+
   context 'when raise_fatal_errors is configured true' do
     before do
       Lev.configure do |config|
         config.raise_fatal_errors = true
       end
+
+      stub_const 'RaiseFatalError', Class.new
+      RaiseFatalError.class_eval {
+        lev_routine
+        def exec
+          fatal_error(code: :broken, such: :disaster)
+        end
+      }
     end
 
     after do
