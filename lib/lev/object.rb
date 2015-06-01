@@ -10,6 +10,8 @@ class Object
 
       @active_job_queue = options[:active_job_queue]
 
+      @raise_fatal_errors = options[:raise_fatal_errors]
+
       @delegates_to = options[:delegates_to]
       if @delegates_to
         uses_routine @delegates_to,
