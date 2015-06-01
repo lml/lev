@@ -206,6 +206,34 @@ module Lev
         result.outputs.send(@express_output)
       end
 
+      if defined?(ActiveJob)
+        def active_job_class
+          @active_job_class ||= const_set("ActiveJob",
+            Class.new(ActiveJob::Base) do
+              queue_as do
+                parent_routine.active_job_queue
+              end
+
+              def parent_routine
+                self.class.parent
+              end
+
+              def perform(*args, &block)
+                parent_routine.call(*args, &block)
+              end
+            end
+          )
+        end
+
+        def perform_later(*args, &block)
+          active_job_class.perform_later(*args, &block)
+        end
+
+        def active_job_queue
+          @active_job_queue || :default
+        end
+      end
+
       # Called at a routine's class level to foretell which other routines will
       # be used when this routine executes.  Helpful for figuring out ahead of
       # time what kind of transaction isolation level should be used.

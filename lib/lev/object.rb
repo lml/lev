@@ -8,6 +8,8 @@ class Object
       options[:transaction] ||= Lev::TransactionIsolation.mysql_default.symbol
       @transaction_isolation = Lev::TransactionIsolation.new(options[:transaction])
 
+      @active_job_queue = options[:active_job_queue]
+
       @delegates_to = options[:delegates_to]
       if @delegates_to
         uses_routine @delegates_to,
