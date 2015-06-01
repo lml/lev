@@ -37,14 +37,27 @@ describe Lev::Routine do
     SpecialFatalErrorOption.class_eval {
       lev_routine raise_fatal_errors: true
       def exec
-        fatal_error(wow: :its_broken)
+        fatal_error(code: :its_broken)
       end
     }
 
+    stub_const 'NoFatalErrorOption', Class.new
+    NoFatalErrorOption.class_eval {
+      lev_routine
+      def exec
+        fatal_error(code: :no_propagate)
+      end
+    }
+
+    Lev.configure { |c| c.raise_fatal_errors = false }
+
     expect {
-      Lev.configure { |c| c.raise_fatal_errors = false }
       SpecialFatalErrorOption.call
     }.to raise_error
+
+    expect {
+      NoFatalErrorOption.call
+    }.not_to raise_error
   end
 
   it 'allows raising fatal errors config to be overridden' do
@@ -52,12 +65,13 @@ describe Lev::Routine do
     SpecialNoFatalErrorOption.class_eval {
       lev_routine raise_fatal_errors: false
       def exec
-        fatal_error(wow: :its_broken)
+        fatal_error(code: :its_broken)
       end
     }
 
+    Lev.configure { |c| c.raise_fatal_errors = true }
+
     expect {
-      Lev.configure { |c| c.raise_fatal_errors = true }
       SpecialNoFatalErrorOption.call
     }.not_to raise_error
   end

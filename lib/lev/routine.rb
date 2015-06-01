@@ -267,6 +267,11 @@ module Lev
         @nested_routines ||= {}
       end
 
+      def raise_fatal_errors?
+        @raise_fatal_errors ||
+          (Lev.configuration.raise_fatal_errors && @raise_fatal_errors.nil?)
+      end
+
       def class_to_symbol(klass)
         klass.name.underscore.gsub('/','_').to_sym
       end
@@ -397,7 +402,7 @@ module Lev
     end
 
     def fatal_error(args={})
-      if Lev.configuration.raise_fatal_errors
+      if self.class.raise_fatal_errors?
         raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
       else
         errors.add(true, args)
