@@ -402,7 +402,7 @@ module Lev
     end
 
     def fatal_error(args={})
-      if self.class.raise_fatal_errors?
+      if topmost_runner.class.raise_fatal_errors?
         raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
       else
         errors.add(true, args)
