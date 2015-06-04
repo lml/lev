@@ -35,7 +35,7 @@ describe Lev::Routine do
   it 'allows not raising fatal errors to be overridden' do
     stub_const 'NestedFatalError', Class.new
     NestedFatalError.class_eval {
-      lev_routine
+      lev_routine raise_fatal_errors: false # testing that parent overrides
 
       def exec
         fatal_error(code: :its_broken)

@@ -73,6 +73,31 @@ end
 
 So if you `fatal_error(name: :is_blank)` it will raise `StandardError: "name is blank"`, or `fatal_error(thing: :is_broken, and: :messed_up)` it will raise `StandardError: "thing is broken - and messed up"`
 
+You can override the global setting in your routine, which also overrides nested routine settings:
+
+```ruby
+# initializer
+Lev.configure do |config|
+  config.raise_fatal_errors = false
+end
+
+# app/routines/my_routine.rb
+class MyRoutine
+  lev_routine raise_fatal_errors: true
+
+  uses_routine Tasks::MyTaskRoutine # Still raises despite its setting
+end
+
+
+# app/subroutines/tasks/my_task_routine.rb
+module Tasks
+  class MyTaskRoutine
+    lev_routine raise_fatal_errors: false
+  end
+end
+```
+
+
 Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
 
 Any `StandardError` raised within a routine will be caught and transformed into a fatal error with `:kind` set to `:exception`.  The caller of this routine can choose to reraise this exception by calling `reraise_exception!` on the returned errors object:
