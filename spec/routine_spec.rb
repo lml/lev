@@ -33,12 +33,18 @@ describe Lev::Routine do
   end
 
   it 'allows not raising fatal errors to be overridden' do
-    stub_const 'SpecialFatalErrorOption', Class.new
-    SpecialFatalErrorOption.class_eval {
-      lev_routine raise_fatal_errors: true
+    stub_const 'NestedFatalError', Class.new
+    NestedFatalError.class_eval {
+      lev_routine
+
       def exec
         fatal_error(code: :its_broken)
       end
+    }
+
+    stub_const 'SpecialFatalErrorOption', Class.new
+    SpecialFatalErrorOption.class_eval {
+      lev_routine raise_fatal_errors: true, delegates_to: NestedFatalError
     }
 
     stub_const 'NoFatalErrorOption', Class.new
