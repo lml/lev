@@ -79,6 +79,7 @@ describe Lev::Routine do
 
     expect {
       SpecialNoFatalErrorOption.call
+      SpecialNoFatalErrorOption[]
     }.not_to raise_error
   end
 
