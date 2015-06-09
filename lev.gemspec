@@ -23,13 +23,15 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "transaction_retry"
   spec.add_runtime_dependency "active_attr"
   spec.add_runtime_dependency "hashie"
+  spec.add_runtime_dependency 'active_job_status'
+  spec.add_runtime_dependency "activejob"
+
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "sqlite3"
-  spec.add_development_dependency "debugger"
-  spec.add_development_dependency "activejob"
+  spec.add_development_dependency "byebug"
 
   ## workaround for an issue using activerecord 4.2 outside of rails
   spec.add_development_dependency "rails"

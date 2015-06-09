@@ -209,7 +209,7 @@ module Lev
       if defined?(ActiveJob)
         def active_job_class
           @active_job_class ||= const_set("ActiveJob",
-            Class.new(ActiveJob::Base) do
+            Class.new(TrackableJob) do
               queue_as do
                 parent_routine.active_job_queue
               end
