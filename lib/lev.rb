@@ -3,6 +3,7 @@ require "transaction_isolation"
 require "transaction_retry"
 require "active_attr"
 require "hashie"
+require 'active_job_status'
 
 require "lev/version"
 require "lev/object"
@@ -67,3 +68,5 @@ module Lev
 
   end
 end
+
+ActiveJobStatus.store = ActiveSupport::Cache::MemoryStore.new
