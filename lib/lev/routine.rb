@@ -219,7 +219,9 @@ module Lev
               end
 
               def perform(*args, &block)
-                parent_routine.call(*args, &block)
+                # Call the routine and pass the result out (if configured)
+                result = parent_routine.call(*args, &block)
+                Lev.configuration.active_job_results_proc.call(result.outputs, result.errors)
               end
             end
           )

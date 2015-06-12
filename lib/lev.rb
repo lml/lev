@@ -56,6 +56,7 @@ module Lev
       attr_accessor :illegal_argument_error
       attr_accessor :raise_fatal_errors
       attr_accessor :active_job_class
+      attr_writer   :active_job_results_proc
 
       def initialize
         @form_error_class = 'error'
@@ -64,6 +65,10 @@ module Lev
         @raise_fatal_errors = false
         @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
         super
+      end
+
+      def active_job_results_proc
+        @active_job_results_proc ||= -> (outputs, errors) {}
       end
     end
 
