@@ -411,9 +411,9 @@ Routine class have access to a few other methods:
 2. a `topmost_runner` accessor which points to the highest routine in the calling
    hierarchy (that routine whose 'runner' is nil)
 
-### Calling routines as ActiveJobs
+### Calling routines as Background jobs
 
-If `ActiveJob` is included in your project, you can invoke a routine to be run in the background.  E.g. instead of saying
+If `Resque` is included in your project, you can invoke a routine to be run in the background.  E.g. instead of saying
 
 ```ruby
 MyRoutine.call(arg1: 23, arg2: 'howdy')
@@ -422,24 +422,43 @@ MyRoutine.call(arg1: 23, arg2: 'howdy')
 You can say
 
 ```ruby
-MyRoutine.perform_later(arg1: 23, arg2: 'howdy')
+job_id = MyRoutine.perform_later(arg1: 23, arg2: 'howdy')
+
+status = Resque::Plugins::Status::Hash.get(job_id)
+
+status.status #=> :queued, :working, :completed
 ```
 
-By default jobs are placed in the `:default` queue, but you can override this in the `lev_routine` call:
+You can get data back to this status object when the job is complete. Use the :job_data output
 
 ```ruby
-class MyRoutine
-  lev_routine active_job_queue: :some_other_queue
+class FeedTheDucks
+  lev_routine
+
+  protected
+  def exec(food:)
+    feed_ducks(food)
+    outputs[:job_data] = { ducks_fed: true } # will be reported to the status on complete
+  end
 end
+
+
+# some endpoint
+
+def feed_ducks
+  FeesTheDucks.perform_later(food: some_food)
+end
+
+# endpoint for getting the job's status
+
+status = Resque::Plugins::Status::Hash.get(params[:job_id])
+
+case status.status
+when 'queued'    # status.ducks_fed #=> false
+when 'working'   # status.ducks_fed #=> false
+when 'completed' # status.ducks_fed #=> true
 ```
 
-By default also, jobs use ActiveJob::Base as the class, but you can configure this:
-
-```ruby
-Lev.configure do |config|
-  config.active_job_class = TrackableJob
-end
-```
 
 ## Handlers
 

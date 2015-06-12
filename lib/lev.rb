@@ -55,14 +55,12 @@ module Lev
       attr_accessor :security_transgression_error
       attr_accessor :illegal_argument_error
       attr_accessor :raise_fatal_errors
-      attr_accessor :active_job_class
 
       def initialize
         @form_error_class = 'error'
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
         super
       end
     end

@@ -180,7 +180,6 @@ module Lev
   #   http://ducktypo.blogspot.com/2010/08/why-inheritance-sucks.html
   #
   module Routine
-
     class Result
       attr_reader :outputs
       attr_reader :errors
@@ -193,6 +192,15 @@ module Lev
 
     def self.included(base)
       base.extend(ClassMethods)
+      enable_background_jobs(base)
+    end
+
+    def perform(*args, &block)
+      outputs = call(*args, &block).outputs
+
+      if defined?(Resque::Plugins::Status)
+        completed(outputs.job_data)
+      end
     end
 
     module ClassMethods
@@ -204,34 +212,6 @@ module Lev
         result = call(*args, &block)
         result.errors.raise_exception_if_any!
         result.outputs.send(@express_output)
-      end
-
-      if defined?(ActiveJob)
-        def active_job_class
-          @active_job_class ||= const_set("ActiveJob",
-            Class.new(Lev.configuration.active_job_class) do
-              queue_as do
-                parent_routine.active_job_queue
-              end
-
-              def parent_routine
-                self.class.parent
-              end
-
-              def perform(*args, &block)
-                parent_routine.call(*args, &block)
-              end
-            end
-          )
-        end
-
-        def perform_later(*args, &block)
-          active_job_class.perform_later(*args, &block)
-        end
-
-        def active_job_queue
-          @active_job_queue || :default
-        end
       end
 
       # Called at a routine's class level to foretell which other routines will
@@ -510,5 +490,38 @@ module Lev
       nil
     end
 
+    module ResqueStatusClassMethods
+      def self.extended(base)
+        base.send(:include, Resque::Plugins::Status)
+        base.class_eval do
+          define_method(:initialize) do |uuid = nil, options = {}|
+            super(uuid, options)
+          end
+        end
+      end
+
+      def perform_later(*args, &block)
+        create(*args, &block)
+      end
+    end
+
+    module ResqueClassMethods
+      def perform_later(*args, &block)
+        Resque.enqueue(self, *args, &block)
+      end
+    end
+
+    private
+    def self.enable_background_jobs(base)
+      base.instance_eval do
+        @queue = :default
+      end
+
+      if defined?(Resque::Plugins::Status)
+        base.extend(ResqueStatusClassMethods)
+      elsif defined?(Resque)
+        base.extend(ResqueClassMethods)
+      end
+    end
   end
 end
