@@ -62,7 +62,7 @@ module Lev
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @active_job_class = ActiveJob::Base if defined?(ActiveJob)
+        @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
         super
       end
     end
