@@ -195,17 +195,9 @@ module Lev
       enable_background_jobs(base)
     end
 
-    def parent_routine
-      if self.class.parent == Object
-        self.class
-      else
-        self.class.parent
-      end
-    end
-
     def perform(*args, &block)
       if defined?(Resque::Plugins::Status)
-        outputs = parent_routine.call(*args, &block).outputs
+        outputs = call(*args, &block).outputs
         completed(outputs.job_data)
       end
     end
