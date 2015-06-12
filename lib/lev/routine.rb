@@ -516,7 +516,7 @@ module Lev
         @queue = :default
       end
 
-      if defined?(Resque) && defined?(Resque::Plugins::Status)
+      if defined?(Resque::Plugins::Status)
         base.extend(ResqueStatusClassMethods)
       elsif defined?(Resque)
         base.extend(ResqueClassMethods)
