@@ -433,6 +433,14 @@ class MyRoutine
 end
 ```
 
+By default also, jobs use ActiveJob::Base as the class, but you can configure this:
+
+```ruby
+Lev.configure do |config|
+  config.active_job_class = TrackableJob
+end
+```
+
 ## Handlers
 
 Handlers are specialized routines that take user input (e.g. form data) and then take an action based on that input.  Because all Handlers are Routines, everything discussed above applies to them.
