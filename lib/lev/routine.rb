@@ -196,8 +196,9 @@ module Lev
     end
 
     def perform(*args, &block)
+      outputs = call(*args, &block).outputs
+
       if defined?(Resque::Plugins::Status)
-        outputs = call(*args, &block).outputs
         completed(outputs.job_data)
       end
     end

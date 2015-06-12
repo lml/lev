@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "debugger"
   spec.add_development_dependency "resque"
+  spec.add_development_dependency "resque-status"
   spec.add_development_dependency "resque_spec"
   spec.add_development_dependency "mock_redis"
 
