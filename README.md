@@ -429,6 +429,37 @@ status = Resque::Plugins::Status::Hash.get(job_id)
 status.status #=> :queued, :working, :completed
 ```
 
+You can get data back to this status object when the job is complete. Use the :job_data output
+
+```ruby
+class FeedTheDucks
+  lev_routine
+
+  protected
+  def exec(food:)
+    feed_ducks(food)
+    outputs[:job_data] = { ducks_fed: true } # will be reported to the status on complete
+  end
+end
+
+
+# some endpoint
+
+def feed_ducks
+  FeesTheDucks.perform_later(food: some_food)
+end
+
+# endpoint for getting the job's status
+
+status = Resque::Plugins::Status::Hash.get(params[:job_id])
+
+case status.status
+when 'queued'    # status.ducks_fed #=> false
+when 'working'   # status.ducks_fed #=> false
+when 'completed' # status.ducks_fed #=> true
+```
+
+
 ## Handlers
 
 Handlers are specialized routines that take user input (e.g. form data) and then take an action based on that input.  Because all Handlers are Routines, everything discussed above applies to them.

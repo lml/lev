@@ -204,8 +204,10 @@ module Lev
     end
 
     def perform(*args, &block)
-      outputs = parent_routine.call(*args, &block).outputs
-      completed(outputs.job_data)
+      if defined?(Resque::Plugins::Status)
+        outputs = parent_routine.call(*args, &block).outputs
+        completed(outputs.job_data)
+      end
     end
 
     module ClassMethods
