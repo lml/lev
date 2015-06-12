@@ -500,14 +500,14 @@ module Lev
         end
       end
 
-      def perform_later(*args)
-        create(*args)
+      def perform_later(*args, &block)
+        create(*args, &block)
       end
     end
 
     module ResqueClassMethods
-      def perform_later(*args)
-        Resque.enqueue(self, *args)
+      def perform_later(*args, &block)
+        Resque.enqueue(self, *args, &block)
       end
     end
 
