@@ -56,6 +56,7 @@ module Lev
       attr_accessor :illegal_argument_error
       attr_accessor :raise_fatal_errors
       attr_accessor :active_job_class
+      attr_accessor :status_store
 
       def initialize
         @form_error_class = 'error'
@@ -63,6 +64,7 @@ module Lev
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
         @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
+        @status_store = Lev::SimpleMemoryStatusStore.new
         super
       end
     end

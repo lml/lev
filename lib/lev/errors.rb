@@ -4,12 +4,29 @@ module Lev
   #
   class Errors < Array
 
+    def initialize(routine_status = nil, raise_fatal_errors = false)
+      @routine_status = routine_status || DummyStatus.new
+      @raise_fatal_errors = raise_fatal_errors
+    end
+
     def add(fail, args={})
       args[:kind] ||= :lev
       error = Error.new(args)
+
       return if ignored_error_procs.any?{|proc| proc.call(error)}
       self.push(error)
-      throw :fatal_errors_encountered if fail
+
+      routine_status.add_error(fail, error)
+
+      if fail
+        routine_status.failed!
+
+        if raise_fatal_errors
+          raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
+        else
+          throw :fatal_errors_encountered
+        end
+      end
     end
 
     def ignore(arg)
@@ -35,7 +52,17 @@ module Lev
       raise exception_type, collect{|error| error.message}.join('; ') if any?
     end
 
+
+
   protected
+
+    class DummyStatus
+      def save(*); end
+      def failed!(*); end
+    end
+
+    attr_reader :routine_status
+    attr_reader :raise_fatal_errors
 
     def ignored_error_procs
       @ignored_error_procs ||= []

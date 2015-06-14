@@ -185,11 +185,13 @@ module Lev
       attr_reader :outputs
       attr_reader :errors
 
-      def initialize
-        @outputs = Outputs.new
-        @errors = Errors.new
+      def initialize(outputs, errors)
+        @outputs = outputs
+        @errors = errors
       end
     end
+
+    attr_reader :uuid
 
     def self.included(base)
       base.extend(ClassMethods)
@@ -211,27 +213,42 @@ module Lev
           @active_job_class ||= const_set("ActiveJob",
             Class.new(Lev.configuration.active_job_class) do
               queue_as do
-                parent_routine.active_job_queue
+                routine_class.active_job_queue
               end
 
-              def parent_routine
+              def routine_class
                 self.class.parent
               end
 
               def perform(*args, &block)
-                parent_routine.call(*args, &block)
+                uuid = args.pop
+                routine_instance = routine_class.new(uuid)
+                routine_instance.call(*args, &block)
               end
             end
           )
         end
 
         def perform_later(*args, &block)
+          # Make a UUID (so it can be returned) and concatenate it on to the
+          # args so it makes it to `perform` where the routine is instatiated.
+          # Peel if off there before calling `call`.
+
+          uuid = new_uuid()
+          args.push(new_uuid())
+
           active_job_class.perform_later(*args, &block)
+
+          uuid
         end
 
         def active_job_queue
           @active_job_queue || :default
         end
+      end
+
+      def new_uuid()
+        SecureRandom.uuid()
       end
 
       # Called at a routine's class level to foretell which other routines will
@@ -282,6 +299,8 @@ module Lev
     def call(*args, &block)
       @after_transaction_blocks = []
 
+      status.working!
+
       in_transaction do
         catch :fatal_errors_encountered do
           begin
@@ -297,6 +316,8 @@ module Lev
       @after_transaction_blocks.each do |block|
         block.call
       end
+
+      status.completed!
 
       result
     end
@@ -402,11 +423,7 @@ module Lev
     end
 
     def fatal_error(args={})
-      if topmost_runner.class.raise_fatal_errors?
-        raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
-      else
-        errors.add(true, args)
-      end
+      errors.add(true, args)
     end
 
     def nonfatal_error(args={})
@@ -431,10 +448,22 @@ module Lev
       @after_transaction_blocks.push(block)
     end
 
+    def initialize(uuid=nil)
+      @uuid = uuid || self.new_uuid()
+    end
+
   protected
 
     def result
-      @result ||= Result.new
+      @result ||= Result.new(
+        Outputs.new,
+        Errors.new(status,
+                   topmost_runner.class.raise_fatal_errors?)
+      )
+    end
+
+    def status
+      @status ||= Lev::Status.new(uuid)
     end
 
     attr_writer :runner
