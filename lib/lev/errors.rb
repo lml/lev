@@ -5,7 +5,7 @@ module Lev
   class Errors < Array
 
     def initialize(routine_status = nil, raise_fatal_errors = false)
-      @routine_status = routine_status || DummyStatus.new
+      @routine_status = routine_status || BlackHoleStatus.new
       @raise_fatal_errors = raise_fatal_errors
     end
 
@@ -52,14 +52,7 @@ module Lev
       raise exception_type, collect{|error| error.message}.join('; ') if any?
     end
 
-
-
   protected
-
-    class DummyStatus
-      def save(*); end
-      def failed!(*); end
-    end
 
     attr_reader :routine_status
     attr_reader :raise_fatal_errors

@@ -221,8 +221,9 @@ module Lev
               end
 
               def perform(*args, &block)
-                uuid = args.pop
-                routine_instance = routine_class.new(uuid)
+                # perform_later made a status object be the last argument
+                status = args.pop
+                routine_instance = routine_class.new(status)
                 routine_instance.call(*args, &block)
               end
             end
@@ -230,25 +231,23 @@ module Lev
         end
 
         def perform_later(*args, &block)
-          # Make a UUID (so it can be returned) and concatenate it on to the
-          # args so it makes it to `perform` where the routine is instatiated.
-          # Peel if off there before calling `call`.
+          # To enable tracking of this job's status, create a new Status object
+          # and push it on to the arguments so that in `perform` it can be peeled
+          # off and handed to the routine instance.  The Status UUID is returned
+          # so that callers can track the status.
 
-          uuid = new_uuid()
-          args.push(new_uuid())
+          status = Lev::Status.new
+          status.queued!
+          args.push(status)
 
           active_job_class.perform_later(*args, &block)
 
-          uuid
+          status.uuid()
         end
 
         def active_job_queue
           @active_job_queue || :default
         end
-      end
-
-      def new_uuid()
-        SecureRandom.uuid()
       end
 
       # Called at a routine's class level to foretell which other routines will
@@ -448,11 +447,16 @@ module Lev
       @after_transaction_blocks.push(block)
     end
 
-    def initialize(uuid=nil)
-      @uuid = uuid || self.new_uuid()
+    def initialize(status=nil)
+      # If someone cares about the status, they'll pass it in; otherwise all
+      # status updates go into the bit bucket.
+      @status = status || BlackHoleStatus.new
     end
 
   protected
+
+    attr_reader :status
+    attr_writer :runner
 
     def result
       @result ||= Result.new(
@@ -461,12 +465,6 @@ module Lev
                    topmost_runner.class.raise_fatal_errors?)
       )
     end
-
-    def status
-      @status ||= Lev::Status.new(uuid)
-    end
-
-    attr_writer :runner
 
     def outputs
       result.outputs

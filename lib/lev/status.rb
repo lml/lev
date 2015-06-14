@@ -23,11 +23,11 @@ module Lev
 
     attr_reader :uuid
 
-    def initialize(uuid)
-      @uuid = uuid
+    def initialize
+      @uuid = SecureRandom.uuid()
     end
 
-    def progress(at, out_of = nil)
+    def set_progress(at, out_of = nil)
       raise IllegalArgument, "Must specify at least `at` argument to `progress` call" if at.nil?
       raise IllegalArgument, "progress cannot be negative (at=#{at})" if at < 0
       raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls" unless out_of > at
@@ -85,6 +85,8 @@ module Lev
     RESERVED_KEYS = [:progress, :uuid, :status, :errors]
 
     def self.store
+      # Nice to get the store from lev config each time so it isn't serialized
+      # when activejobs are sent off to places like redis
       Lev.configuration.status_store
     end
 
