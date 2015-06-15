@@ -111,7 +111,7 @@ describe Lev::Routine do
       begin
         RaiseFatalError.call
       rescue => e
-        expect(e.message).to eq('code broken - such disaster')
+        expect(e.message).to eq('code broken - such disaster - kind lev')
       end
     end
   end
