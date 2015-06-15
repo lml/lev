@@ -14,7 +14,7 @@ RSpec.describe 'Statused Routines' do
         lev_routine
         protected
         def exec
-          set_progress(9, 10)
+          outputs.status.set_progress(9, 10)
         end
       end
 
