@@ -47,15 +47,7 @@ module Lev
       set(data_to_set)
     end
 
-    def progress
-      get('progress')
-    end
-
     STATUSES.each do |status|
-      define_method("#{status}?") do
-        get('status') === status
-      end
-
       define_method("#{status}!") do
         set('status', status)
       end
@@ -74,10 +66,6 @@ module Lev
         code: error.code,
         message: error.message
       })
-    end
-
-    def errors
-      get('errors') || []
     end
 
     protected
@@ -119,6 +107,12 @@ module Lev
     def push(key, new_item)
       new_value = (get(key) || []).push(new_item)
       set(key: new_value)
+    end
+
+    STATUSES.each do |status|
+      define_method("#{status}?") do
+        get('status') === status
+      end
     end
 
   end

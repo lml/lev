@@ -441,6 +441,49 @@ Lev.configure do |config|
 end
 ```
 
+Routines run as ActiveJobs can also publish there status somewhere it can be listened to (e.g. to Redis).
+
+Routines have a `status` object and can call the following methods:
+
+* `set_progress(at, out_of = nil)` sets the current progress; can either pass a float between 0.0 and 1.0 or
+  a counter towards a total, e.g. `set_progress(67,212)`.
+* `queued!` Sets the status to 'queued'
+* `working!` Sets the status to 'working'
+* `completed!` Sets the status to 'completed'
+* `failed!` Sets the status to 'failed'
+* `killed!` Sets the status to 'killed'
+* `save(hash)` Takes a hash of key value pairs and writes those keys and values to the status; there are several reserved keys which cannot be used (and which will blow up if you try to use them)
+* `add_error(is_fatal, error)` takes a boolean and a Lev `Error` object and adds its data to an array of `errors` in the status hash.
+
+All routines have such a status object.  For plain vanilla routines not run as an active job, the status calls are no-ops.  When a routine is invoked with `perform_later`, the status object actually records the statuses to a store of your choice.  The store is configured in the Lev configuration block, e.g.:
+
+```ruby
+Lev.configure do |config|
+  config.status_store = whatever
+end
+```
+
+The store needs to respond to the following methods:
+
+1. fetch(key)
+2. write(key, value)
+
+The default store is essentially a hash (implemented in `Lev::SimpleMemoryStatusStore`).  Any `ActiveSupport::Cache::Store` will work.
+
+A routine's status can be retrieved with `Lev::Status.get(uuid_here)`.  This just returns a simple hash.  Notable keys are
+
+* `'progress'` which returns the progress as a number between 0.0 and 1.0
+* `'status'` which returns one of the status strings shown above
+* `'errors'` which (if present) is an error of error hashes
+* `'uuid'` the UUID of the routine / status
+
+Other routine-specific keys (set with a `save` call) are also present.
+
+**Notes:**
+
+1. Don't try to write a status store that uses the ActiveRecord database, as the database changes would only be seen when the routine completes and its transaction is committed.
+2. Job killing hasn't been implemented yet, but shouldn't be too bad.  For routines run in a transaction (which are frankly the only ones you'd want to kill), we can likely kill them by raising `ActiveRecord::Rollback`.
+
 ## Handlers
 
 Handlers are specialized routines that take user input (e.g. form data) and then take an action based on that input.  Because all Handlers are Routines, everything discussed above applies to them.

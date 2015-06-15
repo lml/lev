@@ -316,7 +316,7 @@ module Lev
         block.call
       end
 
-      status.completed!
+      status.completed! if !errors?
 
       result
     end

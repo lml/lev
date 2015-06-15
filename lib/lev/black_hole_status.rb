@@ -9,10 +9,14 @@ module Lev
     def save(*); end
     def add_error(*); end
 
+    Lev::Status.STATUSES.each do |status|
+      define_method("#{status}!") do; end
+    end
+
     def self.method_missing(method_sym, *args, &block)
       if Lev::Status.new.respond_to?(method_sym)
         raise NameError,
-              "'#{method_sym}' is Status query method, and those cannot be called on BlackHoleStatus"
+              "'#{method_sym}' is Lev::Status query method, and those cannot be called on BlackHoleStatus"
       else
         super
       end
