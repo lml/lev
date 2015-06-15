@@ -9,8 +9,8 @@ module Lev
     def save(*); end
     def add_error(*); end
 
-    Lev::Status::STATUSES.each do |status|
-      define_method("#{status}!") do; end
+    Lev::Status::STATES.each do |state|
+      define_method("#{state}!") do; end
     end
 
     def self.method_missing(method_sym, *args, &block)

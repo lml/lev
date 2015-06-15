@@ -17,7 +17,7 @@ RSpec.describe 'Statused Routines' do
       uuid = StatusedRoutine.perform_later
       status = Lev::Status.find(uuid)
 
-      expect(status['status']).to eq(Lev::Status::STATUS_QUEUED)
+      expect(status['state']).to eq(Lev::Status::STATE_QUEUED)
     end
 
     context 'inline activejob mode' do
@@ -32,7 +32,7 @@ RSpec.describe 'Statused Routines' do
       it 'completes the status object on completion, returning other data' do
         uuid = StatusedRoutine.perform_later
         status = Lev::Status.find(uuid)
-        expect(status['status']).to eq(Lev::Status::STATUS_COMPLETED)
+        expect(status['state']).to eq(Lev::Status::STATE_COMPLETED)
         expect(status['progress']).to eq(0.9)
       end
     end
@@ -49,7 +49,7 @@ RSpec.describe 'Statused Routines' do
       }.to raise_error(Lev::IllegalArgument)
 
       expect {
-        status.save(status: 'blocked')
+        status.save(state: 'blocked')
       }.to raise_error(Lev::IllegalArgument)
 
       expect {

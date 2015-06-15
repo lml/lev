@@ -2,18 +2,18 @@ require 'json'
 
 module Lev
   class Status
-    STATUS_QUEUED = 'queued'
-    STATUS_WORKING = 'working'
-    STATUS_COMPLETED = 'completed'
-    STATUS_FAILED = 'failed'
-    STATUS_KILLED = 'killed'
+    STATE_QUEUED = 'queued'
+    STATE_WORKING = 'working'
+    STATE_COMPLETED = 'completed'
+    STATE_FAILED = 'failed'
+    STATE_KILLED = 'killed'
 
-    STATUSES = [
-      STATUS_QUEUED,
-      STATUS_WORKING,
-      STATUS_COMPLETED,
-      STATUS_FAILED,
-      STATUS_KILLED
+    STATES = [
+      STATE_QUEUED,
+      STATE_WORKING,
+      STATE_COMPLETED,
+      STATE_FAILED,
+      STATE_KILLED
     ].freeze
 
     attr_reader :uuid
@@ -35,13 +35,13 @@ module Lev
       prevent_faulty_arguments(at, out_of)
 
       if set_status_progress(at, out_of) == 1.0
-        set(status: STATUS_COMPLETED)
+        set(state: STATE_COMPLETED)
       end
     end
 
-    STATUSES.each do |status|
-      define_method("#{status}!") do
-        set(status: status)
+    STATES.each do |state|
+      define_method("#{state}!") do
+        set(state: state)
       end
     end
 
@@ -66,7 +66,7 @@ module Lev
     end
 
     protected
-    RESERVED_KEYS = [:progress, :uuid, :status, :errors]
+    RESERVED_KEYS = [:progress, :uuid, :state, :errors]
 
     def self.store
       # Nice to get the store from lev config each time so it isn't serialized
@@ -83,7 +83,7 @@ module Lev
     end
 
     def status_key
-      "#{Lev.configuration.status_store_namespace}:#{uuid}"
+      self.class.status_key(uuid)
     end
 
     def self.status_key(uuid)
@@ -99,9 +99,9 @@ module Lev
       set(key => new_value)
     end
 
-    STATUSES.each do |status|
-      define_method("#{status}?") do
-        get('status') == status
+    STATES.each do |state|
+      define_method("#{state}?") do
+        get('state') == state
       end
     end
 
