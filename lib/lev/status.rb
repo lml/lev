@@ -23,7 +23,11 @@ module Lev
     end
 
     def self.find(uuid)
-      store.fetch(status_key(uuid))
+      if status = store.fetch(status_key(uuid))
+        decode(status)
+      else
+        nil
+      end
     end
 
     def set_progress(at, out_of = nil)
@@ -58,7 +62,7 @@ module Lev
 
     def get(key)
       if value = self.class.store.fetch(status_key)
-        decoded_hash = JSON.parse(value)
+        decoded_hash = decode(value)
         decoded_hash.merge(uuid: uuid)[key]
       else
         false
@@ -120,6 +124,14 @@ module Lev
       elsif out_of && out_of < at
         raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls"
       end
+    end
+
+    def self.decode(value)
+      JSON.parse(value)
+    end
+
+    def decode(value)
+      self.class.decode(value)
     end
 
   end
