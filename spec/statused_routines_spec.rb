@@ -1,8 +1,4 @@
-require 'active_job'
 require 'spec_helper'
-
-ActiveJob::Base.queue_adapter = :inline
-ActiveJob::Base.logger = ::Logger.new(nil)
 
 class StatusedRoutine
   lev_routine

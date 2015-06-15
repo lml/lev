@@ -1,8 +1,4 @@
-require 'active_job'
 require 'spec_helper'
-
-ActiveJob::Base.queue_adapter = :test
-ActiveJob::Base.logger = ::Logger.new(nil)
 
 RSpec.describe 'ActiveJob routines' do
   context 'default configuration' do
