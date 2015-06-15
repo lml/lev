@@ -13,10 +13,28 @@ RSpec.describe 'Statused Routines' do
   subject(:status) { Lev::Status.new }
 
   context 'in a routine' do
-    it 'works so wonderfully' do
+    it 'queues the status object on queue' do
       uuid = StatusedRoutine.perform_later
       status = Lev::Status.find(uuid)
-      expect(status['progress']).to eq(0.9)
+
+      expect(status['status']).to eq(Lev::Status::STATUS_QUEUED)
+    end
+
+    context 'inline activejob mode' do
+      before { ActiveJob::Base.queue_adapter = :inline }
+      after { ActiveJob::Base.queue_adapter = :test }
+
+      it 'sets status to working when called' do
+        expect_any_instance_of(Lev::Status).to receive(:working!)
+        StatusedRoutine.perform_later
+      end
+
+      it 'completes the status object on completion, returning other data' do
+        uuid = StatusedRoutine.perform_later
+        status = Lev::Status.find(uuid)
+        expect(status['status']).to eq(Lev::Status::STATUS_COMPLETED)
+        expect(status['progress']).to eq(0.9)
+      end
     end
   end
 
