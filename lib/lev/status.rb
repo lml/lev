@@ -79,6 +79,10 @@ module Lev
     end
 
     def set(incoming_hash)
+      if existing_settings = self.class.find(uuid)
+        incoming_hash = existing_settings.merge(incoming_hash)
+      end
+
       self.class.store.write(status_key, incoming_hash.to_json)
     end
 
