@@ -16,7 +16,7 @@ module Lev
       return if ignored_error_procs.any?{|proc| proc.call(error)}
       self.push(error)
 
-      routine_status.add_error(fail, error)
+      routine_status.add_error(error, is_fatal: fail)
 
       if fail
         routine_status.failed!
