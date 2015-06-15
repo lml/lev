@@ -1,25 +1,26 @@
 require 'active_job'
 require 'spec_helper'
 
-ActiveJob::Base.queue_adapter = :test
+ActiveJob::Base.queue_adapter = :inline
 ActiveJob::Base.logger = ::Logger.new(nil)
+
+class StatusedRoutine
+  lev_routine
+
+  protected
+  def exec
+    status.set_progress(9, 10)
+  end
+end
 
 RSpec.describe 'Statused Routines' do
   subject(:status) { Lev::Status.new }
 
   context 'in a routine' do
     it 'works so wonderfully' do
-      stub_const 'StatusedRoutine', Class.new
-      StatusedRoutine.class_eval do
-        lev_routine
-        protected
-        def exec
-          outputs.status.set_progress(9, 10)
-        end
-      end
-
-      outputs = StatusedRoutine.perform_later.outputs
-      expect(outputs.status[:progress]).to eq(0.9)
+      uuid = StatusedRoutine.perform_later
+      status = Lev::Status.find(uuid)
+      expect(status['progress']).to eq(0.9)
     end
   end
 
@@ -91,6 +92,12 @@ RSpec.describe 'Statused Routines' do
   end
 
   describe '#set_progress' do
+    it 'sets the progress key on the status object' do
+      status.set_progress(8, 10)
+      progress = status.get('progress')
+      expect(progress).to eq(0.8)
+    end
+
     context 'when `out_of` is supplied' do
       it 'requires a positive `at` float or integer' do
         expect {

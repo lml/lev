@@ -18,18 +18,20 @@ module Lev
 
     attr_reader :uuid
 
-    def initialize(uuid=nil)
-      @uuid = uuid || SecureRandom.uuid()
+    def initialize(uuid = nil)
+      @uuid = uuid || SecureRandom.uuid
+    end
+
+    def self.find(uuid)
+      store.fetch(status_key(uuid))
     end
 
     def set_progress(at, out_of = nil)
       prevent_faulty_arguments(at, out_of)
 
-      progress = set_status_progress(at, out_of)
-      data_to_set = { progress: progress }
-      data_to_set[:status] = STATUS_COMPLETED if progress == 1.0
-
-      set(data_to_set)
+      if set_status_progress(at, out_of) == 1.0
+        set(status: STATUS_COMPLETED)
+      end
     end
 
     STATUSES.each do |status|
@@ -77,6 +79,10 @@ module Lev
     end
 
     def status_key
+      "#{Lev.configuration.status_store_namespace}:#{uuid}"
+    end
+
+    def self.status_key(uuid)
       "#{Lev.configuration.status_store_namespace}:#{uuid}"
     end
 

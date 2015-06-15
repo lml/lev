@@ -238,7 +238,7 @@ module Lev
 
           status = Lev::Status.new
           status.queued!
-          args.push(status.uuid
+          args.push(status.uuid)
 
           active_job_class.perform_later(*args, &block)
 
@@ -447,7 +447,7 @@ module Lev
       @after_transaction_blocks.push(block)
     end
 
-    def initialize(status=nil)
+    def initialize(status = nil)
       # If someone cares about the status, they'll pass it in; otherwise all
       # status updates go into the bit bucket.
       @status = status || Lev::BlackHoleStatus.new
