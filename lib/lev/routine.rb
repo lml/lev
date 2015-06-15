@@ -242,7 +242,7 @@ module Lev
 
           active_job_class.perform_later(*args, &block)
 
-          status.uuid()
+          status.uuid
         end
 
         def active_job_queue

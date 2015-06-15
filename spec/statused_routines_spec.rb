@@ -1,7 +1,27 @@
+require 'active_job'
 require 'spec_helper'
+
+ActiveJob::Base.queue_adapter = :test
+ActiveJob::Base.logger = ::Logger.new(nil)
 
 RSpec.describe 'Statused Routines' do
   subject(:status) { Lev::Status.new }
+
+  context 'in a routine' do
+    it 'works so wonderfully' do
+      stub_const 'StatusedRoutine', Class.new
+      StatusedRoutine.class_eval do
+        lev_routine
+        protected
+        def exec
+          set_progress(9, 10)
+        end
+      end
+
+      outputs = StatusedRoutine.perform_later.outputs
+      expect(outputs.status[:progress]).to eq(0.9)
+    end
+  end
 
   describe '#save' do
     it 'prevents the use of reserved keys' do

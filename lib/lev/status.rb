@@ -2,7 +2,6 @@ require 'json'
 
 module Lev
   class Status
-
     STATUS_QUEUED = 'queued'
     STATUS_WORKING = 'working'
     STATUS_COMPLETED = 'completed'
