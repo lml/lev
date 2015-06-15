@@ -27,12 +27,11 @@ RSpec.describe 'ActiveJob routines' do
   end
 
   context 'specialized configuration' do
-    before do
-      Lev.configure { |c| c.active_job_class = SomeOtherJobBase }
-    end
+    before { Lev.configure { |c| c.active_job_class = SomeOtherJobBase } }
+    after { Lev.configure { |c| c.active_job_class = ActiveJob::Base } }
 
     class SomeOtherJobBase
-      def self.queue_as(*args); end
+      def self.queue_as(*); end
       def self.perform_later; end
     end
 
