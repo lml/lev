@@ -18,8 +18,8 @@ module Lev
 
     attr_reader :uuid
 
-    def initialize
-      @uuid = SecureRandom.uuid()
+    def initialize(uuid=nil)
+      @uuid = uuid || SecureRandom.uuid()
     end
 
     def set_progress(at, out_of = nil)

@@ -221,9 +221,9 @@ module Lev
               end
 
               def perform(*args, &block)
-                # perform_later made a status object be the last argument
-                status = args.pop
-                routine_instance = routine_class.new(status)
+                # perform_later made a status uuid be the last argument
+                uuid = args.pop
+                routine_instance = routine_class.new(Lev::Status.new(uuid))
                 routine_instance.call(*args, &block)
               end
             end
@@ -238,7 +238,7 @@ module Lev
 
           status = Lev::Status.new
           status.queued!
-          args.push(status)
+          args.push(status.uuid
 
           active_job_class.perform_later(*args, &block)
 
