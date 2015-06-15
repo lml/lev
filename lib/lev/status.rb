@@ -8,6 +8,7 @@ module Lev
     STATUS_COMPLETED = 'completed'
     STATUS_FAILED = 'failed'
     STATUS_KILLED = 'killed'
+
     STATUSES = [
       STATUS_QUEUED,
       STATUS_WORKING,
@@ -16,11 +17,6 @@ module Lev
       STATUS_KILLED
     ].freeze
 
-    def self.get(uuid)
-      decoded_hash = decode(self.store.fetch(status_key(uuid)))
-      decoded_hash.merge(uuid: uuid)
-    end
-
     attr_reader :uuid
 
     def initialize
@@ -28,19 +24,9 @@ module Lev
     end
 
     def set_progress(at, out_of = nil)
-      raise IllegalArgument, "Must specify at least `at` argument to `progress` call" if at.nil?
-      raise IllegalArgument, "progress cannot be negative (at=#{at})" if at < 0
-      raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls" unless out_of > at
+      prevent_faulty_arguments(at, out_of)
 
-      progress =
-        if out_of.nil?
-          raise IllegalArgument, "If `out_of` not specified, `at` must be in the range [0.0,1.0]" \
-            if at < 0 || at > 1
-          set(progress: at)
-        else
-          set(progress: (at.to_f / out_of.to_f))
-        end
-
+      progress = set_status_progress(at, out_of)
       data_to_set = { progress: progress }
       data_to_set[:status] = STATUS_COMPLETED if progress == 1.0
 
@@ -49,27 +35,36 @@ module Lev
 
     STATUSES.each do |status|
       define_method("#{status}!") do
-        set('status', status)
+        set(status: status)
       end
     end
 
     def save(hash)
-      raise IllegalArgument, "Caller cannot specify any reserved keys (#{RESERVED_KEYS})" \
-        if has_reserved_keys?(hash)
-
-      set(hash)
+      if has_reserved_keys?(hash)
+        raise IllegalArgument,
+              "Caller cannot specify any reserved keys (#{RESERVED_KEYS})"
+      else
+        set(hash)
+      end
     end
 
-    def add_error(is_fatal, error)
-      push('errors', {
-        is_fatal: is_fatal,
-        code: error.code,
-        message: error.message
-      })
+    def add_error(error, options = { })
+      options = { is_fatal: false }.merge(options)
+      push('errors', { is_fatal: options[:is_fatal],
+                       code: error.code,
+                       message: error.message })
+    end
+
+    def get(key)
+      if value = self.class.store.fetch(status_key)
+        decoded_hash = JSON.parse(value)
+        decoded_hash.merge(uuid: uuid)[key]
+      else
+        false
+      end
     end
 
     protected
-
     RESERVED_KEYS = [:progress, :uuid, :status, :errors]
 
     def self.store
@@ -79,39 +74,46 @@ module Lev
     end
 
     def set(incoming_hash)
-      decoded_hash = self.get(uuid)
-      decoded_hash.merge(incoming_hash)
-      self.store.write(status_key(uuid), encode(decoded_hash))
+      self.class.store.write(status_key, incoming_hash.to_json)
     end
 
-    def get(key)
-      self.get(uuid)[key]
-    end
-
-    def encode(val)
-      val.to_json
-    end
-
-    def decode(val)
-      JSON.parse(val)
-    end
-
-    def status_key(uuid)
+    def status_key
       "#{Lev.configuration.status_store_namespace}:#{uuid}"
     end
 
     def has_reserved_keys?(hash)
-      (hash.keys.collect{|key| key.to_sym} & RESERVED_KEYS).any?
+      (hash.keys.collect(&:to_sym) & RESERVED_KEYS).any?
     end
 
     def push(key, new_item)
       new_value = (get(key) || []).push(new_item)
-      set(key: new_value)
+      set(key => new_value)
     end
 
     STATUSES.each do |status|
       define_method("#{status}?") do
-        get('status') === status
+        get('status') == status
+      end
+    end
+
+    def set_status_progress(at, out_of)
+      if out_of.nil? && (at < 0 || at > 1)
+        raise IllegalArgument,
+              "If `out_of` not specified, `at` must be in the range [0.0, 1.0]"
+      elsif out_of.nil?
+        set(progress: at)
+      else
+        set(progress: (at.to_f / out_of.to_f))
+      end
+    end
+
+    def prevent_faulty_arguments(at, out_of)
+      if at.nil?
+        raise IllegalArgument, "Must specify at least `at` argument to `progress` call"
+      elsif at < 0
+        raise IllegalArgument, "progress cannot be negative (at=#{at})"
+      elsif out_of && out_of < at
+        raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls"
       end
     end
 

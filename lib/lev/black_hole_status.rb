@@ -9,7 +9,7 @@ module Lev
     def save(*); end
     def add_error(*); end
 
-    Lev::Status.STATUSES.each do |status|
+    Lev::Status::STATUSES.each do |status|
       define_method("#{status}!") do; end
     end
 
