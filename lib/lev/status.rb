@@ -20,11 +20,12 @@ module Lev
 
     def initialize(uuid = nil)
       @uuid = uuid || SecureRandom.uuid
+      save
     end
 
     def self.find(uuid)
       if status = store.fetch(status_key(uuid))
-        decode(status)
+        JSON.parse(status)
       else
         nil
       end
@@ -44,7 +45,7 @@ module Lev
       end
     end
 
-    def save(hash)
+    def save(hash = {})
       if has_reserved_keys?(hash)
         raise IllegalArgument,
               "Caller cannot specify any reserved keys (#{RESERVED_KEYS})"
@@ -61,12 +62,7 @@ module Lev
     end
 
     def get(key)
-      if value = self.class.store.fetch(status_key)
-        decoded_hash = decode(value)
-        decoded_hash.merge(uuid: uuid)[key]
-      else
-        false
-      end
+      self.class.find(uuid)[key]
     end
 
     protected
@@ -128,14 +124,6 @@ module Lev
       elsif out_of && out_of < at
         raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls"
       end
-    end
-
-    def self.decode(value)
-      JSON.parse(value)
-    end
-
-    def decode(value)
-      self.class.decode(value)
     end
 
   end
