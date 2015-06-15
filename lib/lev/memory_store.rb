@@ -1,5 +1,5 @@
 module Lev
-  class SimpleMemoryStatusStore
+  class MemoryStore
 
     def initialize
       @store = {}

@@ -468,7 +468,7 @@ The store needs to respond to the following methods:
 1. fetch(key)
 2. write(key, value)
 
-The default store is essentially a hash (implemented in `Lev::SimpleMemoryStatusStore`).  Any `ActiveSupport::Cache::Store` will work.
+The default store is essentially a hash (implemented in `Lev::MemoryStore`).  Any `ActiveSupport::Cache::Store` will work.
 
 A routine's status can be retrieved with `Lev::Status.get(uuid_here)`.  This just returns a simple hash.  Notable keys are
 
