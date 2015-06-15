@@ -450,7 +450,7 @@ module Lev
     def initialize(status=nil)
       # If someone cares about the status, they'll pass it in; otherwise all
       # status updates go into the bit bucket.
-      @status = status || BlackHoleStatus.new
+      @status = status || Lev::BlackHoleStatus.new
     end
 
   protected

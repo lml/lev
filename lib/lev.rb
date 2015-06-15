@@ -57,6 +57,7 @@ module Lev
       attr_accessor :raise_fatal_errors
       attr_accessor :active_job_class
       attr_accessor :status_store
+      attr_accessor :status_store_namespace
 
       def initialize
         @form_error_class = 'error'
@@ -65,6 +66,7 @@ module Lev
         @raise_fatal_errors = false
         @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
         @status_store = Lev::SimpleMemoryStatusStore.new
+        @status_store_namespace = "lev_status"
         super
       end
     end

@@ -97,7 +97,7 @@ module Lev
     end
 
     def status_key(uuid)
-      "status:#{uuid}" # TODO make this namespace configurable
+      "#{Lev.configuration.status_store_namespace}:#{uuid}"
     end
 
     def has_reserved_keys?(hash)
