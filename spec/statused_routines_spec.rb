@@ -71,29 +71,47 @@ RSpec.describe 'Statused Routines' do
   end
 
   describe '#set_progress' do
-    it 'requires a positive `at` integer value' do
+    context 'when `out_of` is supplied' do
+      it 'requires a positive `at` float or integer' do
+        expect {
+          status.set_progress(nil, 1)
+        }.to raise_error(Lev::IllegalArgument)
 
-      expect {
-        status.set_progress(nil)
-      }.to raise_error(Lev::IllegalArgument)
+        expect {
+          status.set_progress(-1, 1)
+        }.to raise_error(Lev::IllegalArgument)
 
-      expect {
-        status.set_progress(-1)
-      }.to raise_error(Lev::IllegalArgument)
+        expect {
+          status.set_progress(2, 5)
+        }.not_to raise_error
+      end
 
-      expect {
-        status.set_progress(1)
-      }.not_to raise_error
+      it 'requires `out_of` to be greater than `at`' do
+        expect {
+          status.set_progress(15, 8)
+        }.to raise_error(Lev::IllegalArgument)
+
+        expect {
+          status.set_progress(5, 10)
+        }.not_to raise_error
+      end
     end
 
-    it 'requires `out_of` to be greater than `at` if set' do
-      expect {
-        status.set_progress(15, 8)
-      }.to raise_error(Lev::IllegalArgument)
+    context 'without out_of specified' do
+      it 'requires `at` to be a float between 0.0 and 1.0' do
+        expect {
+          status.set_progress(1.1)
+        }.to raise_error(Lev::IllegalArgument)
 
-      expect {
-        status.set_progress(5, 10)
-      }.not_to raise_error
+        expect {
+          status.set_progress(-1)
+        }.to raise_error(Lev::IllegalArgument)
+
+        expect {
+          status.set_progress(0.78)
+        }.not_to raise_error
+      end
     end
+
   end
 end
