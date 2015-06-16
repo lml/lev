@@ -32,11 +32,12 @@ module Lev
     end
 
     def set_progress(at, out_of = nil)
-      prevent_faulty_arguments(at, out_of)
+      progress = compute_fractional_progress(at, out_of)
 
-      if set_status_progress(at, out_of) == 1.0
-        set(state: STATE_COMPLETED)
-      end
+      data_to_set = { progress: progress }
+      data_to_set[:state] = STATE_COMPLETED if 1.0 == progress
+
+      set(data_to_set)
     end
 
     STATES.each do |state|
@@ -105,25 +106,18 @@ module Lev
       end
     end
 
-    def set_status_progress(at, out_of)
-      if out_of.nil? && (at < 0 || at > 1)
-        raise IllegalArgument,
-              "If `out_of` not specified, `at` must be in the range [0.0, 1.0]"
-      elsif out_of.nil?
-        set(progress: at)
-      else
-        set(progress: (at.to_f / out_of.to_f))
-      end
-    end
-
-    def prevent_faulty_arguments(at, out_of)
+    def compute_fractional_progress(at, out_of)
       if at.nil?
         raise IllegalArgument, "Must specify at least `at` argument to `progress` call"
       elsif at < 0
         raise IllegalArgument, "progress cannot be negative (at=#{at})"
       elsif out_of && out_of < at
         raise IllegalArgument, "`out_of` must be greater than `at` in `progress` calls"
+      elsif out_of.nil? && (at < 0 || at > 1)
+        raise IllegalArgument, "If `out_of` not specified, `at` must be in the range [0.0, 1.0]"
       end
+
+      at.to_f / (out_of || 1).to_f
     end
 
   end
