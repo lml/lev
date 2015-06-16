@@ -482,7 +482,7 @@ Other routine-specific keys (set with a `save` call) are also present.
 **Notes:**
 
 1. Don't try to write a status store that uses the ActiveRecord database, as the database changes would only be seen when the routine completes and its transaction is committed.
-2. Job killing hasn't been implemented yet, but shouldn't be too bad.  For routines run in a transaction (which are frankly the only ones you'd want to kill), we can likely kill them by raising `ActiveRecord::Rollback`.
+2. Job killing hasn't been implemented yet, but shouldn't be too bad.  For routines run in a transaction (which are frankly the only ones you'd want to kill), we can likely kill them by raising an exception or similar to cause a rollback (will need to have good tests to prove that).
 
 ## Handlers
 
