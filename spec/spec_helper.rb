@@ -4,6 +4,12 @@
 # loaded once.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+
+require 'active_job'
+
+ActiveJob::Base.queue_adapter = :test
+ActiveJob::Base.logger = ::Logger.new(nil)
+
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
   config.filter_run :focus

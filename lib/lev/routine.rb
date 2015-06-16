@@ -185,11 +185,13 @@ module Lev
       attr_reader :outputs
       attr_reader :errors
 
-      def initialize
-        @outputs = Outputs.new
-        @errors = Errors.new
+      def initialize(outputs, errors)
+        @outputs = outputs
+        @errors = errors
       end
     end
+
+    attr_reader :uuid
 
     def self.included(base)
       base.extend(ClassMethods)
@@ -211,22 +213,36 @@ module Lev
           @active_job_class ||= const_set("ActiveJob",
             Class.new(Lev.configuration.active_job_class) do
               queue_as do
-                parent_routine.active_job_queue
+                routine_class.active_job_queue
               end
 
-              def parent_routine
+              def routine_class
                 self.class.parent
               end
 
               def perform(*args, &block)
-                parent_routine.call(*args, &block)
+                # perform_later made a status uuid be the last argument
+                uuid = args.pop
+                routine_instance = routine_class.new(Lev::Status.new(uuid))
+                routine_instance.call(*args, &block)
               end
             end
           )
         end
 
         def perform_later(*args, &block)
+          # To enable tracking of this job's status, create a new Status object
+          # and push it on to the arguments so that in `perform` it can be peeled
+          # off and handed to the routine instance.  The Status UUID is returned
+          # so that callers can track the status.
+
+          status = Lev::Status.new
+          status.queued!
+          args.push(status.uuid)
+
           active_job_class.perform_later(*args, &block)
+
+          status.uuid
         end
 
         def active_job_queue
@@ -282,6 +298,8 @@ module Lev
     def call(*args, &block)
       @after_transaction_blocks = []
 
+      status.working!
+
       in_transaction do
         catch :fatal_errors_encountered do
           begin
@@ -297,6 +315,8 @@ module Lev
       @after_transaction_blocks.each do |block|
         block.call
       end
+
+      status.completed! if !errors?
 
       result
     end
@@ -402,11 +422,7 @@ module Lev
     end
 
     def fatal_error(args={})
-      if topmost_runner.class.raise_fatal_errors?
-        raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
-      else
-        errors.add(true, args)
-      end
+      errors.add(true, args)
     end
 
     def nonfatal_error(args={})
@@ -431,13 +447,24 @@ module Lev
       @after_transaction_blocks.push(block)
     end
 
-  protected
-
-    def result
-      @result ||= Result.new
+    def initialize(status = nil)
+      # If someone cares about the status, they'll pass it in; otherwise all
+      # status updates go into the bit bucket.
+      @status = status || Lev::BlackHoleStatus.new
     end
 
+  protected
+
+    attr_reader :status
     attr_writer :runner
+
+    def result
+      @result ||= Result.new(
+        Outputs.new,
+        Errors.new(status,
+                   topmost_runner.class.raise_fatal_errors?)
+      )
+    end
 
     def outputs
       result.outputs
