@@ -447,16 +447,21 @@ module Lev
       @after_transaction_blocks.push(block)
     end
 
+    # Note that the parent may neglect to call super, leading to this method never being called.
+    # Do not perform any initialization here that cannot be safely skipped
     def initialize(status = nil)
       # If someone cares about the status, they'll pass it in; otherwise all
       # status updates go into the bit bucket.
-      @status = status || Lev::BlackHoleStatus.new
+      @status = status
     end
 
   protected
 
-    attr_reader :status
     attr_writer :runner
+
+    def status
+       @status ||= Lev::BlackHoleStatus.new
+    end
 
     def result
       @result ||= Result.new(
