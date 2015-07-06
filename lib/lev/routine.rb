@@ -267,6 +267,11 @@ module Lev
         transaction_isolation.replace_if_more_isolated(routine_class.transaction_isolation)
       end
 
+      def uses_routine_verbatim(routine_class, options = {})
+        options.merge!(translations: { outputs: { type: :verbatim } })
+        uses_routine(routine_class, options)
+      end
+
       def transaction_isolation
         @transaction_isolation ||= TransactionIsolation.mysql_default
       end

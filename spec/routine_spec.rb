@@ -18,6 +18,31 @@ describe Lev::Routine do
         unknown_method_call
       end
     }
+
+    stub_const 'SubRoutine', Class.new
+    SubRoutine.class_eval {
+      lev_routine
+
+      def exec
+        outputs[:sub] = :routine
+      end
+    }
+
+    stub_const 'UsesRoutineVerbatim', Class.new
+    UsesRoutineVerbatim.class_eval {
+      lev_routine
+      uses_routine_verbatim SubRoutine
+
+      def exec
+        run(:sub_routine)
+      end
+    }
+  end
+
+  describe '#uses_routine_verbatim' do
+    it 'sets the outputs translations to verbatim' do
+      expect(UsesRoutineVerbatim.call.outputs.sub).to eq(:routine)
+    end
   end
 
   it "raised errors should propagate" do
