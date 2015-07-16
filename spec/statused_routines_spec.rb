@@ -21,8 +21,8 @@ RSpec.describe 'Statused Routines' do
     end
 
     context 'inline activejob mode' do
-      before { ActiveJob::Base.queue_adapter = :inline }
-      after { ActiveJob::Base.queue_adapter = :test }
+      before { ::ActiveJob::Base.queue_adapter = :inline }
+      after { ::ActiveJob::Base.queue_adapter = :test }
 
       it 'sets status to working when called' do
         expect_any_instance_of(Lev::Status).to receive(:working!)

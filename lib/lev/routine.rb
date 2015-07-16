@@ -209,13 +209,9 @@ module Lev
       end
 
       if defined?(::ActiveJob)
-        def active_job_class
-          Lev.configuration.active_job_class
-        end
-
         def perform_later(*args, &block)
           # Delegate to a subclass of Lev::Routine::ActiveJob::Base
-          active_job_class.perform_later(self, *args, &block)
+          Lev::ActiveJob::Base.perform_later(self, *args, &block)
         end
 
         def active_job_queue
