@@ -68,7 +68,7 @@ module Lev
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @active_job_class = defined?(ActiveJob) ? ActiveJob::Base : nil
+        @active_job_class = defined?(Lev::Routine::ActiveJob) ? Lev::Routine::ActiveJob::Base : nil
         @status_store = Lev::MemoryStore.new
         @status_store_namespace = "lev_status"
         super
