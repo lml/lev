@@ -208,41 +208,10 @@ module Lev
         result.outputs.send(@express_output)
       end
 
-      if defined?(ActiveJob)
-        def active_job_class
-          @active_job_class ||= const_set("ActiveJob",
-            Class.new(Lev.configuration.active_job_class) do
-              queue_as do
-                routine_class.active_job_queue
-              end
-
-              def routine_class
-                self.class.parent
-              end
-
-              def perform(*args, &block)
-                # perform_later made a status uuid be the last argument
-                uuid = args.pop
-                routine_instance = routine_class.new(Lev::Status.new(uuid))
-                routine_instance.call(*args, &block)
-              end
-            end
-          )
-        end
-
+      if defined?(::ActiveJob)
         def perform_later(*args, &block)
-          # To enable tracking of this job's status, create a new Status object
-          # and push it on to the arguments so that in `perform` it can be peeled
-          # off and handed to the routine instance.  The Status UUID is returned
-          # so that callers can track the status.
-
-          status = Lev::Status.new
-          status.queued!
-          args.push(status.uuid)
-
-          active_job_class.perform_later(*args, &block)
-
-          status.uuid
+          # Delegate to a subclass of Lev::Routine::ActiveJob::Base
+          Lev::ActiveJob::Base.perform_later(self, *args, &block)
         end
 
         def active_job_queue

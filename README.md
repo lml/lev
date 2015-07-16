@@ -433,15 +433,7 @@ class MyRoutine
 end
 ```
 
-By default also, jobs use ActiveJob::Base as the class, but you can configure this:
-
-```ruby
-Lev.configure do |config|
-  config.active_job_class = TrackableJob
-end
-```
-
-Routines run as ActiveJobs can also publish there status somewhere it can be listened to (e.g. to Redis).
+Routines run as ActiveJobs can also publish their status somewhere it can be listened to (e.g. to Redis).
 
 Routines have a `status` object and can call the following methods:
 
