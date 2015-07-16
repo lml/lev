@@ -24,8 +24,8 @@ require "lev/form_builder"
 require "lev/delegate_to_routine"
 require "lev/transaction_isolation"
 
+require 'lev/active_job'
 require 'lev/memory_store'
-
 require 'lev/status'
 require 'lev/black_hole_status'
 
@@ -68,7 +68,7 @@ module Lev
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @active_job_class = defined?(Lev::Routine::ActiveJob) ? Lev::Routine::ActiveJob::Base : nil
+        @active_job_class = defined?(Lev::ActiveJob) ? Lev::ActiveJob::Base : nil
         @status_store = Lev::MemoryStore.new
         @status_store_namespace = "lev_status"
         super
