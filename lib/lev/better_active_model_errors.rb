@@ -257,7 +257,7 @@ module Lev
       end
 
       self[attribute] << normalized_message
-      self.types[attribute] << message if message.is_a?(Symbol)
+      self.types[attribute] << message.try(:to_sym)
     end
 
     # Will add an error message to each of the attributes in +attributes+ that is empty.
