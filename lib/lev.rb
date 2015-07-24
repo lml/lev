@@ -26,6 +26,7 @@ require "lev/transaction_isolation"
 
 require 'lev/active_job'
 require 'lev/memory_store'
+require 'lev/redis_store'
 require 'lev/status'
 require 'lev/black_hole_status'
 
