@@ -32,7 +32,10 @@ module Lev
     end
 
     def self.jobs
-      job_ids.map { |id| Job.new(id) }
+      job_ids.map do |id|
+        attrs = { id: id }.merge(find(id))
+        Job.new(attrs)
+      end
     end
 
     def set_progress(at, out_of = nil)
