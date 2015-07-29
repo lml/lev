@@ -16,26 +16,42 @@ module Lev
       STATE_KILLED
     ].freeze
 
-    attr_reader :uuid
+    def initialize(attrs = {})
+      attrs.each do |k, v|
+        instance_variable_set("@#{k}", v)
+      end
 
-    def initialize(uuid = nil)
-      @uuid = uuid || SecureRandom.uuid
+      @uuid ||= SecureRandom.uuid
+
       save
     end
 
     def self.find(uuid)
+      attrs = { uuid: uuid }
+
       if status = store.fetch(status_key(uuid))
-        JSON.parse(status)
+        attrs.merge!(JSON.parse(status))
       else
-        nil
+        attrs.merge!(state: 'unknown')
       end
+
+      new(attrs)
     end
 
-    def self.jobs
-      job_ids.map do |id|
-        attrs = { id: id }.merge(find(id))
-        Job.new(attrs)
-      end
+    def id
+      @uuid
+    end
+
+    def status
+      @state
+    end
+
+    def progress
+      @progress ||= set_progress(0)
+    end
+
+    def self.all
+      job_ids.map { |id| find(id) }
     end
 
     def set_progress(at, out_of = nil)
@@ -45,6 +61,8 @@ module Lev
       data_to_set[:state] = STATE_COMPLETED if 1.0 == progress
 
       set(data_to_set)
+
+      progress
     end
 
     STATES.each do |state|
@@ -63,14 +81,25 @@ module Lev
     end
 
     def add_error(error, options = { })
+      @errors ||= []
+
       options = { is_fatal: false }.merge(options)
-      push('errors', { is_fatal: options[:is_fatal],
-                       code: error.code,
-                       message: error.message })
+
+      @errors << { is_fatal: options[:is_fatal],
+                   code: error.code,
+                   message: error.message }
+
+      set(errors: @errors)
     end
 
-    def get(key)
-      self.class.find(uuid)[key]
+    def as_json(options = {})
+      json = { id: id, status: status, progress: progress }
+      [options[:with]].flatten.each { |w| json[w] = send(w) }
+      json
+    end
+
+    def method_missing(method_name, *args)
+      instance_variable_get("@#{method_name}")
     end
 
     protected
@@ -87,22 +116,34 @@ module Lev
     end
 
     def set(incoming_hash)
-      if existing_settings = self.class.find(uuid)
+      if existing_settings.keys.any?
         incoming_hash = existing_settings.merge(incoming_hash)
+      end
+
+      incoming_hash.each do |k, v|
+        instance_variable_set("@#{k}", v)
       end
 
       self.class.store.write(status_key, incoming_hash.to_json)
       track_job_id
     end
 
+    def existing_settings
+      if status = self.class.store.fetch(status_key)
+        JSON.parse(status)
+      else
+        {}
+      end
+    end
+
     def track_job_id
       ids = self.class.job_ids
-      ids << uuid
+      ids << @uuid
       self.class.store.write(self.class.status_key('lev_status_uuids'), ids.uniq)
     end
 
     def status_key
-      self.class.status_key(uuid)
+      self.class.status_key(@uuid)
     end
 
     def self.status_key(uuid)
@@ -114,13 +155,13 @@ module Lev
     end
 
     def push(key, new_item)
-      new_value = (get(key) || []).push(new_item)
+      new_value = (send(key) || []).push(new_item)
       set(key => new_value)
     end
 
     STATES.each do |state|
       define_method("#{state}?") do
-        get('state') == state
+        status == state
       end
     end
 

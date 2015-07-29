@@ -17,7 +17,7 @@ RSpec.describe 'Statused Routines' do
       uuid = StatusedRoutine.perform_later
       status = Lev::Status.find(uuid)
 
-      expect(status['state']).to eq(Lev::Status::STATE_QUEUED)
+      expect(status.status).to eq(Lev::Status::STATE_QUEUED)
     end
 
     context 'inline activejob mode' do
@@ -32,8 +32,8 @@ RSpec.describe 'Statused Routines' do
       it 'completes the status object on completion, returning other data' do
         uuid = StatusedRoutine.perform_later
         status = Lev::Status.find(uuid)
-        expect(status['state']).to eq(Lev::Status::STATE_COMPLETED)
-        expect(status['progress']).to eq(0.9)
+        expect(status.status).to eq(Lev::Status::STATE_COMPLETED)
+        expect(status.progress).to eq(0.9)
       end
     end
   end
@@ -59,7 +59,7 @@ RSpec.describe 'Statused Routines' do
 
     it 'saves the hash given and writes them to the status' do
       status.save(something: 'else')
-      expect(status.get('something')).to eq('else')
+      expect(status.something).to eq('else')
     end
   end
 
@@ -67,9 +67,9 @@ RSpec.describe 'Statused Routines' do
     it 'adds the error object data to the status object' do
       errors = Lev::Error.new(code: 'bad', message: 'awful')
       status.add_error(errors)
-      expect(status.get('errors')).to eq([{ 'is_fatal' => false,
-                                            'code' => 'bad',
-                                            'message' => 'awful' }])
+      expect(status.errors).to eq([{ is_fatal: false,
+                                     code: 'bad',
+                                     message: 'awful' }])
     end
   end
 
@@ -108,8 +108,7 @@ RSpec.describe 'Statused Routines' do
   describe '#set_progress' do
     it 'sets the progress key on the status object' do
       status.set_progress(8, 10)
-      progress = status.get('progress')
-      expect(progress).to eq(0.8)
+      expect(status.progress).to eq(0.8)
     end
 
     context 'when `out_of` is supplied' do

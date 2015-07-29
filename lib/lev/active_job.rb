@@ -12,11 +12,11 @@ if defined?(::ActiveJob)
           # so that callers can track the status.
           status = Lev::Status.new
           status.queued!
-          args.push(status.uuid)
+          args.push(status.id)
 
           super(*args, &block)
 
-          status.uuid
+          status.id
         end
 
         def perform(*args, &block)
@@ -24,7 +24,7 @@ if defined?(::ActiveJob)
           uuid = args.pop
           routine_class = Kernel.const_get(args.pop)
 
-          routine_instance = routine_class.new(Lev::Status.new(uuid))
+          routine_instance = routine_class.new(Lev::Status.new(uuid: uuid))
           routine_instance.call(*args, &block)
         end
       end

@@ -7,15 +7,22 @@ RSpec.describe Lev::Status do
     def exec; end
   end
 
-  describe '.jobs' do
-    it 'returns all job objects with the UUID and the status information' do
-      allow(SecureRandom).to receive(:uuid) { '123abc' }
+  subject(:job) { described_class.all.last }
 
-      DelayedRoutine.perform_later
-      job = described_class.jobs.last
+  before do
+    Lev.configuration.status_store.clear
+    allow(SecureRandom).to receive(:uuid) { '123abc' }
+    DelayedRoutine.perform_later
+  end
 
-      expect(job.id).to eq('123abc')
-      expect(job.status).to eq('queued')
-    end
+  it 'behaves as a nice ruby object' do
+    expect(subject.id).to eq('123abc')
+    expect(subject.status).to eq(Lev::Status::STATE_QUEUED)
+    expect(subject.progress).to eq(0.0)
+  end
+
+  it 'is unknown when not found' do
+    foo = described_class.find('noooooo')
+    expect(foo.status).to eq('unknown')
   end
 end
