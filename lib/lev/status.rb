@@ -31,6 +31,10 @@ module Lev
       end
     end
 
+    def self.jobs
+      job_ids.map { |id| Job.new(id) }
+    end
+
     def set_progress(at, out_of = nil)
       progress = compute_fractional_progress(at, out_of)
 
@@ -75,12 +79,23 @@ module Lev
       Lev.configuration.status_store
     end
 
+    def self.job_ids
+      store.fetch(status_key('lev_status_uuids')) || []
+    end
+
     def set(incoming_hash)
       if existing_settings = self.class.find(uuid)
         incoming_hash = existing_settings.merge(incoming_hash)
       end
 
       self.class.store.write(status_key, incoming_hash.to_json)
+      track_job_id
+    end
+
+    def track_job_id
+      ids = self.class.job_ids
+      ids << uuid
+      self.class.store.write(self.class.status_key('lev_status_uuids'), ids.uniq)
     end
 
     def status_key

@@ -13,5 +13,9 @@ module Lev
       @store[key] = value
     end
 
+    def clear
+      @store.clear
+    end
+
   end
 end
