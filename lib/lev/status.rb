@@ -7,13 +7,15 @@ module Lev
     STATE_COMPLETED = 'completed'
     STATE_FAILED = 'failed'
     STATE_KILLED = 'killed'
+    STATE_UNKNOWN = 'unknown'
 
     STATES = [
       STATE_QUEUED,
       STATE_WORKING,
       STATE_COMPLETED,
       STATE_FAILED,
-      STATE_KILLED
+      STATE_KILLED,
+      STATE_UNKNOWN
     ].freeze
 
     def initialize(attrs = {})
@@ -32,7 +34,7 @@ module Lev
       if status = store.fetch(status_key(uuid))
         attrs.merge!(JSON.parse(status))
       else
-        attrs.merge!(state: 'unknown')
+        attrs.merge!(state: STATE_UNKNOWN)
       end
 
       new(attrs)

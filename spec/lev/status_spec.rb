@@ -23,6 +23,6 @@ RSpec.describe Lev::Status do
 
   it 'is unknown when not found' do
     foo = described_class.find('noooooo')
-    expect(foo.status).to eq('unknown')
+    expect(foo.status).to eq(Lev::Status::STATE_UNKNOWN)
   end
 end
