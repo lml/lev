@@ -92,6 +92,14 @@ module Lev
       instance_variable_get("@#{method_name}") || super
     end
 
+    def respond_to?(method_name)
+      if method_name.match /\?$/
+        super
+      else
+        instance_variable_get("@#{method_name}").present? || super
+      end
+    end
+
     protected
     RESERVED_KEYS = [:id, :status, :progress, :errors]
 

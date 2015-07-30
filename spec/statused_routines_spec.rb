@@ -76,6 +76,7 @@ RSpec.describe 'Statused Routines' do
 
     it 'saves the hash given and writes them to the status' do
       status.save(something: 'else')
+      expect(status).to respond_to(:something)
       expect(status.something).to eq('else')
     end
   end
