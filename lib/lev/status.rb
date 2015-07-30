@@ -80,19 +80,28 @@ module Lev
       stored
     end
 
-    def set(incoming_hash)
-      incoming_hash = stored.merge(incoming_hash)
-      incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
-      self.class.store.write(status_key, incoming_hash.to_json)
-      track_job_id
+    def save(incoming_hash)
+      if reserved = incoming_hash.select { |k, _| RESERVED_KEYS.include?(k) }.first
+        raise IllegalArgument, "Cannot set reserved key: #{reserved[0]}"
+      else
+        set(incoming_hash)
+      end
     end
-    alias :save :set
 
     def method_missing(method_name, *args)
       instance_variable_get("@#{method_name}") || super
     end
 
     protected
+    RESERVED_KEYS = [:id, :status, :progress, :errors]
+
+    def set(incoming_hash)
+      incoming_hash = stored.merge(incoming_hash)
+      incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
+      self.class.store.write(status_key, incoming_hash.to_json)
+      track_job_id
+    end
+
     def self.store
       Lev.configuration.status_store
     end

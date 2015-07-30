@@ -55,6 +55,31 @@ RSpec.describe 'Statused Routines' do
     end
   end
 
+  describe '#save' do
+    it 'prevents the use of reserved keys' do
+      expect {
+        status.save(progress: 'blocked')
+      }.to raise_error(Lev::IllegalArgument)
+
+      expect {
+        status.save(id: 'blocked')
+      }.to raise_error(Lev::IllegalArgument)
+
+      expect {
+        status.save(status: 'blocked')
+      }.to raise_error(Lev::IllegalArgument)
+
+      expect {
+        status.save(errors: 'blocked')
+      }.to raise_error(Lev::IllegalArgument)
+    end
+
+    it 'saves the hash given and writes them to the status' do
+      status.save(something: 'else')
+      expect(status.something).to eq('else')
+    end
+  end
+
   describe 'dynamic status setters/getters' do
     it 'is queued' do
       expect(status).to be_queued
