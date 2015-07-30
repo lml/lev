@@ -66,7 +66,6 @@ module Lev
     end
 
     def add_error(error, options = { })
-      @errors ||= []
       options = { is_fatal: false }.merge(options)
       @errors << { is_fatal: options[:is_fatal],
                    code: error.code,
