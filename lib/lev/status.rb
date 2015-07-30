@@ -74,6 +74,8 @@ module Lev
       set(errors: @errors)
     end
 
+    # Rails compatibility
+    # returns a Hash of all key-value pairs that have been #set()
     def as_json(options = {})
       stored
     end
