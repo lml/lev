@@ -14,8 +14,8 @@ RSpec.describe 'Statused Routines' do
 
   context 'in a routine' do
     it 'queues the status object on queue' do
-      uuid = StatusedRoutine.perform_later
-      status = Lev::Status.find(uuid)
+      id = StatusedRoutine.perform_later
+      status = Lev::Status.find(id)
 
       expect(status.status).to eq(Lev::Status::STATE_QUEUED)
     end
@@ -30,8 +30,8 @@ RSpec.describe 'Statused Routines' do
       end
 
       it 'completes the status object on completion, returning other data' do
-        uuid = StatusedRoutine.perform_later
-        status = Lev::Status.find(uuid)
+        id = StatusedRoutine.perform_later
+        status = Lev::Status.find(id)
         expect(status.status).to eq(Lev::Status::STATE_COMPLETED)
         expect(status.progress).to eq(0.9)
       end
@@ -45,7 +45,7 @@ RSpec.describe 'Statused Routines' do
       }.to raise_error(Lev::IllegalArgument)
 
       expect {
-        status.save(uuid: 'blocked')
+        status.save(id: 'blocked')
       }.to raise_error(Lev::IllegalArgument)
 
       expect {

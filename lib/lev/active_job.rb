@@ -21,10 +21,10 @@ if defined?(::ActiveJob)
 
         def perform(*args, &block)
           # Pop arguments added by perform_later
-          uuid = args.pop
+          id = args.pop
           routine_class = Kernel.const_get(args.pop)
 
-          routine_instance = routine_class.new(Lev::Status.new(uuid: uuid))
+          routine_instance = routine_class.new(Lev::Status.new(id: id))
           routine_instance.call(*args, &block)
         end
       end

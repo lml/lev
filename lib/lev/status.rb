@@ -2,6 +2,8 @@ require 'json'
 
 module Lev
   class Status
+    attr_reader :id
+
     STATE_QUEUED = 'queued'
     STATE_WORKING = 'working'
     STATE_COMPLETED = 'completed'
@@ -23,25 +25,21 @@ module Lev
         instance_variable_set("@#{k}", v)
       end
 
-      @uuid ||= SecureRandom.uuid
+      @id ||= SecureRandom.uuid
 
       save
     end
 
-    def self.find(uuid)
-      attrs = { uuid: uuid }
+    def self.find(id)
+      attrs = { id: id }
 
-      if status = store.fetch(status_key(uuid))
+      if status = store.fetch(status_key(id))
         attrs.merge!(JSON.parse(status))
       else
         attrs.merge!(state: STATE_UNKNOWN)
       end
 
       new(attrs)
-    end
-
-    def id
-      @uuid
     end
 
     def status
@@ -105,7 +103,7 @@ module Lev
     end
 
     protected
-    RESERVED_KEYS = [:progress, :uuid, :state, :errors]
+    RESERVED_KEYS = [:progress, :id, :state, :errors]
 
     def self.store
       # Nice to get the store from lev config each time so it isn't serialized
@@ -114,7 +112,7 @@ module Lev
     end
 
     def self.job_ids
-      store.fetch(status_key('lev_status_uuids')) || []
+      store.fetch(status_key('lev_status_ids')) || []
     end
 
     def set(incoming_hash)
@@ -140,16 +138,16 @@ module Lev
 
     def track_job_id
       ids = self.class.job_ids
-      ids << @uuid
-      self.class.store.write(self.class.status_key('lev_status_uuids'), ids.uniq)
+      ids << @id
+      self.class.store.write(self.class.status_key('lev_status_ids'), ids.uniq)
     end
 
     def status_key
-      self.class.status_key(@uuid)
+      self.class.status_key(@id)
     end
 
-    def self.status_key(uuid)
-      "#{Lev.configuration.status_store_namespace}:#{uuid}"
+    def self.status_key(id)
+      "#{Lev.configuration.status_store_namespace}:#{id}"
     end
 
     def has_reserved_keys?(hash)

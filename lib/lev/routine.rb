@@ -191,7 +191,7 @@ module Lev
       end
     end
 
-    attr_reader :uuid
+    attr_reader :id
 
     def self.included(base)
       base.extend(ClassMethods)
