@@ -4,8 +4,8 @@ module Lev
   #
   class Errors < Array
 
-    def initialize(routine_status = nil, raise_fatal_errors = false)
-      @routine_status = routine_status || BlackHoleStatus.new
+    def initialize(routine_job = nil, raise_fatal_errors = false)
+      @routine_job = routine_job || NoBackgroundJob.new
       @raise_fatal_errors = raise_fatal_errors
     end
 
@@ -16,10 +16,10 @@ module Lev
       return if ignored_error_procs.any?{|proc| proc.call(error)}
       self.push(error)
 
-      routine_status.add_error(error, is_fatal: fail)
+      routine_job.add_error(error, is_fatal: fail)
 
       if fail
-        routine_status.failed!
+        routine_job.failed!
 
         if raise_fatal_errors
           raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
@@ -54,7 +54,7 @@ module Lev
 
   protected
 
-    attr_reader :routine_status
+    attr_reader :routine_job
     attr_reader :raise_fatal_errors
 
     def ignored_error_procs

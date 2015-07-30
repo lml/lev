@@ -267,7 +267,7 @@ module Lev
     def call(*args, &block)
       @after_transaction_blocks = []
 
-      status.working!
+      job.working!
 
       in_transaction do
         catch :fatal_errors_encountered do
@@ -285,7 +285,7 @@ module Lev
         block.call
       end
 
-      status.completed! if !errors?
+      job.completed! if !errors?
 
       result
     end
@@ -418,26 +418,23 @@ module Lev
 
     # Note that the parent may neglect to call super, leading to this method never being called.
     # Do not perform any initialization here that cannot be safely skipped
-    def initialize(status = nil)
-      # If someone cares about the status, they'll pass it in; otherwise all
-      # status updates go into the bit bucket.
-      @status = status
+    def initialize(job = nil)
+      # If someone cares about the job, they'll pass it in; otherwise all
+      # job updates go into the bit bucket.
+      @job = job
     end
 
   protected
 
     attr_writer :runner
 
-    def status
-       @status ||= Lev::BlackHoleStatus.new
+    def job
+       @job ||= Lev::NoBackgroundJob.new
     end
 
     def result
-      @result ||= Result.new(
-        Outputs.new,
-        Errors.new(status,
-                   topmost_runner.class.raise_fatal_errors?)
-      )
+      @result ||= Result.new(Outputs.new,
+                             Errors.new(job, topmost_runner.class.raise_fatal_errors?))
     end
 
     def outputs

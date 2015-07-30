@@ -1,7 +1,7 @@
 require 'json'
 
 module Lev
-  class Status
+  class BackgroundJob
     attr_reader :id, :status, :progress, :errors
 
     STATE_QUEUED = 'queued'
@@ -35,8 +35,8 @@ module Lev
     def self.find(id)
       attrs = { id: id }
 
-      if status = store.fetch(status_key(id))
-        attrs.merge!(JSON.parse(status))
+      if job = store.fetch(job_key(id))
+        attrs.merge!(JSON.parse(job))
       else
         attrs.merge!(status: STATE_UNKNOWN)
       end
@@ -105,20 +105,20 @@ module Lev
     def set(incoming_hash)
       incoming_hash = stored.merge(incoming_hash)
       incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
-      self.class.store.write(status_key, incoming_hash.to_json)
+      self.class.store.write(job_key, incoming_hash.to_json)
       track_job_id
     end
 
     def self.store
-      Lev.configuration.status_store
+      Lev.configuration.job_store
     end
 
     def self.job_ids
-      store.fetch(status_key('lev_status_ids')) || []
+      store.fetch(job_key('lev_job_ids')) || []
     end
 
     def stored
-      if found = self.class.store.fetch(status_key)
+      if found = self.class.store.fetch(job_key)
         JSON.parse(found)
       else
         {}
@@ -128,15 +128,15 @@ module Lev
     def track_job_id
       ids = self.class.job_ids
       ids << @id
-      self.class.store.write(self.class.status_key('lev_status_ids'), ids.uniq)
+      self.class.store.write(self.class.job_key('lev_job_ids'), ids.uniq)
     end
 
-    def status_key
-      self.class.status_key(@id)
+    def job_key
+      self.class.job_key(@id)
     end
 
-    def self.status_key(id)
-      "#{Lev.configuration.status_store_namespace}:#{id}"
+    def self.job_key(id)
+      "#{Lev.configuration.job_store_namespace}:#{id}"
     end
 
     def has_reserved_keys?(hash)

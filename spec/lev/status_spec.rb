@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Lev::Status do
+RSpec.describe Lev::BackgroundJob do
   class DelayedRoutine
     lev_routine
     protected
@@ -10,20 +10,20 @@ RSpec.describe Lev::Status do
   subject(:job) { described_class.all.last }
 
   before do
-    Lev.configuration.status_store.clear
+    Lev.configuration.job_store.clear
     allow(SecureRandom).to receive(:uuid) { '123abc' }
     DelayedRoutine.perform_later
   end
 
   it 'behaves as a nice ruby object' do
     expect(job.id).to eq('123abc')
-    expect(job.status).to eq(Lev::Status::STATE_QUEUED)
+    expect(job.status).to eq(Lev::BackgroundJob::STATE_QUEUED)
     expect(job.progress).to eq(0.0)
   end
 
   it 'is unknown when not found' do
     foo = described_class.find('noooooo')
-    expect(foo.status).to eq(Lev::Status::STATE_UNKNOWN)
+    expect(foo.status).to eq(Lev::BackgroundJob::STATE_UNKNOWN)
   end
 
   it 'uses as_json' do
@@ -31,7 +31,7 @@ RSpec.describe Lev::Status do
 
     expect(json).to eq({
       'id' => '123abc',
-      'status' => Lev::Status::STATE_QUEUED,
+      'status' => Lev::BackgroundJob::STATE_QUEUED,
       'progress' => 0.0,
       'errors' => []
     })

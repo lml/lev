@@ -26,11 +26,11 @@ RSpec.describe 'ActiveJob routines' do
     end
 
     it 'stores all the UUIDs of queued jobs' do
-      Lev.configuration.status_store.clear
+      Lev.configuration.job_store.clear
 
       job_id1 = LaterRoutine.perform_later
 
-      expect(Lev::Status.send(:job_ids)).to eq([job_id1])
+      expect(Lev::BackgroundJob.send(:job_ids)).to eq([job_id1])
     end
   end
 end
