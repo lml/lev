@@ -6,25 +6,25 @@ if defined?(::ActiveJob)
           queue_as routine_class.active_job_queue
           args.push(routine_class.to_s)
 
-          # To enable tracking of this job's status, create a new Status object
+          # To enable tracking of this job's status, create a new BackgroundJob object
           # and push it on to the arguments so that in `perform` it can be peeled
-          # off and handed to the routine instance.  The Status UUID is returned
+          # off and handed to the routine instance.  The BackgroundJob UUID is returned
           # so that callers can track the status.
-          status = Lev::Status.new
-          status.queued!
-          args.push(status.uuid)
+          job = Lev::BackgroundJob.new
+          job.queued!
+          args.push(job.id)
 
           super(*args, &block)
 
-          status.uuid
+          job.id
         end
 
         def perform(*args, &block)
           # Pop arguments added by perform_later
-          uuid = args.pop
+          id = args.pop
           routine_class = Kernel.const_get(args.pop)
 
-          routine_instance = routine_class.new(Lev::Status.new(uuid))
+          routine_instance = routine_class.new(Lev::BackgroundJob.new(id: id))
           routine_instance.call(*args, &block)
         end
       end

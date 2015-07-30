@@ -16,9 +16,21 @@ RSpec.describe 'ActiveJob routines' do
     end
 
     it 'can have the default queue overridden' do
+      ActiveJob::Base.queue_adapter.enqueued_jobs.clear
+
       LaterRoutine.perform_later
+
       queue_name = ActiveJob::Base.queue_adapter.enqueued_jobs.first[:queue]
+
       expect(queue_name).to eq('something_else')
+    end
+
+    it 'stores all the UUIDs of queued jobs' do
+      Lev.configuration.job_store.clear
+
+      job_id1 = LaterRoutine.perform_later
+
+      expect(Lev::BackgroundJob.send(:job_ids)).to eq([job_id1])
     end
   end
 end
