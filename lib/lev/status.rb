@@ -110,9 +110,6 @@ module Lev
       store.fetch(status_key('lev_status_ids')) || []
     end
 
-    def set_instance_vars(hash)
-    end
-
     def stored
       if found = self.class.store.fetch(status_key)
         JSON.parse(found)
