@@ -2,7 +2,7 @@ require 'json'
 
 module Lev
   class Status
-    attr_reader :id
+    attr_reader :id, :status, :progress, :errors
 
     STATE_QUEUED = 'queued'
     STATE_WORKING = 'working'
@@ -21,13 +21,15 @@ module Lev
     ].freeze
 
     def initialize(attrs = {})
-      attrs.each do |k, v|
-        instance_variable_set("@#{k}", v)
-      end
+      @id = attrs[:id] || attrs['id'] || SecureRandom.uuid
+      @status = attrs[:status] || attrs['status'] || STATE_QUEUED
+      @progress = attrs[:progress] || attrs['progress'] || set_progress(0)
+      @errors = attrs[:errors] || attrs['errors'] || []
 
-      @id ||= SecureRandom.uuid
-
-      save
+      set({ id: id,
+            status: status,
+            progress: progress,
+            errors: errors })
     end
 
     def self.find(id)
@@ -36,18 +38,10 @@ module Lev
       if status = store.fetch(status_key(id))
         attrs.merge!(JSON.parse(status))
       else
-        attrs.merge!(state: STATE_UNKNOWN)
+        attrs.merge!(status: STATE_UNKNOWN)
       end
 
       new(attrs)
-    end
-
-    def status
-      @state
-    end
-
-    def progress
-      @progress ||= set_progress(0)
     end
 
     def self.all
@@ -58,7 +52,7 @@ module Lev
       progress = compute_fractional_progress(at, out_of)
 
       data_to_set = { progress: progress }
-      data_to_set[:state] = STATE_COMPLETED if 1.0 == progress
+      data_to_set[:status] = STATE_COMPLETED if 1.0 == progress
 
       set(data_to_set)
 
@@ -67,47 +61,37 @@ module Lev
 
     STATES.each do |state|
       define_method("#{state}!") do
-        set(state: state)
-      end
-    end
-
-    def save(hash = {})
-      if has_reserved_keys?(hash)
-        raise IllegalArgument,
-              "Caller cannot specify any reserved keys (#{RESERVED_KEYS})"
-      else
-        set(hash)
+        set(status: state)
       end
     end
 
     def add_error(error, options = { })
       @errors ||= []
-
       options = { is_fatal: false }.merge(options)
-
       @errors << { is_fatal: options[:is_fatal],
                    code: error.code,
                    message: error.message }
-
       set(errors: @errors)
     end
 
     def as_json(options = {})
-      json = { id: id, status: status, progress: progress }
-      [options[:with]].flatten.each { |w| json[w] = send(w) }
-      json
+      stored
     end
 
+    def set(incoming_hash)
+      incoming_hash = stored.merge(incoming_hash)
+      incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
+      self.class.store.write(status_key, incoming_hash.to_json)
+      track_job_id
+    end
+    alias :save :set
+
     def method_missing(method_name, *args)
-      instance_variable_get("@#{method_name}")
+      instance_variable_get("@#{method_name}") || super
     end
 
     protected
-    RESERVED_KEYS = [:progress, :id, :state, :errors]
-
     def self.store
-      # Nice to get the store from lev config each time so it isn't serialized
-      # when activejobs are sent off to places like redis
       Lev.configuration.status_store
     end
 
@@ -115,22 +99,12 @@ module Lev
       store.fetch(status_key('lev_status_ids')) || []
     end
 
-    def set(incoming_hash)
-      if existing_settings.keys.any?
-        incoming_hash = existing_settings.merge(incoming_hash)
-      end
-
-      incoming_hash.each do |k, v|
-        instance_variable_set("@#{k}", v)
-      end
-
-      self.class.store.write(status_key, incoming_hash.to_json)
-      track_job_id
+    def set_instance_vars(hash)
     end
 
-    def existing_settings
-      if status = self.class.store.fetch(status_key)
-        JSON.parse(status)
+    def stored
+      if found = self.class.store.fetch(status_key)
+        JSON.parse(found)
       else
         {}
       end
