@@ -83,6 +83,8 @@ RSpec.describe 'Statused Routines' do
 
   describe 'dynamic status setters/getters' do
     it 'is queued' do
+      expect(status).not_to be_queued
+      status.queued!
       expect(status).to be_queued
     end
 
@@ -111,8 +113,6 @@ RSpec.describe 'Statused Routines' do
     end
 
     it 'is unknown' do
-      expect(status).not_to be_unknown
-      status.unknown!
       expect(status).to be_unknown
     end
   end

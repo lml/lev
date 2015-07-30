@@ -22,7 +22,7 @@ module Lev
 
     def initialize(attrs = {})
       @id = attrs[:id] || attrs['id'] || SecureRandom.uuid
-      @status = attrs[:status] || attrs['status'] || STATE_QUEUED
+      @status = attrs[:status] || attrs['status'] || STATE_UNKNOWN
       @progress = attrs[:progress] || attrs['progress'] || set_progress(0)
       @errors = attrs[:errors] || attrs['errors'] || []
 
