@@ -33,7 +33,7 @@ RSpec.describe 'Statused Routines' do
         id = StatusedRoutine.perform_later
         job = Lev::BackgroundJob.find(id)
         expect(job.status).to eq(Lev::BackgroundJob::STATE_COMPLETED)
-        expect(job.progress).to eq(0.9)
+        expect(job.progress).to eq(1.0)
       end
     end
   end

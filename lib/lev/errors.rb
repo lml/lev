@@ -22,7 +22,8 @@ module Lev
         routine_job.failed!
 
         if raise_fatal_errors
-          raise StandardError, args.to_a.map { |i| i.join(' ') }.join(' - ')
+          # Use special FatalError type so Routine doesn't re-add job errors
+          raise Lev::FatalError, args.to_a.map { |i| i.join(' ') }.join(' - ')
         else
           throw :fatal_errors_encountered
         end

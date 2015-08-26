@@ -100,10 +100,7 @@ end
 
 Additionally, see below for a discussion on how to transfer errors from ActiveRecord models.
 
-Any `StandardError` raised within a routine will be caught and transformed into a fatal error with `:kind` set to `:exception`.  The caller of this routine can choose to reraise this exception by calling `reraise_exception!` on the returned errors object:
-
-    result = MyRoutine.call(42)
-    result.errors.reraise_exception! # does nothing if there were no exception errors
+If an exception is raised in a routine, it will bubble out.  It will also fail the job status and add information about the exception to the job error list.
 
 Relatedly, a convenience method is provided if the caller wants to raise an exception if there were any errors returned (whether or not they themselves were caused by an exception)
 

@@ -23,7 +23,7 @@ module Lev
     def initialize(attrs = {})
       @id = attrs[:id] || attrs['id'] || SecureRandom.uuid
       @status = attrs[:status] || attrs['status'] || STATE_UNKNOWN
-      @progress = attrs[:progress] || attrs['progress'] || set_progress(0)
+      @progress = attrs[:progress] || attrs['progress'] || 0
       @errors = attrs[:errors] || attrs['errors'] || []
 
       set({ id: id,
@@ -35,8 +35,8 @@ module Lev
     def self.find(id)
       attrs = { id: id }
 
-      if job = store.fetch(job_key(id))
-        attrs.merge!(JSON.parse(job))
+      if job = fetch_and_parse(job_key(id))
+        attrs.merge!(job)
       else
         attrs.merge!(status: STATE_UNKNOWN)
       end
@@ -59,17 +59,22 @@ module Lev
       progress
     end
 
-    STATES.each do |state|
+    (STATES - [STATE_COMPLETED]).each do |state|
       define_method("#{state}!") do
         set(status: state)
       end
+    end
+
+    def completed!
+      set({status: STATE_COMPLETED, progress: 1.0})
     end
 
     def add_error(error, options = { })
       options = { is_fatal: false }.merge(options)
       @errors << { is_fatal: options[:is_fatal],
                    code: error.code,
-                   message: error.message }
+                   message: error.message,
+                   data: error.data }
       set(errors: @errors)
     end
 
@@ -103,6 +108,7 @@ module Lev
     RESERVED_KEYS = [:id, :status, :progress, :errors]
 
     def set(incoming_hash)
+      incoming_hash = incoming_hash.stringify_keys
       incoming_hash = stored.merge(incoming_hash)
       incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
       self.class.store.write(job_key, incoming_hash.to_json)
@@ -113,22 +119,25 @@ module Lev
       Lev.configuration.job_store
     end
 
+    def self.fetch_and_parse(job_key)
+      fetched = store.fetch(job_key)
+      return nil if fetched.nil?
+      JSON.parse(fetched).stringify_keys!
+    end
+
     def self.job_ids
       store.fetch(job_key('lev_job_ids')) || []
     end
 
     def stored
-      if found = self.class.store.fetch(job_key)
-        JSON.parse(found)
-      else
-        {}
-      end
+      self.class.fetch_and_parse(job_key) || {}
     end
 
     def track_job_id
       ids = self.class.job_ids
+      return if ids.include?(@id)
       ids << @id
-      self.class.store.write(self.class.job_key('lev_job_ids'), ids.uniq)
+      self.class.store.write(self.class.job_key('lev_job_ids'), ids)
     end
 
     def job_key
