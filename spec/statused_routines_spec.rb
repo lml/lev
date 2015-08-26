@@ -51,7 +51,8 @@ RSpec.describe 'Statused Routines' do
       job.add_error(errors)
       expect(job.errors).to eq([{ is_fatal: false,
                                      code: 'bad',
-                                     message: 'awful' }])
+                                     message: 'awful',
+                                     data: nil }])
     end
   end
 

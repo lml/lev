@@ -37,6 +37,7 @@ RSpec.describe 'ActiveJob routines' do
   it 'does not duplicate BackgroundJobs in `all`' do
     # Previous track_job_id implementation changed string objects in job_ids
     # resulting in duplicate objects in `all`
+    Lev.configuration.job_store.clear
     LaterRoutine.perform_later
     expect(Lev::BackgroundJob.all.count).to eq 1
   end
