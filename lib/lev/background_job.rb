@@ -48,6 +48,34 @@ module Lev
       job_ids.map { |id| find(id) }
     end
 
+    def self.incomplete
+      all.select { |j| !j.completed? }
+    end
+
+    def self.queued
+      all.select(&:queued?)
+    end
+
+    def self.working
+      all.select(&:working?)
+    end
+
+    def self.failed
+      all.select(&:failed?)
+    end
+
+    def self.killed
+      all.select(&:killed?)
+    end
+
+    def self.unknown
+      all.select(&:unknown?)
+    end
+
+    def self.complete
+      all.select(&:completed?)
+    end
+
     def set_progress(at, out_of = nil)
       progress = compute_fractional_progress(at, out_of)
 
