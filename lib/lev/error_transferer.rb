@@ -7,11 +7,11 @@ module Lev
       when ActiveRecord::Base, Lev::Paramifier
         source.errors.each_with_type_and_message do |attribute, type, message|
           target_routine.nonfatal_error(
-            code: type, 
+            code: type,
             data: {
               model: source,
               attribute: attribute
-            }, 
+            },
             kind: :activerecord,
             message: message,
             offending_inputs: input_mapper.map(attribute)

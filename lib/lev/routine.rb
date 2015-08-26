@@ -269,9 +269,9 @@ module Lev
 
       job.working!
 
-      in_transaction do
-        catch :fatal_errors_encountered do
-          begin
+      begin
+        in_transaction do
+          catch :fatal_errors_encountered do
             if self.class.delegates_to
               run(self.class.delegates_to, *args, &block)
             else
@@ -279,10 +279,22 @@ module Lev
             end
           end
         end
-      end
 
-      @after_transaction_blocks.each do |block|
-        block.call
+        @after_transaction_blocks.each do |block|
+          block.call
+        end
+      rescue Exception => e
+        # Let exceptions escape but make sure to note the error in the job
+        # if not already done
+        if !e.is_a?(Lev::FatalError)
+          error = Error.new(code: :exception,
+                            message: e.message,
+                            data: e.backtrace.first)
+          job.add_error(error, is_fatal: true)
+          job.failed!
+        end
+
+        raise e
       end
 
       job.completed! if !errors?
