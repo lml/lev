@@ -21,10 +21,11 @@ module Lev
     ].freeze
 
     def initialize(attrs = {})
-      @id = attrs[:id] || attrs['id'] || SecureRandom.uuid
-      @status = attrs[:status] || attrs['status'] || STATE_UNKNOWN
-      @progress = attrs[:progress] || attrs['progress'] || 0
-      @errors = attrs[:errors] || attrs['errors'] || []
+      attrs.stringify_keys!
+      @id = attrs['id'] || SecureRandom.uuid
+      @status = attrs['status'] || STATE_UNKNOWN
+      @progress = attrs['progress'] || 0
+      @errors = attrs['errors'] || []
 
       set({ id: id,
             status: status,
@@ -46,6 +47,34 @@ module Lev
 
     def self.all
       job_ids.map { |id| find(id) }
+    end
+
+    def self.incomplete
+      all.select { |j| !j.completed? }
+    end
+
+    def self.queued
+      all.select(&:queued?)
+    end
+
+    def self.working
+      all.select(&:working?)
+    end
+
+    def self.failed
+      all.select(&:failed?)
+    end
+
+    def self.killed
+      all.select(&:killed?)
+    end
+
+    def self.unknown
+      all.select(&:unknown?)
+    end
+
+    def self.complete
+      all.select(&:completed?)
     end
 
     def set_progress(at, out_of = nil)
