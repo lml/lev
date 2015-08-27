@@ -94,6 +94,12 @@ module Lev
       end
     end
 
+    STATES.each do |state|
+      define_method("#{state}?") do
+        status == state
+      end
+    end
+
     def completed!
       set({status: STATE_COMPLETED, progress: 1.0})
     end
@@ -184,12 +190,6 @@ module Lev
     def push(key, new_item)
       new_value = (send(key) || []).push(new_item)
       set(key => new_value)
-    end
-
-    STATES.each do |state|
-      define_method("#{state}?") do
-        status == state
-      end
     end
 
     def compute_fractional_progress(at, out_of)
