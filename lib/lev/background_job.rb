@@ -21,10 +21,11 @@ module Lev
     ].freeze
 
     def initialize(attrs = {})
-      @id = attrs[:id] || attrs['id'] || SecureRandom.uuid
-      @status = attrs[:status] || attrs['status'] || STATE_UNKNOWN
-      @progress = attrs[:progress] || attrs['progress'] || 0
-      @errors = attrs[:errors] || attrs['errors'] || []
+      attrs.stringify_keys!
+      @id = attrs['id'] || SecureRandom.uuid
+      @status = attrs['status'] || STATE_UNKNOWN
+      @progress = attrs['progress'] || 0
+      @errors = attrs['errors'] || []
 
       set({ id: id,
             status: status,
