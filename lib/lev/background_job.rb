@@ -128,6 +128,7 @@ module Lev
     end
 
     def method_missing(method_name, *args)
+      method_name = method_name.to_s.sub(/\?/, '')
       instance_variable_get("@#{method_name}") || super
     end
 
