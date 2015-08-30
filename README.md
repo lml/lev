@@ -438,13 +438,15 @@ Routines have a `job` object and can call the following methods:
   a counter towards a total, e.g. `set_progress(67,212)`.
 * `queued!` Sets the job status to 'queued'
 * `working!` Sets the job status to 'working'
-* `completed!` Sets the job status to 'completed'
+* `succeeded!` Sets the job status to 'succeeded'
 * `failed!` Sets the job status to 'failed'
 * `killed!` Sets the job status to 'killed'
 * `save(hash)` Takes a hash of key value pairs and writes those keys and values to the job status; there are several reserved keys which cannot be used (and which will blow up if you try to use them)
 * `add_error(is_fatal, error)` takes a boolean and a Lev `Error` object and adds its data to an array of `errors` in the job status hash.
 
-All routines have such a job object.  For plain vanilla routines not run as an active job, the job calls are no-ops.  When a routine is invoked with `perform_later`, the job object actually records the jobs to a store of your choice.  The store is configured in the Lev configuration block, e.g.:
+Routine job objects also have query methods to check if a job is in a given state, e.g. `queued?`.  `completed?` and `incomplete` convenience methods are provided as well.  A job is complete if it is failed or succeeded; incomplete if neither.  All job routines start in an `unqueued` state and will only stay there if queueing had a problem.  Scope-like class methods (e.g. `BackgroundJob.queued`) are provided to return all jobs in a given state.
+
+For plain vanilla routines not run as an active job, the job calls are no-ops.  When a routine is invoked with `perform_later`, the job object actually records the jobs to a store of your choice.  The store is configured in the Lev configuration block, e.g.:
 
 ```ruby
 Lev.configure do |config|

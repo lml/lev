@@ -297,7 +297,7 @@ module Lev
         raise e
       end
 
-      job.completed! if !errors?
+      job.succeeded! if !errors?
 
       result
     end

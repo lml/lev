@@ -24,7 +24,7 @@ describe Lev::BackgroundJob do
     end
 
     it 'is unknown when not found' do
-      foo = described_class.find('noooooo')
+      foo = described_class.find!('noooooo')
       expect(foo.status).to eq(described_class::STATE_UNKNOWN)
     end
 
@@ -56,7 +56,7 @@ describe Lev::BackgroundJob do
       expect(described_class.working.collect(&:id)).to include(job.id)
 
       job.failed!
-      expect(described_class.incomplete.collect(&:id)).to include(job.id)
+      expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
       expect(described_class.failed.collect(&:id)).to include(job.id)
 
       job.killed!
@@ -67,15 +67,22 @@ describe Lev::BackgroundJob do
       expect(described_class.incomplete.collect(&:id)).to include(job.id)
       expect(described_class.unknown.collect(&:id)).to include(job.id)
 
-      job.completed!
+      job.succeeded!
+      expect(described_class.succeeded.collect(&:id)).to include(job.id)
       expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
-      expect(described_class.complete.collect(&:id)).to include(job.id)
+      expect(described_class.succeeded.collect(&:id)).to include(job.id)
+    end
+
+    it 'has the unqueued scope' do
+      expect(described_class.unqueued.collect(&:id)).to eq []
+      unqueued_job = Lev::BackgroundJob.create
+      expect(described_class.unqueued.collect(&:id)).to include(unqueued_job.id)
     end
   end
 
-  it 'sets progress to 100% when completed' do
+  it 'sets progress to 100% when succeeded' do
     job = described_class.new
-    job.completed!
+    job.succeeded!
     expect(job.progress).to eq 1
   end
 
