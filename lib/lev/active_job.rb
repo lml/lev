@@ -13,8 +13,10 @@ if defined?(::ActiveJob)
           job = Lev::BackgroundJob.create
           args.push(job.id)
 
-          super(*args, &block)
+          # In theory we'd mark as queued right after the call to super, but this messes
+          # up when the activejob adapter runs the job right away
           job.queued!
+          super(*args, &block)
 
           job.id
         end
