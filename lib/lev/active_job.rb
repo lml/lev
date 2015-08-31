@@ -11,10 +11,10 @@ if defined?(::ActiveJob)
           # off and handed to the routine instance.  The BackgroundJob UUID is returned
           # so that callers can track the status.
           job = Lev::BackgroundJob.create
-          job.queued! # TODO should only be queued after successful super call
           args.push(job.id)
 
           super(*args, &block)
+          job.queued!
 
           job.id
         end
