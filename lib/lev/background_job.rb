@@ -20,8 +20,10 @@ module Lev
       STATE_UNKNOWN
     ].freeze
 
-    def initialize(attrs = {})
+    def initialize(attrs = {}, opts = {})
       attrs.stringify_keys!
+      opts[:write] = true if opts[:write].nil?
+
       @id = attrs['id'] || SecureRandom.uuid
       @status = attrs['status'] || STATE_UNKNOWN
       @progress = attrs['progress'] || 0
@@ -30,7 +32,7 @@ module Lev
       set({ id: id,
             status: status,
             progress: progress,
-            errors: errors })
+            errors: errors }) if opts[:write]
     end
 
     def self.find(id)
@@ -42,7 +44,7 @@ module Lev
         attrs.merge!(status: STATE_UNKNOWN)
       end
 
-      new(attrs)
+      new(attrs, { write: false })
     end
 
     def self.all
