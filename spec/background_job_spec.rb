@@ -86,4 +86,15 @@ describe Lev::BackgroundJob do
     expect(job.progress).to eq 1
   end
 
+  describe '.find!' do
+    let!(:job) { described_class.create }
+
+    it 'does not write to store when job exists' do
+      expect(described_class.store).to_not receive(:write)
+      found_job = described_class.find!(job.id)
+      expect(found_job.as_json).to eq(job.as_json)
+    end
+  end
+
+
 end
