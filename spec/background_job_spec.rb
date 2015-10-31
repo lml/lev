@@ -94,7 +94,25 @@ describe Lev::BackgroundJob do
       found_job = described_class.find!(job.id)
       expect(found_job.as_json).to eq(job.as_json)
     end
+
+    it 'finds jobs that are not in the store' do
+      found_job = described_class.find!('not-a-real-id')
+      expect(found_job.as_json).to include('status' => 'unknown')
+    end
   end
 
+  describe '.find' do
+    let!(:job) { described_class.create }
+
+    it 'finds jobs that are in the store' do
+      found_job = described_class.find(job.id)
+      expect(found_job.as_json).to eq(job.as_json)
+    end
+
+    it 'returns nil for jobs not in the store' do
+      found_job = described_class.find('not-a-real-id')
+      expect(found_job.as_json).to eq nil
+    end
+  end
 
 end

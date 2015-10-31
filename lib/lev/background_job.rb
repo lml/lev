@@ -32,6 +32,14 @@ module Lev
     # exists in the store, returns a job with 'unknown' status and sets it
     # in the store
     def self.find!(id)
+      find(id) || new({id: id}).tap do |job|
+        job.save_standard_values
+      end
+    end
+
+    # Finds the job with the specified ID and returns it.  If no such ID
+    # exists in the store, returns nil.
+    def self.find(id)
       raise(ArgumentError, "`id` cannot be nil") if id.nil?
 
       attrs = { id: id }
@@ -42,9 +50,7 @@ module Lev
         attrs.merge!(existing_job_attrs)
         new(attrs)
       else
-        new(attrs).tap do |job|
-          job.save_standard_values
-        end
+        nil
       end
     end
 
