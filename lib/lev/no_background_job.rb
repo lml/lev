@@ -14,7 +14,7 @@ module Lev
     end
 
     def self.method_missing(method_sym, *args, &block)
-      if Lev::BackgroundJob.new.respond_to?(method_sym)
+      if Lev::BackgroundJob.method_defined?(method_sym)
         raise NameError,
               "'#{method_sym}' is Lev::BackgroundJob query method, and those cannot be called on NoBackgroundJob"
       else

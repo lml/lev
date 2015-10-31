@@ -4,104 +4,87 @@ module Lev
   class BackgroundJob
     attr_reader :id, :status, :progress, :errors
 
+    STATE_UNQUEUED = 'unqueued'
     STATE_QUEUED = 'queued'
     STATE_WORKING = 'working'
-    STATE_COMPLETED = 'completed'
+    STATE_SUCCEEDED = 'succeeded'
     STATE_FAILED = 'failed'
     STATE_KILLED = 'killed'
     STATE_UNKNOWN = 'unknown'
 
     STATES = [
+      STATE_UNQUEUED,
       STATE_QUEUED,
       STATE_WORKING,
-      STATE_COMPLETED,
+      STATE_SUCCEEDED,
       STATE_FAILED,
       STATE_KILLED,
       STATE_UNKNOWN
     ].freeze
 
-    def initialize(attrs = {})
-      attrs.stringify_keys!
-      @id = attrs['id'] || SecureRandom.uuid
-      @status = attrs['status'] || STATE_UNKNOWN
-      @progress = attrs['progress'] || 0
-      @errors = attrs['errors'] || []
-
-      set({ id: id,
-            status: status,
-            progress: progress,
-            errors: errors })
+    def self.create
+      new(status: STATE_UNQUEUED).tap do |job|
+        job.save_standard_values
+      end
     end
 
+    # Finds the job with the specified ID and returns it.  If no such ID
+    # exists in the store, returns a job with 'unknown' status and sets it
+    # in the store
+    def self.find!(id)
+      find(id) || new({id: id}).tap do |job|
+        job.save_standard_values
+      end
+    end
+
+    # Finds the job with the specified ID and returns it.  If no such ID
+    # exists in the store, returns nil.
     def self.find(id)
+      raise(ArgumentError, "`id` cannot be nil") if id.nil?
+
       attrs = { id: id }
 
-      if job = fetch_and_parse(job_key(id))
-        attrs.merge!(job)
-      else
-        attrs.merge!(status: STATE_UNKNOWN)
-      end
+      existing_job_attrs = fetch_and_parse(job_key(id))
 
-      new(attrs)
+      if existing_job_attrs.present?
+        attrs.merge!(existing_job_attrs)
+        new(attrs)
+      else
+        nil
+      end
     end
 
     def self.all
-      job_ids.map { |id| find(id) }
-    end
-
-    def self.incomplete
-      all.select { |j| !j.completed? }
-    end
-
-    def self.queued
-      all.select(&:queued?)
-    end
-
-    def self.working
-      all.select(&:working?)
-    end
-
-    def self.failed
-      all.select(&:failed?)
-    end
-
-    def self.killed
-      all.select(&:killed?)
-    end
-
-    def self.unknown
-      all.select(&:unknown?)
-    end
-
-    def self.complete
-      all.select(&:completed?)
+      job_ids.map { |id| find!(id) }
     end
 
     def set_progress(at, out_of = nil)
       progress = compute_fractional_progress(at, out_of)
-
-      data_to_set = { progress: progress }
-      data_to_set[:status] = STATE_COMPLETED if 1.0 == progress
-
-      set(data_to_set)
-
-      progress
-    end
-
-    (STATES - [STATE_COMPLETED]).each do |state|
-      define_method("#{state}!") do
-        set(status: state)
-      end
+      set(progress: progress)
     end
 
     STATES.each do |state|
+      define_method("#{state}!") do
+        set(status: state)
+      end
+
       define_method("#{state}?") do
         status == state
       end
     end
 
-    def completed!
-      set({status: STATE_COMPLETED, progress: 1.0})
+    (STATES + %w(completed incomplete)).each do |state|
+      define_singleton_method("#{state}") do
+        all.select{|job| job.send("#{state}?")}
+      end
+    end
+
+    def completed?
+      failed? || succeeded?
+    end
+
+    def incomplete?
+      !completed?
     end
 
     def add_error(error, options = { })
@@ -127,28 +110,56 @@ module Lev
       end
     end
 
+    def save_standard_values
+      set({
+        id: id,
+        status: status,
+        progress: progress,
+        errors: errors
+      })
+    end
+
     def method_missing(method_name, *args)
-      method_name = method_name.to_s.sub(/\?/, '')
-      instance_variable_get("@#{method_name}") || super
+      get_dynamic_variable(method_name) || super
     end
 
     def respond_to?(method_name)
-      if method_name.match /\?$/
-        super
-      else
-        instance_variable_get("@#{method_name}").present? || super
-      end
+      has_dynamic_variable?(method_name) || super
     end
 
     protected
+
     RESERVED_KEYS = [:id, :status, :progress, :errors]
 
+    def initialize(attrs = {})
+      attrs = attrs.stringify_keys
+
+      @id = attrs['id'] || SecureRandom.uuid
+      @status = attrs['status'] || STATE_UNKNOWN
+      @progress = attrs['progress'] || 0
+      @errors = attrs['errors'] || []
+    end
+
     def set(incoming_hash)
-      incoming_hash = incoming_hash.stringify_keys
-      incoming_hash = stored.merge(incoming_hash)
-      incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
-      self.class.store.write(job_key, incoming_hash.to_json)
+      apply_consistency_rules!(incoming_hash)
+      new_hash = stored.merge(incoming_hash)
+      new_hash.each { |k, v| instance_variable_set("@#{k}", v) }
+      self.class.store.write(job_key, new_hash.to_json)
       track_job_id
+    end
+
+    def apply_consistency_rules!(hash)
+      hash.stringify_keys!
+      hash['progress'] = 1.0 if hash['status'] == 'succeeded'
+    end
+
+    def get_dynamic_variable(name)
+      return nil if !has_dynamic_variable?(name)
+      instance_variable_get("@#{name}")
+    end
+
+    def has_dynamic_variable?(name)
+      !name.match(/\?|\!/) && instance_variable_defined?("@#{name}")
     end
 
     def self.store
