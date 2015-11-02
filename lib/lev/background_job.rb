@@ -56,59 +56,29 @@ module Lev
       job_ids.map { |id| find!(id) }
     end
 
-    def self.incomplete
-      all.select { |j| !j.completed? }
-    end
-
-    def self.queued
-      all.select(&:queued?)
-    end
-
-    def self.working
-      all.select(&:working?)
-    end
-
-    def self.failed
-      all.select(&:failed?)
-    end
-
-    def self.killed
-      all.select(&:killed?)
-    end
-
-    def self.unknown
-      all.select(&:unknown?)
-    end
-
-    def self.complete
-      all.select(&:completed?)
-    end
-
     def set_progress(at, out_of = nil)
       progress = compute_fractional_progress(at, out_of)
-
-      data_to_set = { progress: progress }
-      data_to_set[:status] = STATE_COMPLETED if 1.0 == progress
-
-      set(data_to_set)
-
-      progress
-    end
-
-    (STATES - [STATE_COMPLETED]).each do |state|
-      define_method("#{state}!") do
-        set(status: state)
-      end
+      set(progress: progress)
     end
 
     STATES.each do |state|
+      define_method("#{state}!") do
+        set(status: state)
+      end
+
       define_method("#{state}?") do
         status == state
       end
     end
 
-    def completed!
-      set({status: STATE_COMPLETED, progress: 1.0})
+    (STATES + %w(incomplete)).each do |state|
+      define_singleton_method("#{state}") do
+        all.select{|job| job.send("#{state}?")}
+      end
+    end
+
+    def incomplete?
+      !completed?
     end
 
     def add_error(error, options = { })
@@ -144,16 +114,11 @@ module Lev
     end
 
     def method_missing(method_name, *args)
-      method_name = method_name.to_s.sub(/\?/, '')
-      instance_variable_get("@#{method_name}") || super
+      get_dynamic_variable(method_name) || super
     end
 
     def respond_to?(method_name)
-      if method_name.match /\?$/
-        super
-      else
-        instance_variable_get("@#{method_name}").present? || super
-      end
+      has_dynamic_variable?(method_name) || super
     end
 
     protected
@@ -170,11 +135,25 @@ module Lev
     end
 
     def set(incoming_hash)
-      incoming_hash = incoming_hash.stringify_keys
-      incoming_hash = stored.merge(incoming_hash)
-      incoming_hash.each { |k, v| instance_variable_set("@#{k}", v) }
-      self.class.store.write(job_key, incoming_hash.to_json)
+      apply_consistency_rules!(incoming_hash)
+      new_hash = stored.merge(incoming_hash)
+      new_hash.each { |k, v| instance_variable_set("@#{k}", v) }
+      self.class.store.write(job_key, new_hash.to_json)
       track_job_id
+    end
+
+    def apply_consistency_rules!(hash)
+      hash.stringify_keys!
+      hash['progress'] = 1.0 if hash['status'] == 'completed'
+    end
+
+    def get_dynamic_variable(name)
+      return nil if !has_dynamic_variable?(name)
+      instance_variable_get("@#{name}")
+    end
+
+    def has_dynamic_variable?(name)
+      !name.match(/\?|\!/) && instance_variable_defined?("@#{name}")
     end
 
     def self.store

@@ -69,7 +69,7 @@ describe Lev::BackgroundJob do
 
       job.completed!
       expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
-      expect(described_class.complete.collect(&:id)).to include(job.id)
+      expect(described_class.completed.collect(&:id)).to include(job.id)
     end
   end
 
