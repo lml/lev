@@ -6,7 +6,7 @@ module Lev
 
     STATE_QUEUED = 'queued'
     STATE_WORKING = 'working'
-    STATE_COMPLETED = 'completed'
+    STATE_SUCCEEDED = 'succeeded'
     STATE_FAILED = 'failed'
     STATE_KILLED = 'killed'
     STATE_UNKNOWN = 'unknown'
@@ -14,7 +14,7 @@ module Lev
     STATES = [
       STATE_QUEUED,
       STATE_WORKING,
-      STATE_COMPLETED,
+      STATE_SUCCEEDED,
       STATE_FAILED,
       STATE_KILLED,
       STATE_UNKNOWN
@@ -71,10 +71,14 @@ module Lev
       end
     end
 
-    (STATES + %w(incomplete)).each do |state|
+    (STATES + %w(completed incomplete)).each do |state|
       define_singleton_method("#{state}") do
         all.select{|job| job.send("#{state}?")}
       end
+    end
+
+    def completed?
+      failed? || succeeded?
     end
 
     def incomplete?
@@ -144,7 +148,7 @@ module Lev
 
     def apply_consistency_rules!(hash)
       hash.stringify_keys!
-      hash['progress'] = 1.0 if hash['status'] == 'completed'
+      hash['progress'] = 1.0 if hash['status'] == 'succeeded'
     end
 
     def get_dynamic_variable(name)

@@ -438,7 +438,7 @@ Routines have a `job` object and can call the following methods:
   a counter towards a total, e.g. `set_progress(67,212)`.
 * `queued!` Sets the job status to 'queued'
 * `working!` Sets the job status to 'working'
-* `completed!` Sets the job status to 'completed'
+* `succeeded!` Sets the job status to 'succeeded'
 * `failed!` Sets the job status to 'failed'
 * `killed!` Sets the job status to 'killed'
 * `save(hash)` Takes a hash of key value pairs and writes those keys and values to the job status; there are several reserved keys which cannot be used (and which will blow up if you try to use them)

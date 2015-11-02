@@ -56,7 +56,7 @@ describe Lev::BackgroundJob do
       expect(described_class.working.collect(&:id)).to include(job.id)
 
       job.failed!
-      expect(described_class.incomplete.collect(&:id)).to include(job.id)
+      expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
       expect(described_class.failed.collect(&:id)).to include(job.id)
 
       job.killed!
@@ -67,15 +67,16 @@ describe Lev::BackgroundJob do
       expect(described_class.incomplete.collect(&:id)).to include(job.id)
       expect(described_class.unknown.collect(&:id)).to include(job.id)
 
-      job.completed!
+      job.succeeded!
+      expect(described_class.succeeded.collect(&:id)).to include(job.id)
       expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
-      expect(described_class.completed.collect(&:id)).to include(job.id)
+      expect(described_class.succeeded.collect(&:id)).to include(job.id)
     end
   end
 
-  it 'sets progress to 100% when completed' do
+  it 'sets progress to 100% when succeeded' do
     job = described_class.new
-    job.completed!
+    job.succeeded!
     expect(job.progress).to eq 1
   end
 
