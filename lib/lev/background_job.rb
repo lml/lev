@@ -20,29 +20,27 @@ module Lev
       STATE_UNKNOWN
     ].freeze
 
-    def initialize(attrs = {})
-      attrs.stringify_keys!
-      @id = attrs['id'] || SecureRandom.uuid
-      @status = attrs['status'] || STATE_UNKNOWN
-      @progress = attrs['progress'] || 0
-      @errors = attrs['errors'] || []
-
-      set({ id: id,
-            status: status,
-            progress: progress,
-            errors: errors })
+    def self.create
+      new(status: STATE_UNKNOWN).tap do |job|
+        job.save_standard_values
+      end
     end
 
     def self.find(id)
+      raise(ArgumentError, "`id` cannot be nil") if id.nil?
+
       attrs = { id: id }
 
-      if job = fetch_and_parse(job_key(id))
-        attrs.merge!(job)
-      else
-        attrs.merge!(status: STATE_UNKNOWN)
-      end
+      existing_job_attrs = fetch_and_parse(job_key(id))
 
-      new(attrs)
+      if existing_job_attrs.present?
+        attrs.merge!(existing_job_attrs)
+        new(attrs)
+      else
+        new(attrs).tap do |job|
+          job.save_standard_values
+        end
+      end
     end
 
     def self.all
@@ -127,6 +125,15 @@ module Lev
       end
     end
 
+    def save_standard_values
+      set({
+        id: id,
+        status: status,
+        progress: progress,
+        errors: errors
+      })
+    end
+
     def method_missing(method_name, *args)
       method_name = method_name.to_s.sub(/\?/, '')
       instance_variable_get("@#{method_name}") || super
@@ -141,7 +148,17 @@ module Lev
     end
 
     protected
+
     RESERVED_KEYS = [:id, :status, :progress, :errors]
+
+    def initialize(attrs = {})
+      attrs = attrs.stringify_keys
+
+      @id = attrs['id'] || SecureRandom.uuid
+      @status = attrs['status'] || STATE_UNKNOWN
+      @progress = attrs['progress'] || 0
+      @errors = attrs['errors'] || []
+    end
 
     def set(incoming_hash)
       incoming_hash = incoming_hash.stringify_keys

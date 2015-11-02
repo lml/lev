@@ -10,7 +10,7 @@ if defined?(::ActiveJob)
           # and push it on to the arguments so that in `perform` it can be peeled
           # off and handed to the routine instance.  The BackgroundJob UUID is returned
           # so that callers can track the status.
-          job = Lev::BackgroundJob.new
+          job = Lev::BackgroundJob.create
           job.queued!
           args.push(job.id)
 
@@ -24,7 +24,7 @@ if defined?(::ActiveJob)
           id = args.pop
           routine_class = Kernel.const_get(args.pop)
 
-          routine_instance = routine_class.new(Lev::BackgroundJob.new(id: id))
+          routine_instance = routine_class.new(Lev::BackgroundJob.find(id))
           routine_instance.call(*args, &block)
         end
       end

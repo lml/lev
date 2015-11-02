@@ -79,4 +79,20 @@ describe Lev::BackgroundJob do
     expect(job.progress).to eq 1
   end
 
+
+  describe '.find' do
+    let!(:job) { described_class.create }
+
+    it 'finds jobs that are in the store' do
+      expect(described_class.store).to_not receive(:write)
+      found_job = described_class.find(job.id)
+      expect(found_job.as_json).to eq(job.as_json)
+    end
+
+    it 'creates jobs for jobs not in the store' do
+      found_job = described_class.find('not-a-real-id')
+      expect(found_job.id).to eq('not-a-real-id')
+    end
+  end
+
 end
