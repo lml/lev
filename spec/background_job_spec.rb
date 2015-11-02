@@ -72,6 +72,12 @@ describe Lev::BackgroundJob do
       expect(described_class.incomplete.collect(&:id)).not_to include(job.id)
       expect(described_class.succeeded.collect(&:id)).to include(job.id)
     end
+
+    it 'has the unqueued scope' do
+      expect(described_class.unqueued.collect(&:id)).to eq []
+      unqueued_job = Lev::BackgroundJob.create
+      expect(described_class.unqueued.collect(&:id)).to include(unqueued_job.id)
+    end
   end
 
   it 'sets progress to 100% when succeeded' do

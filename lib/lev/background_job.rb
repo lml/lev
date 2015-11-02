@@ -4,6 +4,7 @@ module Lev
   class BackgroundJob
     attr_reader :id, :status, :progress, :errors
 
+    STATE_UNQUEUED = 'unqueued'
     STATE_QUEUED = 'queued'
     STATE_WORKING = 'working'
     STATE_SUCCEEDED = 'succeeded'
@@ -12,6 +13,7 @@ module Lev
     STATE_UNKNOWN = 'unknown'
 
     STATES = [
+      STATE_UNQUEUED,
       STATE_QUEUED,
       STATE_WORKING,
       STATE_SUCCEEDED,
@@ -21,7 +23,7 @@ module Lev
     ].freeze
 
     def self.create
-      new(status: STATE_UNKNOWN).tap do |job|
+      new(status: STATE_UNQUEUED).tap do |job|
         job.save_standard_values
       end
     end
