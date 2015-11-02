@@ -24,7 +24,7 @@ if defined?(::ActiveJob)
           id = args.pop
           routine_class = Kernel.const_get(args.pop)
 
-          routine_instance = routine_class.new(Lev::BackgroundJob.find(id))
+          routine_instance = routine_class.new(Lev::BackgroundJob.find!(id))
           routine_instance.call(*args, &block)
         end
       end
