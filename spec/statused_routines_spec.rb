@@ -32,7 +32,7 @@ RSpec.describe 'Statused Routines' do
       it 'completes the job object on completion, returning other data' do
         id = StatusedRoutine.perform_later
         job = Lev::BackgroundJob.find(id)
-        expect(job.status).to eq(Lev::BackgroundJob::STATE_COMPLETED)
+        expect(job.status).to eq(Lev::BackgroundJob::STATE_SUCCEEDED)
         expect(job.progress).to eq(1.0)
       end
     end
@@ -95,10 +95,10 @@ RSpec.describe 'Statused Routines' do
       expect(job).to be_working
     end
 
-    it 'is completed' do
-      expect(job).not_to be_completed
-      job.completed!
-      expect(job).to be_completed
+    it 'is succeeded' do
+      expect(job).not_to be_succeeded
+      job.succeeded!
+      expect(job).to be_succeeded
     end
 
     it 'is failed' do
