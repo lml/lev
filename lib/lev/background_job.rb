@@ -138,6 +138,12 @@ module Lev
       @status = attrs['status'] || STATE_UNKNOWN
       @progress = attrs['progress'] || 0
       @errors = attrs['errors'] || []
+
+      attrs.each do |attr, value|
+        if !instance_variable_defined?("@#{attr}")
+          instance_variable_set("@#{attr}", attrs[attr])
+        end
+      end
     end
 
     def set(incoming_hash)

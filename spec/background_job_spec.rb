@@ -44,6 +44,15 @@ describe Lev::BackgroundJob do
       expect(json['foo']).to eq('bar')
     end
 
+    it 'generates attributes for custom variables' do
+      job.save(foo: 'bar')
+
+      reloaded_job = Lev::BackgroundJob.find(job.id)
+
+      expect(reloaded_job.respond_to?(:foo)).to be true
+      expect(reloaded_job.foo).to eq('bar')
+    end
+
     it 'has scopes' do
       expect(described_class.incomplete.collect(&:id)).to include(job.id)
 
