@@ -8,26 +8,13 @@ class Model < ActiveRecord::Base; end
 
 RSpec.describe 'Transactions' do
   before do
-    stub_const 'RollBackTransactions', Class.new
-    stub_const 'NestedRoutine', Class.new
-
-    NestedRoutine.class_eval do
-      lev_routine
-
-      def exec
-        raise 'Rolled back'
-      end
+    stub_lev_routine('NestedRoutine') do
+      raise 'Rolled back'
     end
 
-    RollBackTransactions.class_eval do
-      lev_routine
-
-      uses_routine NestedRoutine
-
-      def exec
-        Model.create!
-        run(:nested_routine)
-      end
+    stub_lev_routine('RollBackTransactions', {}, nested: NestedRoutine) do
+      Model.create!
+      run(:nested_routine)
     end
   end
 
