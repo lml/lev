@@ -12,7 +12,7 @@ RSpec.describe 'Transactions' do
       raise 'Rolled back'
     end
 
-    stub_lev_routine('RollBackTransactions', {}, nested: NestedRoutine) do
+    stub_lev_routine('RollBackTransactions', uses: NestedRoutine) do
       Model.create!
       run(:nested_routine)
     end
