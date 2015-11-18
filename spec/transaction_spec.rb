@@ -8,11 +8,11 @@ class Model < ActiveRecord::Base; end
 
 RSpec.describe 'Transactions' do
   before do
-    stub_lev_routine('NestedRoutine') do
+    lev_routine_factory('NestedRoutine') do
       raise 'Rolled back'
     end
 
-    stub_lev_routine('RollBackTransactions', uses: NestedRoutine) do
+    lev_routine_factory('RollBackTransactions', uses: NestedRoutine) do
       Model.create!
       run(:nested_routine)
     end

@@ -3,11 +3,11 @@ require 'spec_helper'
 describe Lev::Routine do
 
   before do
-    stub_lev_routine('RaiseError') do
+    lev_routine_factory('RaiseError') do
       raise 'error message'
     end
 
-    stub_lev_routine('RaiseStandardError') do
+    lev_routine_factory('RaiseStandardError') do
       unknown_method_call
     end
   end
@@ -25,14 +25,14 @@ describe Lev::Routine do
   end
 
   it 'allows not raising fatal errors to be overridden' do
-    stub_lev_routine('NestedFatalError', raise_fatal_errors: false) do
+    lev_routine_factory('NestedFatalError', raise_fatal_errors: false) do
       fatal_error(code: :its_broken)
     end
 
-    stub_lev_routine('SpecialFatalErrorOption', raise_fatal_errors: true,
+    lev_routine_factory('SpecialFatalErrorOption', raise_fatal_errors: true,
                                                 delegates_to: NestedFatalError)
 
-    stub_lev_routine('NoFatalErrorOption') do
+    lev_routine_factory('NoFatalErrorOption') do
       fatal_error(code: :no_propagate)
     end
 
@@ -48,7 +48,7 @@ describe Lev::Routine do
   end
 
   it 'allows raising fatal errors config to be overridden' do
-    stub_lev_routine('SpecialNoFatalErrorOption', raise_fatal_errors: false) do
+    lev_routine_factory('SpecialNoFatalErrorOption', raise_fatal_errors: false) do
       fatal_error(code: :its_broken)
     end
 
@@ -65,7 +65,7 @@ describe Lev::Routine do
         config.raise_fatal_errors = true
       end
 
-      stub_lev_routine('RaiseFatalError') do
+      lev_routine_factory('RaiseFatalError') do
         fatal_error(code: :broken, such: :disaster)
       end
     end

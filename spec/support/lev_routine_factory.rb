@@ -1,5 +1,5 @@
-module StubLevRoutineHelper
-  def stub_lev_routine(klass_name, options = {}, &block)
+module LevRoutineFactory
+  def lev_routine_factory(klass_name, options = {}, &block)
     @@block = block || Proc.new { }
     nested_routines = [options.delete(:uses)].flatten.compact
 

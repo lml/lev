@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Lev::BackgroundJob do
 
   context 'delayed routine' do
-    before { stub_lev_routine('DelayedRoutine') }
+    before { lev_routine_factory('DelayedRoutine') }
 
     subject(:job) { described_class.all.last }
 
