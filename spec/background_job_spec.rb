@@ -3,11 +3,7 @@ require 'spec_helper'
 describe Lev::BackgroundJob do
 
   context 'delayed routine' do
-    class DelayedRoutine
-      lev_routine
-      protected
-      def exec; end
-    end
+    before { stub_lev_routine('DelayedRoutine') }
 
     subject(:job) { described_class.all.last }
 
