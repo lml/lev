@@ -120,7 +120,7 @@ describe Lev::BackgroundJob do
     end
 
     it 'returns nil for jobs not in the store' do
-      found_job = described_class.find('not-a-real-id')
+      found_job = described_class.find('still-not-a-real-id')
       expect(found_job).to be_nil
     end
   end
