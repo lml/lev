@@ -5,27 +5,15 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-require 'lev'
 require 'pry'
-require 'debugger'
 require 'active_job'
-
-Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
+require 'lev'
+require 'debugger'
 
 ActiveJob::Base.queue_adapter = :test
 ActiveJob::Base.logger = ::Logger.new(nil)
 
-RSpec.configure do |config|
-  config.run_all_when_everything_filtered = true
-  config.filter_run :focus
-  config.include StubLevRoutineHelper
-
-  # Run specs in random order to surface order dependencies. If you find an
-  # order dependency and want to debug it, you can fix the order by providing
-  # the seed, which is printed after each run.
-  #     --seed 1234
-  config.order = 'random'
-end
+Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
 
 ActiveRecord::Base.establish_connection(
   adapter: :sqlite3,
@@ -44,3 +32,15 @@ unless Sprocket.table_exists?
 end
 
 I18n.enforce_available_locales = true
+
+RSpec.configure do |config|
+  config.run_all_when_everything_filtered = true
+  config.filter_run :focus
+  config.include StubLevRoutineHelper
+
+  # Run specs in random order to surface order dependencies. If you find an
+  # order dependency and want to debug it, you can fix the order by providing
+  # the seed, which is printed after each run.
+  #     --seed 1234
+  config.order = 'random'
+end
