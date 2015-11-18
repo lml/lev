@@ -6,6 +6,7 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 require 'active_job'
+require 'pry'
 
 ActiveJob::Base.queue_adapter = :test
 ActiveJob::Base.logger = ::Logger.new(nil)
