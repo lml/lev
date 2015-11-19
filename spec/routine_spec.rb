@@ -24,7 +24,7 @@ describe Lev::Routine do
 
     Lev.configure { |c| c.raise_fatal_errors = false }
 
-    ##expect { SpecialFatalErrorOption.call }.to raise_error
+    expect { SpecialFatalErrorOption.call }.to raise_error
 
     expect { NoFatalErrorOption.call }.not_to raise_error
   end
