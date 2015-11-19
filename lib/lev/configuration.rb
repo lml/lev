@@ -4,7 +4,7 @@ module Lev
 
     def initialize
       @raise_fatal_errors = false
-      @job_store = Lev::Stores::MemoryStore.new
+      @job_store = Lev::MemoryStore.new
       @job_store_namespace = :lev_job
     end
   end
