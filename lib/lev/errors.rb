@@ -1,4 +1,4 @@
-require 'lev/error'
+require 'lev/errors/error'
 
 module Lev
   class Errors < Array
