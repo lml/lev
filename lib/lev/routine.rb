@@ -8,12 +8,25 @@ module Lev
       base.extend ClassMethods
     end
 
-    def initialize
-      @errors = Errors.new(self.class.raise_fatal_errors?)
+    def initialize(job = nil)
+      @job = job
+    end
+
+    def errors
+      @errors ||= Errors.new(self.class.raise_fatal_errors?)
     end
 
     def call
-      ActiveRecord::Base.transaction { exec }
+      job.working!
+
+      begin
+        ActiveRecord::Base.transaction { exec }
+      rescue Exception => e
+        job.failed!(e)
+        raise e
+      end
+
+      job.succeeded! unless errors.any?
     end
 
     def run(routine_name, *args)
@@ -35,6 +48,16 @@ module Lev
         }
       end
 
+      if defined?(::ActiveJob)
+        def perform_later(*args, &block)
+          Lev::CoreExt::ActiveJob::Base.perform_later(self, *args, &block)
+        end
+
+        def active_job_queue
+          @active_job_queue || :default
+        end
+      end
+
       def raise_fatal_errors?
         @raise_fatal_errors || (Lev.configuration.raise_fatal_errors &&
                                   @raise_fatal_errors.nil?)
@@ -44,6 +67,11 @@ module Lev
       def nested_routines
         @nested_routines ||= {}
       end
+    end
+
+    private
+    def job
+      @job ||= Lev::NoBackgroundJob.new
     end
   end
 end

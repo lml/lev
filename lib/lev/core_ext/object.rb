@@ -6,7 +6,9 @@ module Lev
           class_eval do
             include Lev::Routine
 
-            @raise_fatal_errors = options[:raise_fatal_errors]
+            options.each do |key, value|
+              instance_variable_set("@#{key}", value)
+            end
           end
         end
       end

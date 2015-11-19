@@ -1,3 +1,5 @@
+require 'lev/error'
+
 module Lev
   class Errors < Array
     def initialize(raise_fatal_errors = false)
