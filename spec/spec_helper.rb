@@ -6,10 +6,14 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 require 'active_record'
+require 'active_job'
 require 'lev'
 require 'pry'
 
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
+
+ActiveJob::Base.queue_adapter = :test
+ActiveJob::Base.logger = ::Logger.new(nil)
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
