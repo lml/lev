@@ -68,11 +68,27 @@ module Lev
       end
 
       private
-      def setup_nested_routine_manifest(map)
+      def setup_routine_getters(options)
+        options.each do |key, value|
+          instance_variable_set("@#{key}", value)
+
+          define_singleton_method(key) do
+            instance_variable_get("@#{key}")
+          end
+        end
+      end
+
+      def setup_nested_routine_manifest(options)
+        manifest = options[:manifest] || {}
+        map = manifest.select { |_, source| source != :_self }
+
         map.each do |attribute, source|
-          nested_routines[source] = {
-            routine_class: source.to_s.classify.safe_constantize
+          nested_routines[source] ||= {
+            routine_class: source.to_s.classify.safe_constantize,
+            attributes: []
           }
+
+          nested_routines[source][:attributes] << attribute
         end
       end
     end
