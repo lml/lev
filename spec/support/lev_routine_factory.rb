@@ -1,6 +1,5 @@
 module LevRoutineFactory
   def lev_routine_factory(klass_name, options = {}, &block)
-    @@block = block || Proc.new { }
     nested_routines = [options.delete(:uses)].flatten.compact
 
     stub_const(klass_name, Class.new)
@@ -12,9 +11,7 @@ module LevRoutineFactory
         uses_routine routine_name
       end
 
-      def exec(*args)
-        instance_exec(*args, &@@block)
-      end
+      define_method(:exec, &block)
     end
   end
 end
