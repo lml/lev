@@ -1,3 +1,5 @@
+require 'lev/background_jobs'
+require 'lev/result'
 require 'lev/errors'
 
 module Lev
@@ -10,23 +12,30 @@ module Lev
 
     def initialize(job = nil)
       @job = job
+      @wrapped = []
     end
 
     def errors
       @errors ||= Errors.new(self.class.raise_fatal_errors?)
     end
 
-    def call
+    def create_instance(wrapped_name, attrs = {})
+      @wrapped << self.class.classify(wrapped_name).create(attrs)
+    end
+
+    def call(*args)
       job.working!
 
       begin
-        ActiveRecord::Base.transaction { exec }
+        ActiveRecord::Base.transaction { exec(*args) }
       rescue Exception => e
         job.failed!(e)
         raise e
       end
 
       job.succeeded! unless errors.any?
+
+      Result.new(wrapped, errors, self.class.exposes)
     end
 
     def run(routine_name, *args)
@@ -38,7 +47,9 @@ module Lev
     end
 
     module ClassMethods
-      def call; new.call; end
+      attr_reader :wraps, :exposes
+
+      def call(*args); new.call(*args); end
 
       def uses_routine(routine, options = {})
         key = routine.name.underscore.gsub('/','_').to_sym
@@ -63,6 +74,10 @@ module Lev
                                   @raise_fatal_errors.nil?)
       end
 
+      def classify(wrapped_name)
+        wrapped_name.to_s.classify.safe_constantize
+      end
+
       private
       def nested_routines
         @nested_routines ||= {}
@@ -70,6 +85,10 @@ module Lev
     end
 
     private
+    def wrapped
+      @wrapped
+    end
+
     def job
       @job ||= Lev::NoBackgroundJob.new
     end

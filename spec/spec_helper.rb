@@ -5,15 +5,10 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-require 'active_record'
-require 'active_job'
-require 'lev'
-require 'pry'
-
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
 
-ActiveJob::Base.queue_adapter = :test
-ActiveJob::Base.logger = ::Logger.new(nil)
+require 'lev'
+require 'pry'
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
@@ -26,8 +21,3 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
 end
-
-ActiveRecord::Base.establish_connection(
-  adapter: :sqlite3,
-  database: ':memory:',
-)

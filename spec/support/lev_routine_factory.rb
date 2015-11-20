@@ -12,7 +12,7 @@ module LevRoutineFactory
         uses_routine routine_name
       end
 
-      def exec
+      def exec(*args)
         instance_eval(&@@block)
       end
     end
