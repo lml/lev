@@ -1,11 +1,5 @@
 require 'spec_helper'
 
-unless ActiveRecord::Migration.table_exists?(:models)
-  ActiveRecord::Migration.create_table(:models)
-end
-
-class Model < ActiveRecord::Base; end
-
 RSpec.describe 'Transactions' do
   before do
     lev_routine_factory('NestedRoutine') { raise 'Rolled back' }
