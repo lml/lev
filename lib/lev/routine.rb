@@ -1,4 +1,5 @@
 require 'lev/background_jobs'
+require 'lev/result'
 require 'lev/errors'
 
 module Lev
@@ -9,8 +10,12 @@ module Lev
       base.extend ClassMethods
     end
 
-    def initialize(job = nil)
-      @job = job
+    def set(attrs = {})
+      result.set(attrs)
+    end
+
+    def result
+      @result ||= Result.new(self.class.manifest, errors)
     end
 
     def errors
@@ -28,10 +33,12 @@ module Lev
       end
 
       job.succeeded! unless errors.any?
+
+      result
     end
 
     def run(routine_name, *args)
-      self.class.nested_routines[routine_name].call(*args)
+      self.class.nested_routines[routine_name][:routine_class].call(*args)
     end
 
     def fatal_error(args = {})
@@ -40,14 +47,6 @@ module Lev
 
     module ClassMethods
       def call(*args); new.call(*args); end
-
-      def uses_routine(routine, options = {})
-        key = routine.name.underscore.gsub('/','_').to_sym
-        nested_routines[key] = {
-          routine_class: routine,
-          options: options
-        }
-      end
 
       if defined?(::ActiveJob)
         def perform_later(*args, &block)
@@ -64,9 +63,17 @@ module Lev
                                   @raise_fatal_errors.nil?)
       end
 
-      private
       def nested_routines
         @nested_routines ||= {}
+      end
+
+      private
+      def setup_nested_routine_manifest(map)
+        map.each do |attribute, source|
+          nested_routines[source] = {
+            routine_class: source.to_s.classify.safe_constantize
+          }
+        end
       end
     end
 
