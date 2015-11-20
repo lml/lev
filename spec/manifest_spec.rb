@@ -20,7 +20,7 @@ RSpec.describe 'Manifest interfaces' do
   end
 
   it 'maps attributes from nested routines' do
-    lev_routine_factory('NestedRoutine') do |title|
+    lev_routine_factory('NestedRoutine', manifest: { title: :_self }) do |title|
       set(title: title)
     end
 

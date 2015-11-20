@@ -38,7 +38,12 @@ module Lev
     end
 
     def run(routine_name, *args)
-      self.class.nested_routines[routine_name][:routine_class].call(*args)
+      routine = self.class.nested_routines[routine_name]
+      result = routine[:routine_class].call(*args)
+
+      routine[:attributes].each do |attr|
+        set(attr => result.send(attr))
+      end
     end
 
     def fatal_error(args = {})
