@@ -2,11 +2,11 @@ require 'spec_helper'
 
 RSpec.describe 'Manifest interfaces' do
   it 'maps attributes to itself' do
-    lev_routine_factory('MapToMyelf', manifest: { title: :_self }) do |title|
+    lev_routine_factory('MapToMyself', manifest: { title: :_self }) do |title|
       set(title: title)
     end
 
-    result = MapToMyelf.call('my title')
+    result = MapToMyself.call('my title')
 
     expect(result.title).to eq('my title')
   end
