@@ -33,5 +33,17 @@ RSpec.describe 'Manifest interfaces' do
     expect(result.title).to eq('nested title')
   end
 
-  it 'maps verbatim to nested routines'
+  it 'maps verbatim to nested routines' do
+    lev_routine_factory('VerbatimMe', manifest: { title: :_self }) do |title|
+      set(title: title)
+    end
+
+    lev_routine_factory('GetVerbatimed', manifest: { _verbatim: :verbatim_me }) do | title|
+      run(:verbatim_me, title)
+    end
+
+    result = GetVerbatimed.call('verbatim title')
+
+    expect(result.title).to eq('verbatim title')
+  end
 end

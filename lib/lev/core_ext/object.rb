@@ -5,8 +5,12 @@ module Lev
         def lev_routine(options = {})
           class_eval do
             include Lev::Routine
+
+            setup_manifest(options.delete(:manifest))
             setup_routine_getters(options)
-            setup_nested_routine_manifest(options)
+
+            nested_map = manifest.select { |_, source| source != :_self }
+            setup_nested_routine_manifest(nested_map)
           end
         end
       end
