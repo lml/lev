@@ -9,6 +9,7 @@ module Lev
         setup_nested_routine_manifest(routine_class.nested_routines, nested_map)
       end
 
+      private
       def self.setup_nested_routine_manifest(nested_routines, map)
         map.each do |attribute, source|
           nested_routines[source] ||= {
