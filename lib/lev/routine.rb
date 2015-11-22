@@ -86,39 +86,6 @@ module Lev
           end
         end
       end
-
-      def setup_manifest(manifest)
-        @manifest = manifest || {}
-        define_singleton_method('manifest') { @manifest }
-      end
-
-      def setup_nested_routine_manifest(map)
-        map.each do |attribute, source|
-          nested_routines[source] ||= {
-            routine_class: source.to_s.classify.constantize,
-            attributes: []
-          }
-
-          map_attribute(nested_routines[source], attribute)
-        end
-      end
-
-      def map_attribute(nested_routine, attribute)
-        case attribute
-        when :_verbatim
-          map_nested_routine_manifest(nested_routine)
-        else
-          nested_routine[:attributes] << attribute
-        end
-      end
-
-      def map_nested_routine_manifest(nested_routine)
-        map = {}
-        nested_routine[:routine_class].manifest.each do |attr, source|
-          map[attr] = nested_routine[:routine_class].name.underscore.to_sym
-        end
-        setup_nested_routine_manifest(map)
-      end
     end
 
     private
