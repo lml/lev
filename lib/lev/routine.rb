@@ -10,6 +10,10 @@ module Lev
       base.extend ClassMethods
     end
 
+    def initialize(job = nil)
+      @job = job
+    end
+
     def set(attrs = {})
       result.set(attrs)
     end
@@ -81,6 +85,13 @@ module Lev
             instance_variable_get("@#{key}")
           end
         end
+
+        setup_manifest_getter if @manifest.nil?
+      end
+
+      def setup_manifest_getter
+        @manifest = {}
+        define_singleton_method('manifest') { @manifest }
       end
 
       def setup_nested_routine_manifest(options)
@@ -89,7 +100,7 @@ module Lev
 
         map.each do |attribute, source|
           nested_routines[source] ||= {
-            routine_class: source.to_s.classify.safe_constantize,
+            routine_class: source.to_s.classify.constantize,
             attributes: []
           }
 

@@ -11,7 +11,7 @@ module LevRoutineFactory
         uses_routine routine_name
       end
 
-      define_method(:exec, &block)
+      define_method(:exec, &(block || Proc.new { }))
     end
   end
 end

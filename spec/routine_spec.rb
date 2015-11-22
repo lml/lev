@@ -15,16 +15,9 @@ describe Lev::Routine do
   end
 
   it 'allows not raising fatal errors to be overridden' do
-    lev_routine_factory('NestedFatalError') { fatal_error(code: :its_broken) }
-
-    lev_routine_factory('SpecialFatalErrorOption', raise_fatal_errors: true,
-                                                   delegates_to: NestedFatalError)
-
     lev_routine_factory('NoFatalErrorOption') { fatal_error(code: :no_propagate) }
 
     Lev.configure { |c| c.raise_fatal_errors = false }
-
-    expect { SpecialFatalErrorOption.call }.to raise_error
 
     expect { NoFatalErrorOption.call }.not_to raise_error
   end
