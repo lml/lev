@@ -8,8 +8,7 @@ module Lev
           class_eval do
             include Lev::Routine
 
-            Lev::Utils::Manifest.setup(self, options.delete(:manifest))
-            setup_routine_getters(options)
+            Lev::Utils::Options.setup(self, options)
           end
         end
       end

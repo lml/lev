@@ -75,17 +75,6 @@ module Lev
       def nested_routines
         @nested_routines ||= {}
       end
-
-      private
-      def setup_routine_getters(map)
-        map.each do |key, value|
-          instance_variable_set("@#{key}", value)
-
-          define_singleton_method(key) do
-            instance_variable_get("@#{key}")
-          end
-        end
-      end
     end
 
     private
