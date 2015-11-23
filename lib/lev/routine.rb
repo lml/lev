@@ -19,7 +19,7 @@ module Lev
     end
 
     def result
-      @result ||= Result.new(self.class.manifest, errors)
+      @result ||= Result.new(self.class.outputs, errors)
     end
 
     def errors

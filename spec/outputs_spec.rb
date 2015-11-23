@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-RSpec.describe 'Manifest interfaces' do
+RSpec.describe 'Outputs interfaces' do
   it 'maps attributes to itself' do
-    lev_routine_factory('MapToMyself', manifest: { title: :_self }) do |title|
+    lev_routine_factory('MapToMyself', outputs: { title: :_self }) do |title|
       set(title: title)
     end
 
@@ -12,7 +12,7 @@ RSpec.describe 'Manifest interfaces' do
   end
 
   it 'does not allow setting attributes not defined' do
-    lev_routine_factory('SetNonexistent', manifest: { title: :_self }) do |title|
+    lev_routine_factory('SetNonexistent', outputs: { title: :_self }) do |title|
       set(nope: title)
     end
 
@@ -20,11 +20,11 @@ RSpec.describe 'Manifest interfaces' do
   end
 
   it 'maps attributes from nested routines' do
-    lev_routine_factory('NestedRoutine', manifest: { title: :_self }) do |title|
+    lev_routine_factory('NestedRoutine', outputs: { title: :_self }) do |title|
       set(title: title)
     end
 
-    lev_routine_factory('MapToNested', manifest: { title: :nested_routine }) do | title|
+    lev_routine_factory('MapToNested', outputs: { title: :nested_routine }) do | title|
       run(:nested_routine, title)
     end
 
@@ -34,17 +34,17 @@ RSpec.describe 'Manifest interfaces' do
   end
 
   it 'maps verbatim to nested routines' do
-    lev_routine_factory('SuperNested', manifest: { description: :_self }) do
+    lev_routine_factory('SuperNested', outputs: { description: :_self }) do
       set(description: 'super nested desc')
     end
 
-    lev_routine_factory('VerbatimMe', manifest: { title: :_self,
+    lev_routine_factory('VerbatimMe', outputs: { title: :_self,
                                                   description: :super_nested }) do |title|
       set(title: title)
       run(:super_nested)
     end
 
-    lev_routine_factory('GetVerbatimed', manifest: { _verbatim: :verbatim_me }) do | title|
+    lev_routine_factory('GetVerbatimed', outputs: { _verbatim: :verbatim_me }) do | title|
       run(:verbatim_me, title)
     end
 

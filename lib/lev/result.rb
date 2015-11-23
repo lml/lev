@@ -2,16 +2,16 @@ module Lev
   class Result
     attr_reader :errors
 
-    def initialize(manifest, errors)
+    def initialize(outputs, errors)
       @errors = errors
-      self.class.manifest(manifest)
+      self.class.outputs(outputs)
     end
 
     def set(attrs = {})
       attrs.each { |k, v| send("#{k}=", v) }
     end
 
-    def self.manifest(map)
+    def self.outputs(map)
       map.each do |attribute, source|
         attr_reader attribute
 
