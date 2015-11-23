@@ -1,4 +1,4 @@
 require 'spec_helper'
 
-RSpec.describe Lev::Handler do
+RSpec.describe Lev::HandleWith do
 end

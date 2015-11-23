@@ -1,4 +1,4 @@
 module Lev
-  module Handler
+  module HandleWith
   end
 end
