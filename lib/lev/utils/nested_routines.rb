@@ -3,10 +3,10 @@ module Lev
     class NestedRoutines
       def self.setup(routine_class, intended_nested_routines)
         [intended_nested_routines].flatten.compact.each do |nested_routine|
-          routine_class.nested_routines[nested_routine] ||= {
-            routine_class: nested_routine.to_s.classify.constantize,
-            attributes: []
-          }
+          key = Symbolify.exec(nested_routine)
+          name = Nameify.exec(nested_routine)
+
+          routine_class.nested_routines[key] ||= { routine_class: name, attributes: [] }
         end
       end
     end

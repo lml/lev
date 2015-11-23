@@ -12,29 +12,29 @@ module Lev
       private
       def self.setup_nested_routine_outputs(nested_routines, map)
         map.each do |attribute, source|
-          nested_routines[source] ||= {
-            routine_class: source.to_s.classify.constantize,
-            attributes: []
-          }
+          key = Symbolify.exec(source)
+          name = Nameify.exec(source)
 
-          map_attribute(nested_routines, source, attribute)
+          nested_routines[key] ||= { routine_class: name, attributes: [] }
+
+          map_attribute(nested_routines, key, attribute)
         end
       end
 
-      def self.map_attribute(nested_routines, source, attribute)
+      def self.map_attribute(nested_routines, key, attribute)
         case attribute
         when :_verbatim
-          map_nested_routine_outputs(nested_routines, source)
+          map_nested_routine_outputs(nested_routines, key)
         else
-          nested_routines[source][:attributes] << attribute
+          nested_routines[key][:attributes] << attribute
         end
       end
 
-      def self.map_nested_routine_outputs(nested_routines, source)
+      def self.map_nested_routine_outputs(nested_routines, key)
         map = {}
 
-        nested_routines[source][:routine_class].outputs.each do |attr, _|
-          map[attr] = nested_routines[source][:routine_class].name.underscore.to_sym
+        nested_routines[key][:routine_class].outputs.each do |attr, _|
+          map[attr] = nested_routines[key][:routine_class].name.underscore.to_sym
         end
 
         setup_nested_routine_outputs(nested_routines, map)

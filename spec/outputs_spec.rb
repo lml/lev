@@ -53,4 +53,52 @@ RSpec.describe 'Outputs interfaces' do
     expect(result.title).to eq('verbatim title')
     expect(result.description).to eq('super nested desc')
   end
+
+  it 'allows constants instead of symbols' do
+    lev_routine_factory('ClassNameMe')
+
+    lev_routine_factory('ClassNameIt', outputs: { _verbatim: ClassNameMe }) do
+      run(:class_name_me)
+    end
+
+    expect(ClassNameMe).to receive(:call)
+
+    ClassNameIt.call
+  end
+
+  it 'allows a set of options' do
+    lev_routine_factory('OptionifyMe')
+
+    lev_routine_factory('OptionifyIt', outputs: {
+      _verbatim: { name: OptionifyMe, as: :something_else }
+    }) { run(:something_else) }
+
+    expect(OptionifyMe).to receive(:call)
+
+    OptionifyIt.call
+  end
+
+  it 'saves itself from no :as option' do
+    lev_routine_factory('DontAsMeBro')
+
+    lev_routine_factory('DontAsIt', outputs: { _verbatim: { name: DontAsMeBro } }) do
+      run(:dont_as_me_bro)
+    end
+
+    expect(DontAsMeBro).to receive(:call)
+
+    DontAsIt.call
+  end
+
+  it 'plays nicely with namespaced routines' do
+    lev_routine_factory('Name::Space::Me')
+
+    lev_routine_factory('UseTheNameSpaced', outputs: {
+      _verbatim: { name: Name::Space::Me }
+    }) { run(:name_space_me) }
+
+    expect(Name::Space::Me).to receive(:call)
+
+    UseTheNameSpaced.call
+  end
 end
