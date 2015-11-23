@@ -4,7 +4,7 @@ module Lev
       def self.exec(source)
         case source
         when Symbol || String
-          source.to_s.classify.constantize
+          source.to_s.camelize.constantize
         when Hash
           exec(source[:name])
         else
