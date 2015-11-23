@@ -2,6 +2,7 @@ require 'active_record'
 
 require 'lev/core_ext'
 require 'lev/configuration'
+require 'lev/handler'
 require 'lev/routine'
 
 module Lev
