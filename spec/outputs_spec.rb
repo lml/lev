@@ -95,10 +95,9 @@ RSpec.describe 'Outputs interfaces' do
     lev_routine_factory('Name::Space::MeTwo')
 
     lev_routine_factory('UseTheNameSpaced', outputs: {
-      _verbatim: [{ name: Name::Space::Me },
-                  { name: Name::Space::MeTwo }]
+      _verbatim: [{ name: Name::Space::Me, as: :coolio }, Name::Space::MeTwo]
     }) do
-      run(:name_space_me)
+      run(:coolio)
       run(:name_space_me_two)
     end
 
