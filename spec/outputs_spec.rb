@@ -92,12 +92,18 @@ RSpec.describe 'Outputs interfaces' do
 
   it 'plays nicely with namespaced routines' do
     lev_routine_factory('Name::Space::Me')
+    lev_routine_factory('Name::Space::MeTwo')
 
     lev_routine_factory('UseTheNameSpaced', outputs: {
-      _verbatim: { name: Name::Space::Me }
-    }) { run(:name_space_me) }
+      _verbatim: [{ name: Name::Space::Me },
+                  { name: Name::Space::MeTwo }]
+    }) do
+      run(:name_space_me)
+      run(:name_space_me_two)
+    end
 
     expect(Name::Space::Me).to receive(:call)
+    expect(Name::Space::MeTwo).to receive(:call)
 
     UseTheNameSpaced.call
   end

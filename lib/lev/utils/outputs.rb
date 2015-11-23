@@ -12,12 +12,14 @@ module Lev
       private
       def self.setup_nested_routine_outputs(nested_routines, map)
         map.each do |attribute, source|
-          key = Symbolify.exec(source)
-          name = Nameify.exec(source)
+          [source].flatten.each do |src|
+            key = Symbolify.exec(src)
+            name = Nameify.exec(src)
 
-          nested_routines[key] ||= { routine_class: name, attributes: [] }
+            nested_routines[key] ||= { routine_class: name, attributes: [] }
 
-          map_attribute(nested_routines, key, attribute)
+            map_attribute(nested_routines, key, attribute)
+          end
         end
       end
 
