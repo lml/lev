@@ -6,23 +6,15 @@ describe Lev::Routine do
     lev_routine_factory('RaiseStandardError') { unknown_method_call }
   end
 
-  it "raised errors should propagate" do
+  it "propagates raised errors" do
     expect{ RaiseArgumentError.call }.to raise_error
   end
 
-  it "raised StandardErrors should propagate" do
+  it "propagates raised StandardErrors" do
     expect { RaiseStandardError.call }.to raise_error(NameError)
   end
 
-  it 'allows not raising fatal errors to be overridden' do
-    lev_routine_factory('NoFatalErrorOption') { fatal_error(code: :no_propagate) }
-
-    Lev.configure { |c| c.raise_fatal_errors = false }
-
-    expect { NoFatalErrorOption.call }.not_to raise_error
-  end
-
-  it 'allows raising fatal errors config to be overridden' do
+  it 'overrides the raise_fatal_errors config' do
     lev_routine_factory('SpecialNoFatalErrorOption', raise_fatal_errors: false) do
       fatal_error(code: :its_broken)
     end
@@ -34,20 +26,15 @@ describe Lev::Routine do
 
   context 'when raise_fatal_errors is configured true' do
     before do
-      Lev.configure do |config|
-        config.raise_fatal_errors = true
-      end
-
+      Lev.configure { |config| config.raise_fatal_errors = true }
       lev_routine_factory('RaiseFatalError') { fatal_error(code: :broken, such: :disaster) }
     end
 
     after do
-      Lev.configure do |config|
-        config.raise_fatal_errors = false
-      end
+      Lev.configure { |config| config.raise_fatal_errors = false }
     end
 
-    it 'raises an exception on fatal_error if configured' do
+    it 'raises an exception on fatal_error' do
       expect { RaiseFatalError.call }.to raise_error
 
       begin
