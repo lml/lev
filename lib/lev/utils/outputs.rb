@@ -36,7 +36,7 @@ module Lev
         map = {}
 
         nested_routines[key][:routine_class].outputs.each do |attr, _|
-          map[attr] = Symbolify.exec(nested_routines[key][:routine_class])
+          map[attr] = nested_routines[key][:routine_class]
         end
 
         setup_nested_routine_outputs(nested_routines, map)
