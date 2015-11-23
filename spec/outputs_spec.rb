@@ -34,12 +34,19 @@ RSpec.describe 'Outputs interfaces' do
   end
 
   it 'maps verbatim to nested routines' do
-    lev_routine_factory('SuperNested', outputs: { description: :_self }) do
+    lev_routine_factory('SuperSuperNested', outputs: { description: :_self }) do
+      set(description: 'something')
+    end
+
+    lev_routine_factory('SuperNested', outputs: { _verbatim: { name: SuperSuperNested,
+                                                               as: :super },
+                                                  description: :_self }) do
+      run(:super)
       set(description: 'super nested desc')
     end
 
     lev_routine_factory('VerbatimMe', outputs: { title: :_self,
-                                                  description: :super_nested }) do |title|
+                                                 description: :super_nested }) do |title|
       set(title: title)
       run(:super_nested)
     end
