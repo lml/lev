@@ -97,7 +97,9 @@ RSpec.describe 'Outputs interfaces' do
   end
 
   it 'plays nicely with namespaced routines' do
-    routine('Name::Space::Me', outputs: { title: :_self })
+    routine('Name::Space::Me', outputs: { title: :_self }) do
+      set(title: 'wow you made it')
+    end
 
     routine('Name::Space::MeTwo', outputs: { _verbatim: Name::Space::Me }) do
       run(:name_space_me)
@@ -111,12 +113,12 @@ RSpec.describe 'Outputs interfaces' do
       run(:coolio)
       run(:name_space_me_three)
     end
-    p UseTheNameSpaced.nested_routines
 
     expect(Name::Space::Me).to receive(:call)
     expect(Name::Space::MeTwo).to receive(:call)
     expect(Name::Space::MeThree).to receive(:call)
 
-    UseTheNameSpaced.call
+    result = UseTheNameSpaced.call
+    expect(result.title).to eq('wow you made it')
   end
 end

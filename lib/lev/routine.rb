@@ -42,7 +42,7 @@ module Lev
     end
 
     def run(routine_name, *args)
-      routine = self.class.nested_routines[routine_name]
+      routine = self.class.find_nested_routine(routine_name)
       result = routine[:routine_class].call(*args)
 
       routine[:attributes].each do |attr|
@@ -74,6 +74,11 @@ module Lev
 
       def nested_routines
         @nested_routines ||= {}
+      end
+
+      def find_nested_routine(name)
+        name = Lev::Utils::Symbolify.exec(name)
+        nested_routines.select { |_, opts| opts[:name_alias] == name }.values.first
       end
     end
 

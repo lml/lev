@@ -15,8 +15,11 @@ module Lev
           [source].flatten.each do |src|
             key = Symbolify.exec(src)
             name = Nameify.exec(src)
+            name_alias = Aliasify.exec(src)
 
-            nested_routines[key] ||= { routine_class: name, attributes: Set.new }
+            nested_routines[key] ||= { name_alias: name_alias,
+                                       routine_class: name,
+                                       attributes: Set.new }
 
             map_attribute(nested_routines, key, attribute)
           end
@@ -26,41 +29,42 @@ module Lev
       def self.map_attribute(nested_routines, key, attribute)
         case attribute
         when :_verbatim
-          ## HERE IT IS IN WIP
-          #
-          # Trying to promote the nested routine's nested attributes up to
-          # the parent routine's attributes
-          #
-          # basically, all verbatim attributes in a given nested routine
-          # become attributes on THAT nested routine for the parent routine
-          #
-          # shitty loop logic, i know. hard to follow
-          #
-          # my plan was to get it working and then of course
-          # clean it up and section it off in distinct functions
-          nested_class = nested_routines[key][:routine_class]
-          map = nested_class.outputs
-          sub_map = {}
-
-          map.each do |attr, source|
-            case attr
-            when :_verbatim
-              [source].flatten.each do
-                key = Symbolify.exec(source)
-                nested_class.nested_routines[key][:attributes].each do |attr|
-                  sub_map[attr] = source
-                end
-              end
-            else
-              map[attr] = nested_class
-            end
-          end
-
-          map.merge!(sub_map)
-
-          setup_nested_routine_outputs(nested_routines, map)
+          promote_verbatim_attributes(nested_routines, key)
         else
           nested_routines[key][:attributes] << attribute
+        end
+      end
+
+      # TODO: This is so bad
+      # blame joemsak
+      def self.promote_verbatim_attributes(nested_routines, key)
+        nested_class = nested_routines[key][:routine_class]
+        map = nested_class.outputs
+        sub_map = {}
+
+        map.each do |attr, source|
+          construct_map(map, attr, source, sub_map, nested_class)
+        end
+
+        setup_nested_routine_outputs(nested_routines, map.merge(sub_map))
+      end
+
+      def self.construct_map(map, attr, source, sub_map, nested_class)
+        case attr
+        when :_verbatim
+          construct_sub_map(nested_class, source, sub_map)
+          map.delete(:_verbatim)
+        else
+          map[attr] = nested_class
+        end
+      end
+
+      def self.construct_sub_map(nested_class, source, sub_map)
+        [source].flatten.each do |src|
+          key = Symbolify.exec(src)
+          nested_class.nested_routines[key][:attributes].each do |attr|
+            sub_map[attr] = nested_class
+          end
         end
       end
     end
