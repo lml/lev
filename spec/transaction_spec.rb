@@ -2,8 +2,8 @@ require 'spec_helper'
 
 RSpec.describe 'Transactions' do
   before do
-    lev_routine_factory('NestedRoutine') { raise 'Rolled back' }
-    lev_routine_factory('RollBackTransactions') do
+    routine('NestedRoutine') { raise 'Rolled back' }
+    routine('RollBackTransactions') do
       Model.create!
       run(:nested_routine)
     end

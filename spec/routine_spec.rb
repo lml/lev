@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Lev::Routine do
   before do
-    lev_routine_factory('RaiseError') { raise 'error message' }
-    lev_routine_factory('RaiseStandardError') { unknown_method_call }
+    routine('RaiseError') { raise 'error message' }
+    routine('RaiseStandardError') { unknown_method_call }
   end
 
   it "propagates raised errors" do
@@ -15,7 +15,7 @@ describe Lev::Routine do
   end
 
   it 'overrides the raise_fatal_errors config' do
-    lev_routine_factory('SpecialNoFatalErrorOption', raise_fatal_errors: false) do
+    routine('SpecialNoFatalErrorOption', raise_fatal_errors: false) do
       fatal_error(code: :its_broken)
     end
 
@@ -27,7 +27,7 @@ describe Lev::Routine do
   context 'when raise_fatal_errors is configured true' do
     before do
       Lev.configure { |config| config.raise_fatal_errors = true }
-      lev_routine_factory('RaiseFatalError') { fatal_error(code: :broken, such: :disaster) }
+      routine('RaiseFatalError') { fatal_error(code: :broken, such: :disaster) }
     end
 
     after do

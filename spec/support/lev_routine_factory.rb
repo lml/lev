@@ -1,5 +1,5 @@
 module LevRoutineFactory
-  def lev_routine_factory(klass_name, options = {}, &block)
+  def routine(klass_name, options = {}, &block)
     stub_const(klass_name, Class.new)
 
     klass_name.constantize.class_eval do

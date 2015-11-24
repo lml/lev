@@ -4,7 +4,7 @@ describe Lev::BackgroundJob do
   subject(:job) { described_class.all.last }
 
   before do
-    lev_routine_factory('DelayedRoutine', active_job_queue: :my_queue)
+    routine('DelayedRoutine', active_job_queue: :my_queue)
     Lev.configuration.job_store.clear
     allow(SecureRandom).to receive(:uuid) { '123abc' }
     DelayedRoutine.perform_later
@@ -227,7 +227,7 @@ describe Lev::BackgroundJob do
 
   context 'exception raised' do
     before do
-      lev_routine_factory('ExceptionalRoutine') { raise TypeError, 'howdy there' }
+      routine('ExceptionalRoutine') { raise TypeError, 'howdy there' }
       ::ActiveJob::Base.queue_adapter = :inline
     end
 
