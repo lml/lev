@@ -20,12 +20,12 @@ RSpec.describe 'Outputs interfaces' do
   end
 
   it 'maps attributes from nested routines' do
-    routine('NestedRoutine', outputs: { title: :_self }) do |title|
+    routine('Subroutine', outputs: { title: :_self }) do |title|
       set(title: title)
     end
 
-    routine('MapToNested', outputs: { title: :nested_routine }) do | title|
-      run(:nested_routine, title)
+    routine('MapToNested', outputs: { title: :subroutine }) do | title|
+      run(:subroutine, title)
     end
 
     result = MapToNested.call('nested title')

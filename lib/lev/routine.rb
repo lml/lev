@@ -42,7 +42,7 @@ module Lev
     end
 
     def run(routine_name, *args)
-      routine = self.class.find_nested_routine(routine_name)
+      routine = self.class.find_subroutine(routine_name)
       result = routine[:routine_class].call(*args)
 
       routine[:attributes].each do |attr|
@@ -72,13 +72,13 @@ module Lev
                                   @raise_fatal_errors.nil?)
       end
 
-      def nested_routines
-        @nested_routines ||= {}
+      def subroutines
+        @subroutines ||= {}
       end
 
-      def find_nested_routine(name)
+      def find_subroutine(name)
         name = Lev::Utils::Symbolify.exec(name)
-        nested_routines.select { |_, opts| opts[:name_alias] == name }.values.first
+        subroutines.select { |_, opts| opts[:name_alias] == name }.values.first
       end
     end
 

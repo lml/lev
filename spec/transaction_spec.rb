@@ -5,7 +5,7 @@ RSpec.describe 'Transactions' do
     routine('NestedRoutine') { raise 'Rolled back' }
     routine('RollBackTransactions') do
       Model.create!
-      run(:nested_routine)
+      run(:subroutine)
     end
   end
 

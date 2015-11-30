@@ -3,7 +3,7 @@ module Lev
     class Options
       def self.setup(routine_class, options)
         Outputs.setup(routine_class, options.delete(:outputs))
-        NestedRoutines.setup(routine_class, options.delete(:uses))
+        Subroutines.setup(routine_class, options.delete(:uses))
         setup_routine_getters(routine_class, options)
       end
 
