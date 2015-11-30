@@ -43,18 +43,23 @@ module Lev
       end
 
       def self.promote_verbatim_attributes(routine_class, key)
-        nested_class = routine_class.subroutines[key][:routine_class]
-        map = nested_class.outputs
+        subroutine = routine_class.subroutines[key]
+        nested_class = subroutine[:routine_class]
+        sub_attrs = nested_class.subroutines.values.collect { |v| v[:attributes] }.first
+        map = {}
 
-        map.each { |attr, _| map[attr] = nested_class }
-
-        map.delete(:_verbatim)
-
-        map.each do |attr, source|
-          map_attribute(routine_class, source, attr)
+        nested_class.outputs.each do |attr, _|
+          case attr
+          when :_verbatim
+            sub_attrs.each { |attr| map[attr] = nested_class }
+          else
+            map[attr] = nested_class
+          end
         end
 
-        setup_subroutine_outputs(routine_class, map)
+        #binding.pry if routine_class.name == 'UseTheNameSpaced'
+
+        setup(routine_class, { outputs: map })
       end
     end
   end
