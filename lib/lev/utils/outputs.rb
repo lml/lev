@@ -2,10 +2,7 @@ module Lev
   module Utils
     class Outputs
       def self.setup(routine_class, outputs_map)
-        routine_class.instance_variable_set('@outputs', outputs_map || {})
-        routine_class.define_singleton_method('outputs') { @outputs }
-
-        nested_map = routine_class.outputs.select { |_, source| source != :_self }
+        nested_map = (outputs_map || {}).select { |_, source| source != :_self }
         setup_subroutine_outputs(routine_class, nested_map)
       end
 
