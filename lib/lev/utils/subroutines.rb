@@ -25,54 +25,33 @@ module Lev
       def self.setup_subroutine_outputs(routine_class, map)
         map.each do |attribute, source|
           setup_subroutines(routine_class, source)
-
-          [source].flatten.each do |src|
-            key = Symbolify.exec(src)
-            map_attribute(routine_class, key, attribute)
-          end
+          map_attribute(routine_class, source, attribute)
         end
       end
 
-      def self.map_attribute(routine_class, key, attribute)
-        case attribute
-        when :_verbatim
-          promote_verbatim_attributes(routine_class, key)
-        else
-          routine_class.subroutines[key][:attributes] << attribute
-        end
-      end
-
-      # TODO: This is so bad
-      # blame joemsak
-      def self.promote_verbatim_attributes(routine_class, key)
-        nested_class = routine_class.subroutines[key][:routine_class]
-        map = nested_class.outputs
-        sub_map = {}
-
-        map.each do |attr, source|
-          construct_map(map, attr, source, sub_map, nested_class)
-        end
-
-        setup_subroutine_outputs(routine_class, map.merge(sub_map))
-      end
-
-      def self.construct_map(map, attr, source, sub_map, nested_class)
-        case attr
-        when :_verbatim
-          construct_sub_map(nested_class, source, sub_map)
-          map.delete(:_verbatim)
-        else
-          map[attr] = nested_class
-        end
-      end
-
-      def self.construct_sub_map(nested_class, source, sub_map)
+      def self.map_attribute(routine_class, source, attribute)
         [source].flatten.each do |src|
           key = Symbolify.exec(src)
-          nested_class.subroutines[key][:attributes].each do |attr|
-            sub_map[attr] = nested_class
+
+          case attribute
+          when :_verbatim
+            promote_verbatim_attributes(routine_class, key)
+          else
+            routine_class.subroutines[key][:attributes] << attribute
           end
         end
+      end
+
+      def self.promote_verbatim_attributes(routine_class, key)
+        nested_class = routine_class.subroutines[key][:routine_class]
+        map = nested_class.outputs.select { |_, v| v != :_self }
+
+        map.each do |attr, source|
+          source = source == :_self ? nested_class : source
+          map_attribute(routine_class, source, attr)
+        end
+
+        setup_subroutine_outputs(routine_class, map)
       end
     end
   end
