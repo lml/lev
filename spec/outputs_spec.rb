@@ -34,30 +34,29 @@ RSpec.describe 'Outputs interfaces' do
   end
 
   it 'maps verbatim to nested routines' do
-    routine('SuperSuperNested', outputs: { description: :_self }) do
-      set(description: 'something')
-    end
+    routine('SuperSuperNested', outputs: { description: :_self }) {
+      set(description: 'super super nested desc')
+    }
 
-    routine('SuperNested', outputs: { _verbatim: { name: SuperSuperNested, as: :super },
-                                                   description: :_self }) do
+    routine('SuperNested', outputs: {
+                             _verbatim: { name: SuperSuperNested, as: :super }
+                           }) {
       run(:super)
-      set(description: 'super nested desc')
-    end
+    }
 
-    routine('VerbatimMe', outputs: { title: :_self,
-                                     description: :super_nested }) do |title|
-      set(title: title)
+    routine('VerbatimMe', outputs: { title: :_self, description: :super_nested }) { |t|
+      set(title: t)
       run(:super_nested)
-    end
+    }
 
-    routine('GetVerbatimed', outputs: { _verbatim: :verbatim_me }) do | title|
+    routine('GetVerbatimed', outputs: { _verbatim: :verbatim_me }) { | title|
       run(:verbatim_me, title)
-    end
+    }
 
     result = GetVerbatimed.call('verbatim title')
 
     expect(result.title).to eq('verbatim title')
-    expect(result.description).to eq('super nested desc')
+    expect(result.description).to eq('super super nested desc')
   end
 
   it 'allows constants instead of symbols' do

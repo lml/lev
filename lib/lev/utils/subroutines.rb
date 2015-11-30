@@ -44,10 +44,13 @@ module Lev
 
       def self.promote_verbatim_attributes(routine_class, key)
         nested_class = routine_class.subroutines[key][:routine_class]
-        map = nested_class.outputs.select { |_, v| v != :_self }
+        map = nested_class.outputs
+
+        map.each { |attr, _| map[attr] = nested_class }
+
+        map.delete(:_verbatim)
 
         map.each do |attr, source|
-          source = source == :_self ? nested_class : source
           map_attribute(routine_class, source, attr)
         end
 
