@@ -56,7 +56,6 @@ module Lev
 
     module ClassMethods
       def call(*args)
-        binding.pry
         new.call(*args)
       end
 
