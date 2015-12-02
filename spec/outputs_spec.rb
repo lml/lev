@@ -60,39 +60,42 @@ RSpec.describe 'Outputs interfaces' do
   end
 
   it 'allows constants instead of symbols' do
-    routine('ClassNameMe')
+    routine('ClassNameMe', outputs: { title: :_self }) do
+      set(title: 'Hey')
+    end
 
     routine('ClassNameIt', outputs: { _verbatim: ClassNameMe }) do
       run(:class_name_me)
     end
 
-    expect(ClassNameMe).to receive(:call)
-
-    ClassNameIt.call
+    result = ClassNameIt.call
+    expect(result.title).to eq('Hey')
   end
 
   it 'allows a set of options' do
-    routine('OptionifyMe')
+    routine('OptionifyMe', outputs: { title: :_self }) do
+      set(title: 'You used options!')
+    end
 
     routine('OptionifyIt', outputs: {
       _verbatim: { name: OptionifyMe, as: :something_else }
     }) { run(:something_else) }
 
-    expect(OptionifyMe).to receive(:call)
-
-    OptionifyIt.call
+    result = OptionifyIt.call
+    expect(result.title).to eq('You used options!')
   end
 
   it 'saves itself from no :as option' do
-    routine('DontAsMeBro')
+    routine('DontAsMeBro', outputs: { title: :_self }) do
+      set(title: "Default alias used")
+    end
 
     routine('DontAsIt', outputs: { _verbatim: { name: DontAsMeBro } }) do
       run(:dont_as_me_bro)
     end
 
-    expect(DontAsMeBro).to receive(:call)
-
-    DontAsIt.call
+    result = DontAsIt.call
+    expect(result.title).to eq('Default alias used')
   end
 
   it 'plays nicely with namespaced routines' do
@@ -112,10 +115,6 @@ RSpec.describe 'Outputs interfaces' do
       run(:coolio)
       run(:name_space_me_three)
     end
-
-    expect(Name::Space::Me).to receive(:call)
-    expect(Name::Space::MeTwo).to receive(:call)
-    expect(Name::Space::MeThree).to receive(:call)
 
     result = UseTheNameSpaced.call
     expect(result.title).to eq('wow you made it')

@@ -43,7 +43,7 @@ module Lev
 
     def run(routine_name, *args)
       routine = self.class.find_subroutine(routine_name)
-      sub_result = routine[:routine_class].call(*args)
+      sub_result = routine[:routine_class].new.call(*args)
 
       routine[:attributes].each do |attr|
         set(attr => sub_result.send(attr))
