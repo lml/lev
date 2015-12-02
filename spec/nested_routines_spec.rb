@@ -8,7 +8,7 @@ RSpec.describe 'Nested routines' do
       run(:nest_me)
     end
 
-    expect_any_instance_of(NestMe).to receive(:call)
+    expect(NestMe).to receive(:call)
     ParentMe.call
   end
 
@@ -19,7 +19,7 @@ RSpec.describe 'Nested routines' do
       run(:constant_nest_me)
     end
 
-    expect_any_instance_of(ConstantNestMe).to receive(:call)
+    expect(ConstantNestMe).to receive(:call)
     ConstantParentMe.call
   end
 
@@ -30,7 +30,7 @@ RSpec.describe 'Nested routines' do
       run(:use_me)
     end
 
-    expect_any_instance_of(OptionUseMe).to receive(:call)
+    expect(OptionUseMe).to receive(:call)
     OptionUseIt.call
   end
 
@@ -43,8 +43,8 @@ RSpec.describe 'Nested routines' do
       run(:up)
     end
 
-    expect_any_instance_of(NoAsHere).to receive(:call)
-    expect_any_instance_of(AsItUp).to receive(:call)
+    expect(NoAsHere).to receive(:call)
+    expect(AsItUp).to receive(:call)
 
     NoAsThere.call
   end
@@ -56,7 +56,7 @@ RSpec.describe 'Nested routines' do
       run(:name_space_child)
     end
 
-    expect_any_instance_of(Name::SpaceChild).to receive(:call)
+    expect(Name::SpaceChild).to receive(:call)
 
     HasNameSpace.call
   end
