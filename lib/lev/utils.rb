@@ -3,9 +3,6 @@ require 'lev/utils/nameify'
 require 'lev/utils/aliasify'
 
 require 'lev/utils/options'
-require 'lev/utils/subroutines'
-
-module Lev
-  module Utils
-  end
-end
+require 'lev/utils/readable_attrs'
+require 'lev/utils/outputs'
+require 'lev/utils/uses'
