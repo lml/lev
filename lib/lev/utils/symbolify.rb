@@ -8,7 +8,7 @@ module Lev
         when String
           source.to_sym
         when Hash
-          exec(source[:name])
+          exec(source[:name] || source.values.last)
         else
           source
         end

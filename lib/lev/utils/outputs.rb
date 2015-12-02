@@ -4,8 +4,12 @@ module Lev
   module Utils
     class Outputs
       def self.setup(routine_class, outputs)
-        subroutine_sources = outputs.select { |_, v| v != :_self }
-        OutputSources::Subroutines.setup(routine_class, subroutine_sources)
+        subroutine_srcs = outputs.select { |_, v| v != :_self }
+        attr_subroutine_srcs = subroutine_srcs.select { |k, _| k != :_verbatim }
+        verbatim_subroutine_srcs = subroutine_srcs.select { |k, _| k == :_verbatim }
+
+        OutputSources::AttributeSubroutines.setup(routine_class, attr_subroutine_srcs)
+        OutputSources::VerbatimSubroutines.setup(routine_class, verbatim_subroutine_srcs)
       end
     end
   end

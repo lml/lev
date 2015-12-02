@@ -55,7 +55,10 @@ module Lev
     end
 
     module ClassMethods
-      def call(*args); new.call(*args); end
+      def call(*args)
+        binding.pry
+        new.call(*args)
+      end
 
       if defined?(::ActiveJob)
         def perform_later(*args, &block)
