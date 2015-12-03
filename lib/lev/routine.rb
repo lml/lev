@@ -58,6 +58,10 @@ module Lev
       errors.add(args.merge(fail: true))
     end
 
+    def nonfatal_error(args = {})
+      errors.add(args.merge(fail: false))
+    end
+
     module ClassMethods
       def call(*args)
         new.call(*args)

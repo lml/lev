@@ -25,22 +25,25 @@ describe Lev::Routine do
   end
 
   context 'when raise_fatal_errors is configured true' do
-    before do
+    before(:all) do
       Lev.configure { |config| config.raise_fatal_errors = true }
-      routine('RaiseFatalError') { fatal_error(code: :broken, such: :disaster) }
     end
 
-    after do
+    after(:all) do
       Lev.configure { |config| config.raise_fatal_errors = false }
     end
 
     it 'raises an exception on fatal_error' do
+      routine('RaiseFatalError') { fatal_error(code: :broken,
+                                               such: :disaster,
+                                               really: 'bad') }
+
       expect { RaiseFatalError.call }.to raise_error
 
       begin
         RaiseFatalError.call
       rescue => e
-        expect(e.message).to eq('code broken - such disaster - kind lev')
+        expect(e.message).to eq('kind: lev - code: broken - such: disaster - really: bad')
       end
     end
   end

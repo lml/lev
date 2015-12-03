@@ -7,11 +7,15 @@ module Lev
     end
 
     def add(args = {})
-      args[:kind] ||= :lev
-      failing = args.delete(:fail)
+      args.stringify_keys!
+
+      failing = args.delete('fail')
+      error = Error.new(args)
 
       if failing && raise_fatal_errors
-        raise FatalError, args.to_a.map { |i| i.join(' ') }.join(' - ')
+        raise FatalError, error.to_s
+      else
+        push(error.to_s)
       end
     end
 
