@@ -1,6 +1,6 @@
 module Lev
   class Result
-    attr_reader :errors
+    attr_accessor :errors
 
     def initialize(outputs, errors)
       @errors = errors

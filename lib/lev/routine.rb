@@ -50,6 +50,10 @@ module Lev
       end
     end
 
+    def transfer_errors_from(model)
+      set(errors: model.errors)
+    end
+
     def fatal_error(args = {})
       errors.add(args.merge(fail: true))
     end
