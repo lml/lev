@@ -15,10 +15,10 @@ module Lev
             key ||= Symbolify.exec(src)
 
             nested_class = Nameify.exec(src)
-            source_class = routine_class.subroutine_class(key)
+            source_class = routine_class.subroutines.routine_class(key)
 
             nested_class.explicit_outputs.each do |attr|
-              routine_class.add_attribute(key, attr)
+              routine_class.subroutines.add_attribute(key, attr)
             end
 
             promote_verbatim_attributes(routine_class, key, nested_class.verbatim_outputs)

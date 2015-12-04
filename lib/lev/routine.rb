@@ -1,4 +1,5 @@
 require 'lev/background_jobs'
+require 'lev/subroutines'
 require 'lev/result'
 require 'lev/errors'
 
@@ -42,10 +43,10 @@ module Lev
     end
 
     def run(routine_name, *args)
-      subroutine = self.class.subroutine_class(routine_name)
+      subroutine = self.class.subroutines.routine_class(routine_name)
       sub_result = subroutine.call(*args)
 
-      subroutine_attrs = self.class.subroutine_attrs(routine_name)
+      subroutine_attrs = self.class.subroutines.attributes(routine_name)
 
       subroutine_attrs.each do |attr|
         set(attr => sub_result.send(attr))
@@ -86,12 +87,8 @@ module Lev
 
       def add_subroutines(sources)
         [sources].flatten.compact.each do |src|
-          add_subroutine(src)
+          subroutines.add(src)
         end
-      end
-
-      def add_attribute(key, attr)
-        subroutine(key)[:attributes] << attr
       end
 
       def explicit_outputs
@@ -103,34 +100,7 @@ module Lev
       end
 
       def subroutines
-        @subroutines ||= {}
-      end
-
-      def subroutine_class(name)
-        subroutine(name)[:routine_class]
-      end
-
-      def subroutine_attrs(name)
-        subroutine(name)[:attributes]
-      end
-
-      private
-      def add_subroutine(source)
-        key = Utils::Symbolify.exec(source)
-        name = Utils::Nameify.exec(source)
-        name_alias = Utils::Aliasify.exec(source)
-
-        subroutines[key] ||= { name_alias: name_alias,
-                               routine_class: name,
-                               attributes: Set.new }
-      end
-
-      def subroutine(name)
-        name = Utils::Symbolify.exec(name)
-
-        subroutines.select { |k, opts|
-          k == name || opts[:name_alias] == name
-        }.values.first
+        @subroutines ||= Subroutines.new
       end
     end
 
