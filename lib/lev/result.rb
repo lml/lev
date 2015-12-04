@@ -4,15 +4,16 @@ module Lev
 
     def initialize(outputs, errors)
       @errors = errors
-      self.class.outputs(outputs)
+      self.class.setup(outputs)
     end
 
     def set(attrs = {})
       attrs.each { |k, v| send("#{k}=", v) }
     end
 
-    def self.outputs(map)
-      map.each do |attribute, source|
+    private
+    def self.setup(outputs)
+      outputs.each do |attribute, source|
         attr_reader attribute
 
         define_method("#{attribute}=") do |value|

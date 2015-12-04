@@ -1,4 +1,5 @@
 require 'lev/background_jobs'
+require 'lev/outputs'
 require 'lev/subroutines'
 require 'lev/result'
 require 'lev/errors'
@@ -71,7 +72,7 @@ module Lev
       end
 
       def outputs
-        @outputs ||= {}
+        @outputs ||= Outputs.new(self, {})
       end
 
       if defined?(::ActiveJob)
@@ -87,14 +88,6 @@ module Lev
       def raise_fatal_errors?
         @raise_fatal_errors || (Lev.configuration.raise_fatal_errors &&
                                   @raise_fatal_errors.nil?)
-      end
-
-      def explicit_outputs
-        outputs.select { |k, _| k != :_verbatim }.keys
-      end
-
-      def verbatim_outputs
-        [outputs[:_verbatim]].flatten.compact
       end
 
       def subroutines

@@ -16,8 +16,8 @@ module Lev
       find(name)[:attributes]
     end
 
-    def add_attribute(key, attr)
-      find(key)[:attributes] << attr
+    def add_attribute(source, attr)
+      find(source)[:attributes] << attr
     end
 
     def routine_class(name)
