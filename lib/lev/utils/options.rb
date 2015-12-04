@@ -6,7 +6,7 @@ module Lev
 
         ReadableAttrs.setup(routine_class, options)
         Outputs.setup(routine_class, options[:outputs])
-        routine_class.add_subroutines(options[:uses])
+        routine_class.subroutines.add(options[:uses])
       end
     end
   end

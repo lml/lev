@@ -1,13 +1,15 @@
 module Lev
   class Subroutines < Hash
     def add(source)
-      key = Utils::Symbolify.exec(source)
-      name = Utils::Nameify.exec(source)
-      name_alias = Utils::Aliasify.exec(source)
+      [source].flatten.compact.each do |src|
+        key = Utils::Symbolify.exec(src)
+        name = Utils::Nameify.exec(src)
+        name_alias = Utils::Aliasify.exec(src)
 
-      self[key] ||= { name_alias: name_alias,
-                      routine_class: name,
-                      attributes: Set.new }
+        self[key] ||= { name_alias: name_alias,
+                        routine_class: name,
+                        attributes: Set.new }
+      end
     end
 
     def attributes(name)

@@ -4,7 +4,7 @@ module Lev
       class VerbatimSubroutines
         def self.setup(routine_class, map)
           map.values.each do |source|
-            routine_class.add_subroutines(source)
+            routine_class.subroutines.add(source)
             promote_verbatim_attributes(routine_class, nil, source)
           end
         end

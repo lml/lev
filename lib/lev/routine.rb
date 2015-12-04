@@ -85,12 +85,6 @@ module Lev
                                   @raise_fatal_errors.nil?)
       end
 
-      def add_subroutines(sources)
-        [sources].flatten.compact.each do |src|
-          subroutines.add(src)
-        end
-      end
-
       def explicit_outputs
         outputs.select { |k, _| k != :_verbatim }.keys
       end
