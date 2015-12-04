@@ -70,6 +70,10 @@ module Lev
         new.call(*args)
       end
 
+      def outputs
+        @outputs ||= {}
+      end
+
       if defined?(::ActiveJob)
         def perform_later(*args, &block)
           Lev::CoreExt::ActiveJob::Base.perform_later(self, *args, &block)

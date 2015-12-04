@@ -1,8 +1,8 @@
 module Lev
   module Utils
     class Outputs
-      def self.setup(routine_class, outputs)
-        subroutine_srcs = outputs.select { |_, v| v != :_self }
+      def self.setup(routine_class)
+        subroutine_srcs = routine_class.outputs.select { |_, v| v != :_self }
 
         subroutine_srcs.select { |k, _| k != :_verbatim }.each do |attr, source|
           add_attribute_subroutines(routine_class, source, attr)
