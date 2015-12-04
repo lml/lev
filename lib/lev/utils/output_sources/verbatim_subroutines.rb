@@ -18,7 +18,7 @@ module Lev
             source_class = routine_class.subroutine_class(key)
 
             nested_class.explicit_outputs.each do |attr|
-              AttributeSubroutines.setup(routine_class, { attr => source_class })
+              routine_class.add_attribute(key, attr)
             end
 
             promote_verbatim_attributes(routine_class, key, nested_class.verbatim_outputs)
