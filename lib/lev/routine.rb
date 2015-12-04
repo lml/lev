@@ -96,6 +96,16 @@ module Lev
       def subroutines
         @subroutines ||= Subroutines.new
       end
+
+      def setup_readable_attrs(options)
+        options.each do |key, value|
+          instance_variable_set("@#{key}", value)
+
+          define_singleton_method(key) do
+            instance_variable_get("@#{key}")
+          end
+        end
+      end
     end
 
     private

@@ -4,7 +4,7 @@ module Lev
       def self.setup(routine_class, options)
         options = { outputs: {}, uses: [] }.merge(options)
 
-        ReadableAttrs.setup(routine_class, options)
+        routine_class.setup_readable_attrs(options)
         Outputs.setup(routine_class, options[:outputs])
         routine_class.subroutines.add(options[:uses])
       end
