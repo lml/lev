@@ -4,7 +4,7 @@ module Lev
       class VerbatimSubroutines
         def self.setup(routine_class, map)
           map.values.each do |source|
-            Uses.setup(routine_class, source)
+            routine_class.add_subroutines(source)
             promote_verbatim_attributes(routine_class, nil, source)
           end
         end
@@ -13,13 +13,15 @@ module Lev
         def self.promote_verbatim_attributes(routine_class, key, source)
           [source].flatten.each do |src|
             key ||= Symbolify.exec(src)
+
             nested_class = Nameify.exec(src)
+            source_class = routine_class.subroutine_class(key)
 
-            attrs = nested_class.outputs.select { |k, _| k != :_verbatim }.keys
-            routine_class.subroutines[key][:attributes] += attrs
+            nested_class.explicit_outputs.each do |attr|
+              AttributeSubroutines.setup(routine_class, { attr => source_class })
+            end
 
-            verbatims = [nested_class.outputs[:_verbatim]].flatten.compact
-            promote_verbatim_attributes(routine_class, key, verbatims)
+            promote_verbatim_attributes(routine_class, key, nested_class.verbatim_outputs)
           end
         end
       end

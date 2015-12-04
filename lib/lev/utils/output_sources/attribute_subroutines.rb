@@ -6,8 +6,8 @@ module Lev
           map.each do |attr, source|
             key = Symbolify.exec(source)
 
-            Uses.setup(routine_class, source)
-            routine_class.subroutines[key][:attributes] << attr
+            routine_class.add_subroutines(source)
+            routine_class.add_attribute(key, attr)
           end
         end
       end

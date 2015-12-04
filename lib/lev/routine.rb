@@ -42,10 +42,12 @@ module Lev
     end
 
     def run(routine_name, *args)
-      routine = self.class.find_subroutine(routine_name)
-      sub_result = routine[:routine_class].call(*args)
+      subroutine = self.class.subroutine_class(routine_name)
+      sub_result = subroutine.call(*args)
 
-      routine[:attributes].each do |attr|
+      subroutine_attrs = self.class.subroutine_attrs(routine_name)
+
+      subroutine_attrs.each do |attr|
         set(attr => sub_result.send(attr))
       end
     end
@@ -82,13 +84,53 @@ module Lev
                                   @raise_fatal_errors.nil?)
       end
 
+      def add_subroutines(sources)
+        [sources].flatten.compact.each do |src|
+          add_subroutine(src)
+        end
+      end
+
+      def add_attribute(key, attr)
+        subroutine(key)[:attributes] << attr
+      end
+
+      def explicit_outputs
+        outputs.select { |k, _| k != :_verbatim }.keys
+      end
+
+      def verbatim_outputs
+        [outputs[:_verbatim]].flatten.compact
+      end
+
       def subroutines
         @subroutines ||= {}
       end
 
-      def find_subroutine(name)
-        name = Lev::Utils::Symbolify.exec(name)
-        subroutines.select { |_, opts| opts[:name_alias] == name }.values.first
+      def subroutine_class(name)
+        subroutine(name)[:routine_class]
+      end
+
+      def subroutine_attrs(name)
+        subroutine(name)[:attributes]
+      end
+
+      private
+      def add_subroutine(source)
+        key = Utils::Symbolify.exec(source)
+        name = Utils::Nameify.exec(source)
+        name_alias = Utils::Aliasify.exec(source)
+
+        subroutines[key] ||= { name_alias: name_alias,
+                               routine_class: name,
+                               attributes: Set.new }
+      end
+
+      def subroutine(name)
+        name = Utils::Symbolify.exec(name)
+
+        subroutines.select { |k, opts|
+          k == name || opts[:name_alias] == name
+        }.values.first
       end
     end
 
