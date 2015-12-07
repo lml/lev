@@ -15,6 +15,7 @@ module Lev
         def lev_handler(options = {})
           class_eval do
             include Lev::Routine
+            include Lev::Handler
 
             Lev::Utils::Options.setup(self, options)
           end

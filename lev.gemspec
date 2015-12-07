@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = Dir["spec/**/*"]
 
   spec.add_dependency "activerecord", '>= 3.0'
+  spec.add_runtime_dependency "active_attr", '~> 0.8.5'
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"

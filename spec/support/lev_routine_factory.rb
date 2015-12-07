@@ -15,7 +15,7 @@ module LevRoutineFactory
     klass_name.constantize.class_eval do
       lev_handler options
 
-      define_method(:exec, &(block || Proc.new { }))
+      define_method(:handle, &(block || Proc.new { }))
     end
   end
 end
