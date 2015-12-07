@@ -52,6 +52,8 @@ module Lev
       subroutine_attrs.each do |attr|
         set(attr => sub_result.send(attr))
       end
+
+      sub_result
     end
 
     def transfer_errors_from(model)

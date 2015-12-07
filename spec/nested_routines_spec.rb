@@ -60,4 +60,21 @@ RSpec.describe 'Nested routines' do
 
     HasNameSpace.call
   end
+
+  it 'returns the sub_result in run' do
+    routine('Subrun', outputs: { test: :_self }) do
+      set(test: 'success!')
+    end
+
+    routine('Parentrun', outputs: { dont_do_this: :_self }, uses: Subrun) do
+      # this is for test purposes only!
+      # instead of setting by hand,
+      # attributes of subroutine results
+      # should be mapped in outputs!
+      set(dont_do_this: run(:subrun).test)
+    end
+
+    result = Parentrun.call
+    expect(result.dont_do_this).to eq('success!')
+  end
 end
