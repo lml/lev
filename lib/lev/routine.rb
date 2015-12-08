@@ -33,12 +33,13 @@ module Lev
 
       begin
         ActiveRecord::Base.transaction { exec(*args, &block) }
+        job.succeeded! unless errors.any?
       rescue Exception => e
         job.failed!(e)
         raise e
+      ensure
+        result
       end
-
-      job.succeeded! unless errors.any?
 
       result
     end
