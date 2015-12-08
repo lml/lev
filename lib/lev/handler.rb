@@ -5,16 +5,16 @@ module Lev
     end
 
     def initialize(options = {})
-      @params = options.delete(:params) || {}
     end
 
-    def call
+    def call(options = {})
+      @params = options.delete(:params) || {}
       handle
       result
     end
 
     module ClassMethods
-      def call(options = {}); new(options).call; end
+      def call(options = {}); new.call(options); end
 
       def paramify(root, &block)
         paramifiers[root] ||= Class.new(Paramifier)

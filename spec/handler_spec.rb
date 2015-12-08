@@ -29,9 +29,9 @@ RSpec.describe Lev::HandleWith do
       attribute :term
     end
 
-    params = { search: { term: 'query', other: 'not here' } }
+    handler = ParamedHandler.new
+    handler.send("params=", { search: { term: 'query', other: 'not here' } })
 
-    handler = ParamedHandler.new(params: params)
     expect(handler.search_params.term).to eq('query')
     expect(handler.search_params).not_to respond_to(:other)
   end
