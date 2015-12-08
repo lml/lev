@@ -8,13 +8,13 @@ module Lev
       @params = options.delete(:params) || {}
     end
 
-    def call(*args, &block)
+    def call
       handle
       result
     end
 
     module ClassMethods
-      def call(*args, &block); new.call(*args, *block); end
+      def call(options = {}); new(options).call; end
 
       def paramify(root, &block)
         paramifiers[root] ||= Class.new(Paramifier)
