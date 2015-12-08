@@ -46,13 +46,7 @@ module Lev
     def run(routine_name, *args)
       subroutine = self.class.subroutines.routine_class(routine_name)
       sub_result = subroutine.call(*args)
-
-      subroutine_attrs = self.class.subroutines.attributes(routine_name)
-
-      subroutine_attrs.each do |attr|
-        set(attr => sub_result.send(attr))
-      end
-
+      subroutine.promote_mapped_attributes(self, sub_result)
       sub_result
     end
 
@@ -76,6 +70,13 @@ module Lev
       def outputs
         @outputs ||= Outputs.new(self, {})
       end
+
+      def promote_mapped_attributes(routine, sub_result)
+        routine.class.subroutines.attributes(self).each do |attr|
+          routine.set(attr => sub_result.send(attr))
+        end
+      end
+
 
       if defined?(::ActiveJob)
         def perform_later(*args, &block)

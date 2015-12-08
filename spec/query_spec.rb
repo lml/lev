@@ -9,4 +9,18 @@ RSpec.describe Lev::Query do
     expect(AreTheseEqual.call(1, 1)).to be true
     expect(AreTheseEqual.call(1, 2)).to be false
   end
+
+  it 'returns the value on run' do
+    query('SubQuery') do
+      true
+    end
+
+    routine('UseAQuery', outputs: { is_true: SubQuery }) do
+      run(:sub_query)
+    end
+
+    result = UseAQuery.call
+
+    expect(result.is_true).to be true
+  end
 end
