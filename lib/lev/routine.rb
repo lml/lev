@@ -28,11 +28,11 @@ module Lev
       @errors ||= Errors.new(self.class.raise_fatal_errors?)
     end
 
-    def call(*args)
+    def call(*args, &block)
       job.working!
 
       begin
-        ActiveRecord::Base.transaction { exec(*args) }
+        ActiveRecord::Base.transaction { exec(*args, &block) }
       rescue Exception => e
         job.failed!(e)
         raise e
@@ -43,9 +43,9 @@ module Lev
       result
     end
 
-    def run(routine_name, *args)
+    def run(routine_name, *args, &block)
       subroutine = self.class.subroutines.routine_class(routine_name)
-      sub_result = subroutine.call(*args)
+      sub_result = subroutine.call(*args, &block)
       subroutine.promote_mapped_attributes(self, sub_result)
       sub_result
     end
@@ -63,8 +63,8 @@ module Lev
     end
 
     module ClassMethods
-      def call(*args)
-        new.call(*args)
+      def call(*args, &block)
+        new.call(*args, &block)
       end
 
       def outputs
