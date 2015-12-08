@@ -18,4 +18,14 @@ module LevRoutineFactory
       define_method(:handle, &(block || Proc.new { }))
     end
   end
+
+  def query(klass_name, options = {}, &block)
+    stub_const(klass_name, Class.new)
+
+    klass_name.constantize.class_eval do
+      lev_query options
+
+      define_method(:query, &(block || Proc.new { }))
+    end
+  end
 end

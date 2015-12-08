@@ -7,6 +7,7 @@ require 'lev/configuration'
 require 'lev/routine'
 require 'lev/handle_with'
 require 'lev/handler'
+require 'lev/query'
 
 module Lev
   def self.configuration

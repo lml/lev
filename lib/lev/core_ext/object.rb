@@ -20,6 +20,15 @@ module Lev
             Lev::Utils::Options.setup(self, options)
           end
         end
+
+        def lev_query(options = {})
+          class_eval do
+            include Lev::Routine
+            include Lev::Query
+
+            Lev::Utils::Options.setup(self, options)
+          end
+        end
       end
     end
   end
