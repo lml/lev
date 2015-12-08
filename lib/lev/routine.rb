@@ -56,7 +56,7 @@ module Lev
       sub_result
     end
 
-    def transfer_errors_from(model)
+    def transfer_errors_from(model, *args)
       set(errors: model.errors)
     end
 
