@@ -15,7 +15,7 @@ module Lev
       if failing && raise_fatal_errors
         raise FatalError, error.to_s
       else
-        push(error.to_s)
+        push(error)
       end
     end
 

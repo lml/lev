@@ -25,7 +25,7 @@ RSpec.describe Lev::Error do
 
     result = NonFatalError.call
 
-    expect(result.errors).to include(
+    expect(result.errors.flat_map(&:to_s)).to include(
       'kind: lev - code: nonfatal - data: bad data - message: This is bad'
     )
   end
