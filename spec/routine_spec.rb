@@ -47,4 +47,14 @@ describe Lev::Routine do
       end
     end
   end
+
+  it 'allows [] as an alias to .call' do
+    routine('ShortenedCall', outputs: { shortened: :_self }) do
+      set(shortened: 'great')
+    end
+
+    result = ShortenedCall[]
+
+    expect(result.shortened).to eq('great')
+  end
 end

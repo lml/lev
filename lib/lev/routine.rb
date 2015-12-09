@@ -67,6 +67,7 @@ module Lev
       def call(*args, &block)
         new.call(*args, &block)
       end
+      alias [] call
 
       def outputs
         @outputs ||= Outputs.new(self, {})
