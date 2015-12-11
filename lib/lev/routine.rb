@@ -19,6 +19,23 @@ module Lev
     def set(attrs = {})
       result.set(attrs)
     end
+    alias :set_result :set
+
+    def add_result(attrs = {})
+      attrs.each do |attr, adding_value|
+        sub_value = result.send(attr)
+        sub_value += adding_value
+        set_result(attr => sub_value)
+      end
+    end
+
+    def push_result(attrs = {})
+      attrs.each do |attr, pushing_value|
+        sub_value = result.send(attr)
+        sub_value << pushing_value
+        set_result(attr => sub_value)
+      end
+    end
 
     def result
       @result ||= Result.new(self.class.outputs, errors)
@@ -81,6 +98,7 @@ module Lev
         routine.class.subroutines.attributes(self).each do |attr|
           routine.set(attr => sub_result.send(attr))
         end
+        routine.add_result(errors: (sub_result && sub_result.errors) || [])
       end
 
 

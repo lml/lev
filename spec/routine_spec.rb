@@ -57,4 +57,26 @@ describe Lev::Routine do
 
     expect(result.shortened).to eq('great')
   end
+
+  it 'adds to result attributes' do
+    routine('AddToResult', outputs: { add_me: :_self }) do
+      set_result(add_me: 2)
+      add_result(add_me: 3)
+    end
+
+    routine = AddToResult.call
+
+    expect(routine.add_me).to eq(5)
+  end
+
+  it 'pushes on result attributes' do
+    routine('PushToResult', outputs: { push_me: :_self }) do
+      set_result(push_me: [1])
+      push_result(push_me: 3)
+    end
+
+    routine = PushToResult.call
+
+    expect(routine.push_me).to eq([1, 3])
+  end
 end

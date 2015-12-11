@@ -43,16 +43,16 @@ RSpec.describe Lev::Error do
   end
 
   it 'catches fatal errors when not raising errors' do
-    Lev.configure { |c| c.raise_fatal_errors = false }
-
-    routine('FatalErrorCaught') do
+    routine('SubRoutineError') do
       fatal_error(code: :cool)
+    end
+
+    routine('FatalErrorCaught', uses: SubRoutineError) do
+      run(:sub_routine_error)
     end
 
     result = FatalErrorCaught.call
 
     expect(result.errors).not_to be_empty
-
-    Lev.configure { |c| c.raise_fatal_errors = true }
   end
 end
