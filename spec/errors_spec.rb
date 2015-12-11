@@ -41,4 +41,18 @@ RSpec.describe Lev::Error do
     expect(result.errors).not_to be_empty
     expect(result.errors.full_messages).to eq(["Required field can't be blank"])
   end
+
+  it 'catches fatal errors when not raising errors' do
+    Lev.configure { |c| c.raise_fatal_errors = false }
+
+    routine('FatalErrorCaught') do
+      fatal_error(code: :cool)
+    end
+
+    result = FatalErrorCaught.call
+
+    expect(result.errors).not_to be_empty
+
+    Lev.configure { |c| c.raise_fatal_errors = true }
+  end
 end

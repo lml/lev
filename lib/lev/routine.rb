@@ -32,7 +32,11 @@ module Lev
       job.working!
 
       begin
-        ActiveRecord::Base.transaction { exec(*args, &block) }
+        ActiveRecord::Base.transaction {
+          catch :fatal_errors_encountered do
+            exec(*args, &block)
+          end
+        }
         job.succeeded! unless errors.any?
       rescue Exception => e
         job.failed!(e)

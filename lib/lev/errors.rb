@@ -12,10 +12,12 @@ module Lev
       failing = args.delete('fail')
       error = Error.new(args)
 
+      push(error)
+
       if failing && raise_fatal_errors
         raise FatalError, error.to_s
       else
-        push(error)
+        throw :fatal_errors_encountered
       end
     end
 
