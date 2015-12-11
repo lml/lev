@@ -60,8 +60,8 @@ describe Lev::Routine do
 
   it 'adds to result attributes' do
     routine('AddToResult', outputs: { add_me: :_self }) do
-      set_result(add_me: 2)
-      add_result(add_me: 3)
+      result_set(add_me: 2)
+      result_add(add_me: 3)
     end
 
     routine = AddToResult.call
@@ -71,8 +71,8 @@ describe Lev::Routine do
 
   it 'pushes on result attributes' do
     routine('PushToResult', outputs: { push_me: :_self }) do
-      set_result(push_me: [1])
-      push_result(push_me: 3)
+      result_set(push_me: [1])
+      result_push(push_me: 3)
     end
 
     routine = PushToResult.call
