@@ -11,7 +11,7 @@ RSpec.describe 'Transactions' do
 
   context 'in nested routines' do
     it 'rolls back on exceptions' do
-      expect { RollBackTransactions.call }.to raise_error
+      expect { RollBackTransactions.call }.to raise_error(NoMethodError)
       expect(Model.count).to eq(0)
     end
   end

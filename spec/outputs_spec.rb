@@ -16,7 +16,7 @@ RSpec.describe 'Outputs interfaces' do
       set(nope: title)
     end
 
-    expect { SetNonexistent.call('my title') }.to raise_error
+    expect { SetNonexistent.call('my title') }.to raise_error(NoMethodError)
   end
 
   it 'maps attributes from nested routines' do

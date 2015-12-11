@@ -7,7 +7,7 @@ describe Lev::Routine do
   end
 
   it "propagates raised errors" do
-    expect{ RaiseArgumentError.call }.to raise_error
+    expect{ RaiseArgumentError.call }.to raise_error(NameError)
   end
 
   it "propagates raised StandardErrors" do
@@ -38,7 +38,7 @@ describe Lev::Routine do
                                                such: :disaster,
                                                really: 'bad') }
 
-      expect { RaiseFatalError.call }.to raise_error
+      expect { RaiseFatalError.call }.to raise_error(Lev::FatalError)
 
       begin
         RaiseFatalError.call
