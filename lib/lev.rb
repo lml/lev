@@ -1,4 +1,5 @@
 require "action_view"
+require "active_job"
 require "transaction_isolation"
 require "transaction_retry"
 require "active_attr"
@@ -24,7 +25,6 @@ require "lev/form_builder"
 require "lev/delegate_to_routine"
 require "lev/transaction_isolation"
 
-require 'lev/active_job'
 require 'lev/memory_store'
 require 'lev/background_job'
 require 'lev/no_background_job'
@@ -47,10 +47,15 @@ module Lev
 
     def configure
       yield configuration
+      after_initialize
     end
 
     def configuration
       @configuration ||= Configuration.new
+    end
+
+    def after_initialize
+      require 'lev/active_job'
     end
 
     class Configuration
@@ -61,6 +66,7 @@ module Lev
       attr_accessor :raise_fatal_errors
       attr_accessor :job_store
       attr_accessor :job_store_namespace
+      attr_accessor :job_class
 
       def initialize
         @form_error_class = 'error'
@@ -69,6 +75,7 @@ module Lev
         @raise_fatal_errors = false
         @job_store = Lev::MemoryStore.new
         @job_store_namespace = "lev_job"
+        @job_class = ::ActiveJob::Base
         super
       end
     end

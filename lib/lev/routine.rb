@@ -208,15 +208,13 @@ module Lev
         result.outputs.send(@express_output)
       end
 
-      if defined?(::ActiveJob)
-        def perform_later(*args, &block)
-          # Delegate to a subclass of Lev::Routine::ActiveJob::Base
-          Lev::ActiveJob::Base.perform_later(self, *args, &block)
-        end
+      def perform_later(*args, &block)
+        # Delegate to a subclass of Lev::Routine::ActiveJob::Base
+        Lev::ActiveJob::Base.perform_later(self, *args, &block)
+      end
 
-        def active_job_queue
-          @active_job_queue || :default
-        end
+      def active_job_queue
+        @active_job_queue || :default
       end
 
       # Called at a routine's class level to foretell which other routines will
