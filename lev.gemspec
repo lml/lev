@@ -16,9 +16,10 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*"] + ['LICENSE.txt', 'Rakefile', 'README.md']
   spec.test_files    = Dir["spec/**/*"]
 
-  spec.add_runtime_dependency "activemodel", ">= 3.0"
-  spec.add_runtime_dependency "activerecord", ">= 3.0"
-  spec.add_runtime_dependency "actionpack", ">= 3.0"
+  spec.add_runtime_dependency "activemodel", ">= 4.2"
+  spec.add_runtime_dependency "activerecord", ">= 4.2"
+  spec.add_runtime_dependency "actionpack", ">= 4.2"
+  spec.add_runtime_dependency "activejob"
   spec.add_runtime_dependency "transaction_isolation"
   spec.add_runtime_dependency "transaction_retry"
   spec.add_runtime_dependency "active_attr"
@@ -29,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "debugger"
-  spec.add_development_dependency "activejob"
 
   ## workaround for an issue using activerecord 4.2 outside of rails
   spec.add_development_dependency "rails"
