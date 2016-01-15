@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'jobba'
 
 class StatusedRoutine
   lev_routine
@@ -14,12 +13,7 @@ end
 
 RSpec.describe 'Statused Routines' do
 
-  before(:each) {
-    Lev.configure do |config|
-      config.create_status_proc = ->(*) { Jobba::Status.create! }
-      config.find_status_proc = ->(id) { Jobba::Status.find!(id) }
-    end
-  }
+  before { Lev::Jobba.use_jobba }
 
   context 'in a routine' do
     it 'queues the job object on queue' do
