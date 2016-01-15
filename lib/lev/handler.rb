@@ -14,26 +14,26 @@ module Lev
     end
   end
 
-  # Common methods for all handlers.  Handlers are extensions of Routines 
-  # and are responsible for taking input data from a form or other widget and 
+  # Common methods for all handlers.  Handlers are extensions of Routines
+  # and are responsible for taking input data from a form or other widget and
   # doing something with it.  See Lev::Routine for more information.
   #
   # All handlers must:
   #   2) call "lev_handler"
-  #   3) implement the 'handle' method which takes no arguments and does the 
+  #   3) implement the 'handle' method which takes no arguments and does the
   #      work the handler is charged with
-  #   4) implement the 'authorized?' method which returns true iff the 
+  #   4) implement the 'authorized?' method which returns true iff the
   #      caller is authorized to do what the handler is charged with
   #
   # Handlers may:
   #   1) implement the 'setup' method which runs before 'authorized?' and 'handle'.
-  #      This method can do anything, and will likely include setting up some 
+  #      This method can do anything, and will likely include setting up some
   #      instance objects based on the params.
   #   2) Call the class method "paramify" to declare, cast, and validate parts of
   #      the params hash. The first argument to paramify is the key in params
   #      which points to a hash of params to be paramified.  The block passed to
   #      paramify looks just like the guts of an ActiveAttr model.
-  #      
+  #
   #      When the incoming params includes :search => {:type, :terms, :num_results}
   #      the Handler class would look like:
   #
@@ -51,9 +51,9 @@ module Lev
   #
   #          attribute :num_results, type: Integer
   #          validates :num_results, numericality: { only_integer: true,
-  #                                            greater_than_or_equal_to: 0 }                               
+  #                                            greater_than_or_equal_to: 0 }
   #        end
-  #        
+  #
   #        def handle
   #          # By this time, if there were any errors the handler would have
   #          # already populated the errors object and returned.
@@ -79,23 +79,23 @@ module Lev
   #
   # These methods are available iff these data were supplied in the call
   # to the handler (not all handlers need all of this).  However, note that
-  # the Lev::HandleWith module supplies an easy way to call Handlers from 
+  # the Lev::HandleWith module supplies an easy way to call Handlers from
   # controllers -- when this way is used, all of the methods above are available.
   #
-  # Handler 'handle' methods don't return anything; they just set values in 
+  # Handler 'handle' methods don't return anything; they just set values in
   # the errors and results objects.  The documentation for each handler
   # should explain what the results will be and any nonstandard data required
   # to be passed in in the options.
   #
-  # In addition to the class- and instance-level "call" methods provided by 
+  # In addition to the class- and instance-level "call" methods provided by
   # Lev::Routine, Handlers have a class-level "handle" method (an alias of
   # the class-level "call" method).  The convention for handlers is that the
   # call methods take a hash of options/inputs.  The instance-level handle
   # method doesn't take any arguments since the arguments have been stored
   # as instance variables by the time the instance-level handle method is called.
-  # 
+  #
   # Example:
-  # 
+  #
   #   class MyHandler
   #     lev_handler
   #   protected
@@ -117,7 +117,7 @@ module Lev
     end
 
     module ClassMethods
-  
+
       def handle(options={})
         call(options)
       end
@@ -137,18 +137,18 @@ module Lev
           end
 
           # Attach a name to this dynamic class
-          const_set("#{group.to_s.capitalize}Paramifier", 
+          const_set("#{group.to_s.capitalize}Paramifier",
                     paramify_classes[group])
 
           paramify_classes[group].class_eval(&block)
           paramify_classes[group].group = group
         end
 
-        # Define the "#{group}_params" method to get the paramifier 
+        # Define the "#{group}_params" method to get the paramifier
         # instance wrapping the params
         define_method method_name.to_sym do
           if !instance_variable_get(variable_sym)
-            instance_variable_set(variable_sym, 
+            instance_variable_set(variable_sym,
                                   self.class.paramify_classes[group].new(params[group]))
           end
           instance_variable_get(variable_sym)
@@ -180,12 +180,12 @@ module Lev
     attr_accessor :auth_error_details
 
     # This is a method required by Lev::Routine.  It enforces the steps common
-    # to all handlers.  
+    # to all handlers.
     def exec(options)
-      self.params = options.delete(:params)
-      self.request = options.delete(:request)
-      self.caller = options.delete(:caller)
-      self.options = options
+      self.params = options[:params]
+      self.request = options[:request]
+      self.caller = options[:caller]
+      self.options = options.except(:params, :request, :caller)
 
       setup
       raise Lev.configuration.security_transgression_error, auth_error_details unless authorized?
@@ -196,19 +196,19 @@ module Lev
     # Default setup implementation -- a no-op
     def setup; end
 
-    # Default authorized? implementation.  It returns true so that every 
+    # Default authorized? implementation.  It returns true so that every
     # handler realization has to make a conscious decision about who is authorized
-    # to call the handler. To help the common error of forgetting to override this 
+    # to call the handler. To help the common error of forgetting to override this
     # method in a handler instance, we provide an error message when this default
     # implementation is called.
     def authorized?
-      self.auth_error_details = 
+      self.auth_error_details =
         "Access to handlers is prevented by default.  You need to override the " +
         "'authorized?' in this handler to explicitly grant access."
       false
     end
 
-    
+
 
     # Helper method to validate paramified params and to transfer any errors
     # into the handler.
