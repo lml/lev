@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'lev/active_job'
 
 describe Lev::BackgroundJob do
 
