@@ -265,7 +265,7 @@ module Lev
     def call(*args, &block)
       @after_transaction_blocks = []
 
-      job.working!
+      status.started!
 
       begin
         in_transaction do
@@ -282,20 +282,20 @@ module Lev
           block.call
         end
       rescue Exception => e
-        # Let exceptions escape but make sure to note the error in the job
+        # Let exceptions escape but make sure to note the error in the status
         # if not already done
         if !e.is_a?(Lev::FatalError)
           error = Error.new(code: :exception,
                             message: e.message,
                             data: e.backtrace.first)
-          job.add_error(error, is_fatal: true)
-          job.failed!
+          status.add_error(error)
+          status.failed!
         end
 
         raise e
       end
 
-      job.succeeded! if !errors?
+      status.succeeded! if !errors?
 
       result
     end
@@ -428,23 +428,20 @@ module Lev
 
     # Note that the parent may neglect to call super, leading to this method never being called.
     # Do not perform any initialization here that cannot be safely skipped
-    def initialize(job = nil)
-      # If someone cares about the job, they'll pass it in; otherwise all
-      # job updates go into the bit bucket.
-      @job = job
+    def initialize(status = nil)
+      # If someone cares about the status, they'll pass it in; otherwise all
+      # status updates go into the bit bucket.
+      @status = status || Lev::NullStatus.new
     end
 
   protected
 
     attr_writer :runner
-
-    def job
-       @job ||= Lev::NoBackgroundJob.new
-    end
+    attr_reader :status
 
     def result
       @result ||= Result.new(Outputs.new,
-                             Errors.new(job, topmost_runner.class.raise_fatal_errors?))
+                             Errors.new(status, topmost_runner.class.raise_fatal_errors?))
     end
 
     def outputs

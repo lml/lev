@@ -432,48 +432,30 @@ end
 
 Routines run as ActiveJobs can also publish their status somewhere it can be listened to (e.g. to Redis).
 
-Routines have a `job` object and can call the following methods:
+Routines have a `status` object and can call the following methods:
 
 * `set_progress(at, out_of = nil)` sets the current progress; can either pass a float between 0.0 and 1.0 or
   a counter towards a total, e.g. `set_progress(67,212)`.
-* `queued!` Sets the job status to 'queued'
-* `working!` Sets the job status to 'working'
-* `succeeded!` Sets the job status to 'succeeded'
-* `failed!` Sets the job status to 'failed'
-* `killed!` Sets the job status to 'killed'
-* `save(hash)` Takes a hash of key value pairs and writes those keys and values to the job status; there are several reserved keys which cannot be used (and which will blow up if you try to use them)
-* `add_error(is_fatal, error)` takes a boolean and a Lev `Error` object and adds its data to an array of `errors` in the job status hash.
+* `queued!` Sets the state to 'queued'
+* `started!` Sets the state to 'working'
+* `succeeded!` Sets the state to 'succeeded'
+* `failed!` Sets the state to 'failed'
+* `killed!` Sets the state to 'killed'
+* `save(hash)` Takes a hash of key value pairs and writes those keys and values to the status; there are several reserved keys which cannot be used (and which will blow up if you try to use them)
+* `add_error(error)` takes a Lev `Error` object and adds its data to an array of `errors` in the job status hash.
 
-Routine job objects also have query methods to check if a job is in a given state, e.g. `queued?`.  `completed?` and `incomplete` convenience methods are provided as well.  A job is complete if it is failed or succeeded; incomplete if neither.  All job routines start in an `unqueued` state and will only stay there if queueing had a problem.  Scope-like class methods (e.g. `BackgroundJob.queued`) are provided to return all jobs in a given state.
+Routine status objects also have query methods to check if a status is in a given state, e.g. `queued?`.  `completed?` and `incomplete` convenience methods are provided as well.  A status is complete if it is failed or succeeded; incomplete if neither.  All job routines start in an `unqueued` state and will only stay there if queueing had a problem.  Scope-like class methods are provided to return all statuses in a given state.
 
-For plain vanilla routines not run as an active job, the job calls are no-ops.  When a routine is invoked with `perform_later`, the job object actually records the jobs to a store of your choice.  The store is configured in the Lev configuration block, e.g.:
+For plain vanilla routines not run as an active job, the status calls are no-ops.  When a routine is invoked with `perform_later`, the status object is created/found using two configuration options that must be set (if you care about the status):
 
 ```ruby
 Lev.configure do |config|
-  config.job_store = whatever
+  config.create_status_proc = ->(*) { Jobba::Status.create! }
+  config.find_status_proc = ->(id) { Jobba::Status.find!(id) }
 end
 ```
 
-The store needs to respond to the following methods:
-
-1. fetch(key)
-2. write(key, value)
-
-The default store is essentially a hash (implemented in `Lev::MemoryStore`).  Any `ActiveSupport::Cache::Store` will work.
-
-A routine's job can be retrieved with `Lev::BackgroundJob.get(uuid_here)`.  This just returns a simple hash.  Notable keys are
-
-* `'progress'` which returns the progress as a number between 0.0 and 1.0
-* `'status'` which returns one of the status strings shown above
-* `'errors'` which (if present) is an error of error hashes
-* `'id'` the UUID of the routine / job
-
-Other routine-specific keys (set with a `save` call) are also present.
-
-**Notes:**
-
-1. Don't try to write a job store that uses the ActiveRecord database, as the database changes would only be seen when the routine completes and its transaction is committed.
-2. Job killing hasn't been implemented yet, but shouldn't be too bad.  For routines run in a transaction (which are frankly the only ones you'd want to kill), we can likely kill them by raising an exception or similar to cause a rollback (will need to have good tests to prove that).
+See the [Jobba README](https://github.com/openstax/jobba) for full details on the status objects.
 
 ## Handlers
 
