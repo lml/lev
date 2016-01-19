@@ -116,4 +116,40 @@ describe Lev::Routine do
     end
   end
 
+  it 'does not explode on a transaction retry' do
+    # To get the transaction to retry (and to simulate what happens in production),
+    # we need to raise an exception the first time through after the event has been
+    # set in the routine outputs.  I picked a call to BL to fake b/c it doesn't impact
+    # the outcome.  On the first call, the BL call raises an exception that triggers
+    # transaction_retry; on the second it doesn't.
+    #
+    stub_const 'RaiseTransactionIsolationConflict', Class.new
+    RaiseTransactionIsolationConflict.class_eval {
+      lev_routine
+      def exec
+        @times_called ||= 1
+        raise(::ActiveRecord::TransactionIsolationConflict, 'hi') if @times_called == 1
+        @times_called += 1
+      end
+    }
+
+    stub_const 'MainRoutine', Class.new
+    MainRoutine.class_eval {
+      lev_routine
+      def exec
+        outputs[:test] = 1
+        RaiseTransactionIsolationConflict.call
+      end
+    }
+
+    # In reality, the Lev routine is the top-level transaction, but rspec has its own
+    # transactions at the top, so we have to fake that the Lev routine transaction
+    # is at the top.
+    allow(ActiveRecord::Base).to receive(:tr_in_nested_transaction?) { false }
+
+    expect {
+      MainRoutine.call
+    }.not_to raise_error
+  end
+
 end

@@ -269,6 +269,7 @@ module Lev
 
       begin
         in_transaction do
+          result.outputs.clear if topmost_runner == self
           catch :fatal_errors_encountered do
             if self.class.delegates_to
               run(self.class.delegates_to, *args, &block)
