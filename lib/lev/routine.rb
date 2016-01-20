@@ -433,13 +433,16 @@ module Lev
     def initialize(status = nil)
       # If someone cares about the status, they'll pass it in; otherwise all
       # status updates go into the bit bucket.
-      @status = status || Lev::NullStatus.new
+      @status = status
     end
 
   protected
 
     attr_writer :runner
-    attr_reader :status
+
+    def status
+      @status ||= Lev::NullStatus.new
+    end
 
     def result
       @result ||= Result.new(Outputs.new,
