@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 RSpec.describe 'ActiveJob routines' do
+
+  before { Lev::Jobba.use_jobba }
+
   context 'default configuration' do
     class LaterRoutine
       lev_routine active_job_queue: :something_else
@@ -24,22 +27,6 @@ RSpec.describe 'ActiveJob routines' do
 
       expect(queue_name).to eq('something_else')
     end
-
-    it 'stores all the UUIDs of queued jobs' do
-      Lev.configuration.job_store.clear
-
-      job_id1 = LaterRoutine.perform_later
-
-      expect(Lev::BackgroundJob.send(:job_ids)).to eq([job_id1])
-    end
-  end
-
-  it 'does not duplicate BackgroundJobs in `all`' do
-    # Previous track_job_id implementation changed string objects in job_ids
-    # resulting in duplicate objects in `all`
-    Lev.configuration.job_store.clear
-    LaterRoutine.perform_later
-    expect(Lev::BackgroundJob.all.count).to eq 1
   end
 
   context 'exception raised' do
@@ -56,17 +43,17 @@ RSpec.describe 'ActiveJob routines' do
     end
 
     it 'lets exception escape, job is failed and has error details' do
-      Lev.configuration.job_store.clear
+      Jobba.all.delete_all!
 
       expect{
         ExceptionalRoutine.perform_later
       }.to raise_error(TypeError)
 
-      job = Lev::BackgroundJob.all.first
+      status = Jobba.all.run.to_a.first
 
-      expect(job.status).to eq Lev::BackgroundJob::STATE_FAILED
+      expect(status).to be_failed
 
-      error = job.errors.first
+      error = status.errors.first
 
       expect(error["code"]).to eq "exception"
       expect(error["message"]).to eq "howdy there"

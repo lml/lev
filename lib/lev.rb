@@ -26,11 +26,18 @@ require "lev/delegate_to_routine"
 require "lev/transaction_isolation"
 
 require 'lev/memory_store'
-require 'lev/background_job'
-require 'lev/no_background_job'
+require 'lev/null_status'
 
 module Lev
   class << self
+
+    def create_status
+      configuration.create_status_proc.call
+    end
+
+    def find_status(id)
+      configuration.find_status_proc.call(id)
+    end
 
     ###########################################################################
     #
@@ -64,8 +71,8 @@ module Lev
       attr_accessor :security_transgression_error
       attr_accessor :illegal_argument_error
       attr_accessor :raise_fatal_errors
-      attr_accessor :job_store
-      attr_accessor :job_store_namespace
+      attr_accessor :create_status_proc
+      attr_accessor :find_status_proc
       attr_accessor :job_class
 
       def initialize
@@ -73,8 +80,8 @@ module Lev
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @job_store = Lev::MemoryStore.new
-        @job_store_namespace = "lev_job"
+        @create_status_proc = ->(*) { NullStatus.new }
+        @find_status_proc = ->(*) { NullStatus.new }
         @job_class = ::ActiveJob::Base
         super
       end

@@ -21,9 +21,8 @@ RSpec.configure do |config|
   config.order = 'random'
 end
 
-
 require 'lev'
-require 'debugger'
+require 'byebug'
 
 require 'transaction_retry'
 TransactionRetry.apply_activerecord_patch

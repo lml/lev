@@ -4,8 +4,8 @@ module Lev
   #
   class Errors < Array
 
-    def initialize(routine_job = nil, raise_fatal_errors = false)
-      @routine_job = routine_job || NoBackgroundJob.new
+    def initialize(routine_status = nil, raise_fatal_errors = false)
+      @routine_status = routine_status || NullStatus.new
       @raise_fatal_errors = raise_fatal_errors
     end
 
@@ -16,13 +16,13 @@ module Lev
       return if ignored_error_procs.any?{|proc| proc.call(error)}
       self.push(error)
 
-      routine_job.add_error(error, is_fatal: fail)
+      routine_status.add_error(error)
 
       if fail
-        routine_job.failed!
+        routine_status.failed!
 
         if raise_fatal_errors
-          # Use special FatalError type so Routine doesn't re-add job errors
+          # Use special FatalError type so Routine doesn't re-add status errors
           raise Lev::FatalError, args.to_a.map { |i| i.join(' ') }.join(' - ')
         else
           throw :fatal_errors_encountered
@@ -55,7 +55,7 @@ module Lev
 
   protected
 
-    attr_reader :routine_job
+    attr_reader :routine_status
     attr_reader :raise_fatal_errors
 
     def ignored_error_procs
