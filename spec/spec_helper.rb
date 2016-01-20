@@ -25,6 +25,9 @@ end
 require 'lev'
 require 'debugger'
 
+require 'transaction_retry'
+TransactionRetry.apply_activerecord_patch
+
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
 
 ActiveRecord::Base.establish_connection(
