@@ -121,8 +121,8 @@ describe Lev::Routine do
     # through execution, after an output has been set in a nested routine and
     # translated to the parent routine
 
-    stub_const 'RaiseTransactionIsolationConflict', Class.new
-    RaiseTransactionIsolationConflict.class_eval {
+    stub_const 'NestedRoutine', Class.new
+    NestedRoutine.class_eval {
       lev_routine
       def exec
         outputs[:test] = 1
@@ -132,11 +132,11 @@ describe Lev::Routine do
     stub_const 'MainRoutine', Class.new
     MainRoutine.class_eval {
       lev_routine
-      uses_routine RaiseTransactionIsolationConflict,
+      uses_routine NestedRoutine,
                    translations: {outputs: {type: :verbatim}}
 
       def exec
-        run(RaiseTransactionIsolationConflict)
+        run(NestedRoutine)
 
         @times_called ||= 0
         @times_called += 1
