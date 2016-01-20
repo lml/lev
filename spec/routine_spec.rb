@@ -116,4 +116,41 @@ describe Lev::Routine do
     end
   end
 
+  it 'does not mess up results on a transaction retry' do
+    # To get the transaction to retry, we need to raise an exception the first time
+    # through execution, after an output has been set in a nested routine and
+    # translated to the parent routine
+
+    stub_const 'RaiseTransactionIsolationConflict', Class.new
+    RaiseTransactionIsolationConflict.class_eval {
+      lev_routine
+      def exec
+        outputs[:test] = 1
+      end
+    }
+
+    stub_const 'MainRoutine', Class.new
+    MainRoutine.class_eval {
+      lev_routine
+      uses_routine RaiseTransactionIsolationConflict,
+                   translations: {outputs: {type: :verbatim}}
+
+      def exec
+        run(RaiseTransactionIsolationConflict)
+
+        @times_called ||= 0
+        @times_called += 1
+        raise(::ActiveRecord::TransactionIsolationConflict, 'hi') if @times_called == 1
+      end
+    }
+
+    # In reality, the Lev routine is the top-level transaction, but rspec has its own
+    # transactions at the top, so we have to fake that the Lev routine transaction
+    # is at the top.
+    allow(ActiveRecord::Base).to receive(:tr_in_nested_transaction?) { false }
+
+    results = MainRoutine.call
+    expect(results.outputs.test).to eq 1
+  end
+
 end

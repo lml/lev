@@ -269,6 +269,8 @@ module Lev
 
       begin
         in_transaction do
+          reset_result! if transaction_run_by?(self)
+
           catch :fatal_errors_encountered do
             if self.class.delegates_to
               run(self.class.delegates_to, *args, &block)
@@ -445,6 +447,10 @@ module Lev
     def result
       @result ||= Result.new(Outputs.new,
                              Errors.new(job, topmost_runner.class.raise_fatal_errors?))
+    end
+
+    def reset_result!
+      @result = nil
     end
 
     def outputs
