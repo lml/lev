@@ -50,10 +50,14 @@ module Lev
     end
 
     def raise_exception_if_any!(exception_type = StandardError)
-      raise exception_type, collect{|error| error.message}.join('; ') if any?
+      raise exception_type, map(&:message).join('; ') if any?
     end
 
-  protected
+    def full_messages
+      map(&:full_message)
+    end
+
+    protected
 
     attr_reader :routine_status
     attr_reader :raise_fatal_errors

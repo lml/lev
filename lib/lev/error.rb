@@ -24,6 +24,26 @@ module Lev
       ErrorTranslator.translate(self)
     end
 
+    def to_s
+      inspect
+    end
+
+    def full_message
+      attribute = data[:attribute] if data.present?
+      return message.humanize if attribute.nil?
+
+      attr_name = attribute.to_s.gsub('.', '_').humanize
+
+      model = data[:model]
+      attr_name = model.class.human_attribute_name(attribute, default: attr_name) if model.present?
+
+      I18n.t(:"errors.format", {
+        default:   "%{attribute} %{message}",
+        attribute: attr_name,
+        message:   message
+      })
+    end
+
   end
 
 end
