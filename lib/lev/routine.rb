@@ -376,18 +376,18 @@ module Lev
       end
 
       #
-      # Attach the subroutine to self, call it, transfer errors and results
+      # Attach the subroutine to self, call it, transfer outputs and errors
       #
 
       other_routine.runner = self
       run_result = other_routine.call(*args, &block)
 
-      options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
-      transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
-
       run_result.outputs.transfer_to(outputs) do |name|
         output_mapper.map(name)
       end
+
+      options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
+      transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
 
       run_result
     end
