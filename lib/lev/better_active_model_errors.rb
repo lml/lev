@@ -244,6 +244,10 @@ module Lev
       messages.dup
     end
 
+    def to_s
+      inspect
+    end
+
     # Adds +message+ to the error messages on +attribute+. More than one error can be added to the same
     # +attribute+.
     # If no +message+ is supplied, <tt>:invalid</tt> is assumed.
@@ -311,11 +315,11 @@ module Lev
     def self.full_message(model, attribute, message)
       return message if attribute == :base
       attr_name = attribute.to_s.gsub('.', '_').humanize
-      attr_name = model.class.human_attribute_name(attribute, :default => attr_name)
+      attr_name = model.class.human_attribute_name(attribute, default: attr_name)
       I18n.t(:"errors.format", {
-        :default   => "%{attribute} %{message}",
-        :attribute => attr_name,
-        :message   => message
+        default:   "%{attribute} %{message}",
+        attribute: attr_name,
+        message:   message
       })
     end
 
