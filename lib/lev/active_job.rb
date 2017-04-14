@@ -33,7 +33,8 @@ module Lev
         # For delayed_job, requires either Rails 5 or
         # http://stackoverflow.com/questions/29855768/rails-4-2-get-delayed-job-id-from-active-job
         provider_job_id = super(*args, &block).provider_job_id
-        status.set_provider_job_id(provider_job_id) unless provider_job_id.blank?
+        status.set_provider_job_id(provider_job_id) \
+          if provider_job_id.present? && status.respond_to?(:set_provider_job_id)
 
         # Return the id of the status object
         status.id
