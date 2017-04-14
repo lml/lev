@@ -22,6 +22,9 @@ class Lev::NullStatus
   # within routines; routines should not be using other query methods to check
   # their own status (they should know it), with the exception of `kill_requested?`
 
+  def set_job_name(*); end
+  def set_job_args(*); end
+  def set_provider_job_id(*); end
   def set_progress(*); end
   def save(*); end
   def add_error(*); end

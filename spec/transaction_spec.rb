@@ -35,7 +35,7 @@ RSpec.describe 'Transactions' do
     it 'rolls back on exceptions' do
       expect {
         RollBackTransactions.call
-      }.to raise_error
+      }.to raise_error(RuntimeError)
 
       expect(Model.count).to eq(0)
     end
