@@ -4,9 +4,10 @@ class StatusedRoutine
   lev_routine
 
   protected
-  def exec
+
+  def exec(*args)
     status.set_progress(9, 10)
-    status.save({'hi' => 'there'})
+    status.save('hi' => 'there')
     fatal_error(code: 'blah', message: 'hi')
   end
 end
@@ -15,11 +16,23 @@ RSpec.describe 'Statused Routines' do
 
   before { Lev::Jobba.use_jobba }
 
-  context 'in a routine' do
-    it 'queues the job object on queue' do
-      id = StatusedRoutine.perform_later
-      status = Jobba::Status.find(id)
+  let(:routine_class) { StatusedRoutine }
+  let(:args)          { ['some arg'] }
+  let(:status_id)     { routine_class.perform_later(*args) }
+  let(:status)        { Jobba::Status.find(status_id) }
 
+  context 'in a routine' do
+    it 'sets the job_name on the status' do
+      expect(status.job_name).to eq routine_class.name
+    end
+
+    it 'sets the provider_job_id on the status' do
+      expect_any_instance_of(Lev::ActiveJob::Base).to receive(:provider_job_id).and_return(42)
+
+      expect(status.provider_job_id).to eq 42
+    end
+
+    it 'sets the status to queued' do
       expect(status).to be_queued
     end
 
@@ -29,12 +42,10 @@ RSpec.describe 'Statused Routines' do
 
       it 'sets job to started when called' do
         expect_any_instance_of(Jobba::Status).to receive(:started!)
-        StatusedRoutine.perform_later
+        routine_class.perform_later
       end
 
       it 'completes the status object on completion, returning other data' do
-        id = StatusedRoutine.perform_later
-        status = Jobba::Status.find(id)
         expect(status).to be_failed
         expect(status.progress).to eq(0.9)
         expect(status.errors).to contain_exactly(

@@ -4,7 +4,8 @@
 # loaded once.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
-
+require 'bundler'
+Bundler.require('default')
 require 'active_job'
 
 ActiveJob::Base.queue_adapter = :test
@@ -25,6 +26,7 @@ require 'lev'
 require 'byebug'
 
 require 'transaction_retry'
+
 TransactionRetry.apply_activerecord_patch
 
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }

@@ -3,8 +3,8 @@ require 'spec_helper'
 describe Lev::Routine do
 
   before do
-    stub_const 'RaiseError', Class.new
-    RaiseError.class_eval {
+    stub_const 'RaiseRuntimeError', Class.new
+    RaiseRuntimeError.class_eval {
       lev_routine
       def exec
         raise 'error message'
@@ -18,12 +18,20 @@ describe Lev::Routine do
         unknown_method_call
       end
     }
+
+    stub_const 'RaiseArgumentError', Class.new
+    RaiseArgumentError.class_eval {
+      lev_routine
+      def exec
+        raise ArgumentError, 'your argument is invalid', caller
+      end
+    }
   end
 
   it "raised errors should propagate" do
     expect{
       RaiseArgumentError.call
-    }.to raise_error
+    }.to raise_error(ArgumentError)
   end
 
   it "raised StandardErrors should propagate" do
@@ -59,7 +67,7 @@ describe Lev::Routine do
 
     expect {
       SpecialFatalErrorOption.call
-    }.to raise_error
+    }.to raise_error(Lev::FatalError)
 
     expect {
       NoFatalErrorOption.call
@@ -106,7 +114,7 @@ describe Lev::Routine do
     it 'raises an exception on fatal_error if configured' do
       expect {
         RaiseFatalError.call
-      }.to raise_error
+      }.to raise_error(Lev::FatalError)
 
       begin
         RaiseFatalError.call
