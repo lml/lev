@@ -9,10 +9,6 @@ module Lev
         # Create a new status object
         status = Lev::create_status
 
-        # Create a hash containing all the arguments for the routine
-        args_hash = {}
-        args.each_with_index { |arg, index| args_hash[index] = arg }
-
         # Push the routine class name on to the arguments
         # so that we can run the correct routine in `perform`
         args.push(routine_class.to_s)
@@ -21,9 +17,8 @@ module Lev
         # it can be used to retrieve the status when the routine is initialized
         args.push(status.id)
 
-        # Set the job_name and job_args
+        # Set the job_name
         status.set_job_name(routine_class.name)
-        status.set_job_args(args_hash)
 
         # In theory we'd mark as queued right after the call to super, but this messes
         # up when the activejob adapter runs the job right away (inline mode)

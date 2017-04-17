@@ -26,10 +26,6 @@ RSpec.describe 'Statused Routines' do
       expect(status.job_name).to eq routine_class.name
     end
 
-    it 'sets the job_args on the status' do
-      expect(status.job_args).to eq('0' => 'some arg')
-    end
-
     it 'sets the provider_job_id on the status' do
       expect_any_instance_of(Lev::ActiveJob::Base).to receive(:provider_job_id).and_return(42)
 
