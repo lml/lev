@@ -204,7 +204,7 @@ module Lev
 
       def [](*args, &block)
         result = call(*args, &block)
-        result.errors.raise_exception_if_any!
+        result.errors.raise_exception_if_any! if raise_fatal_errors?
         result.outputs.send(@express_output)
       end
 
