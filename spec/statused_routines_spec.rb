@@ -27,7 +27,7 @@ RSpec.describe 'Statused Routines' do
     end
 
     it 'sets the provider_job_id on the status' do
-      expect_any_instance_of(Lev::ActiveJob::Base).to receive(:provider_job_id).and_return(42)
+      allow_any_instance_of(Lev::ActiveJob::Base).to receive(:provider_job_id).and_return(42)
 
       expect(status.provider_job_id).to eq 42
     end

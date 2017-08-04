@@ -426,7 +426,7 @@ By default jobs are placed in the `:default` queue, but you can override this in
 
 ```ruby
 class MyRoutine
-  lev_routine active_job_queue: :some_other_queue
+  lev_routine active_job_enqueue_options: { queue: :some_other_queue }
 end
 ```
 
