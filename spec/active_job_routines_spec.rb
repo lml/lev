@@ -6,7 +6,7 @@ RSpec.describe 'ActiveJob routines' do
 
   context 'default configuration' do
     class LaterRoutine
-      lev_routine active_job_queue: :something_else
+      lev_routine active_job_enqueue_options: { queue: :something_else }
 
       protected
       def exec; end

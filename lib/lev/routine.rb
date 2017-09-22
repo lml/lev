@@ -213,8 +213,8 @@ module Lev
         Lev::ActiveJob::Base.perform_later(self, *args, &block)
       end
 
-      def active_job_queue
-        @active_job_queue || :default
+      def active_job_enqueue_options
+        @active_job_enqueue_options || { queue: :default }
       end
 
       # Called at a routine's class level to foretell which other routines will
