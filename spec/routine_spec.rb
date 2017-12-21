@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Lev::Routine do
+RSpec.describe Lev::Routine do
 
   before do
     stub_const 'RaiseRuntimeError', Class.new

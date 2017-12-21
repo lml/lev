@@ -377,8 +377,7 @@ module Lev
       input_mapper  = new_term_mapper(options[:translations][:inputs]) ||
                       new_term_mapper({ scope: symbol })
 
-      output_mapper = new_term_mapper(options[:translations][:outputs]) ||
-                      new_term_mapper({ scope: symbol })
+      output_mapper = new_term_mapper(options[:translations][:outputs])
 
       #
       # Set up the ignored errors in the routine instance
@@ -397,7 +396,7 @@ module Lev
 
       run_result.outputs.transfer_to(outputs) do |name|
         output_mapper.map(name)
-      end
+      end unless output_mapper.nil?
 
       options[:errors_are_fatal] = true if !options.has_key?(:errors_are_fatal)
       transfer_errors_from(run_result.errors, input_mapper, options[:errors_are_fatal])
@@ -458,8 +457,9 @@ module Lev
     end
 
     def result
-      @result ||= Result.new(Outputs.new,
-                             Errors.new(status, topmost_runner.class.raise_fatal_errors?))
+      @result ||= Result.new(
+        Outputs.new, Errors.new(status, topmost_runner.class.raise_fatal_errors?)
+      )
     end
 
     def reset_result!

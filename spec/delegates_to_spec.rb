@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe DelegatingRoutine do
+RSpec.describe DelegatingRoutine do
 
   it "should delegate" do
     result = DelegatingRoutine.call(1,8)
