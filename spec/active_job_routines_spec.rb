@@ -45,9 +45,7 @@ RSpec.describe 'ActiveJob routines' do
     it 'lets exception escape, job is failed and has error details' do
       Jobba.all.delete_all!
 
-      expect{
-        ExceptionalRoutine.perform_later
-      }.to raise_error(TypeError)
+      expect { ExceptionalRoutine.perform_later }.to raise_error(TypeError)
 
       status = Jobba.all.run.to_a.first
 

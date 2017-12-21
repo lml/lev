@@ -3,7 +3,6 @@ require "active_job"
 require "transaction_isolation"
 require "transaction_retry"
 require "active_attr"
-require "hashie"
 
 require "lev/version"
 require "lev/object"

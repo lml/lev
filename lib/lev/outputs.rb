@@ -1,9 +1,11 @@
 module Lev
- class Outputs < Hashie::Mash
+  class Outputs < OpenStruct
 
-    def initialize(source_hash = nil, default = nil, &blk)
+    delegate :each_key, to: :to_h
+
+    def initialize(source_hash = nil)
       @array_created = {}
-      super(source_hash, default, &blk)
+      super
     end
 
     def add(name, value)
@@ -18,7 +20,7 @@ module Lev
     end
 
     def each
-      self.each_key do |key|
+      each_key do |key|
         key = key.to_sym
         if @array_created[key]
           self[key].each { |value| yield key, value }
@@ -29,7 +31,7 @@ module Lev
     end
 
     def transfer_to(other_outputs, &name_mapping_block)
-      self.each do |name, value|
+      each do |name, value|
         new_name = block_given? ? name_mapping_block.call(name) : name
         other_outputs.add(new_name, value)
       end
