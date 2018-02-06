@@ -18,7 +18,7 @@ RSpec.describe 'ActiveJob routines' do
       }.to change { ActiveJob::Base.queue_adapter.enqueued_jobs.count }.by(1)
     end
 
-    it 'can have the default queue overridden' do
+    it 'can have the default queue name overridden in the class definition' do
       ActiveJob::Base.queue_adapter.enqueued_jobs.clear
 
       LaterRoutine.perform_later
@@ -26,6 +26,16 @@ RSpec.describe 'ActiveJob routines' do
       queue_name = ActiveJob::Base.queue_adapter.enqueued_jobs.first[:queue]
 
       expect(queue_name).to eq('something_else')
+    end
+
+    it 'can have the default queue name overridden using the set method' do
+      ActiveJob::Base.queue_adapter.enqueued_jobs.clear
+
+      LaterRoutine.set(queue: 'whoa').perform_later
+
+      queue_name = ActiveJob::Base.queue_adapter.enqueued_jobs.first[:queue]
+
+      expect(queue_name).to eq('whoa')
     end
   end
 
