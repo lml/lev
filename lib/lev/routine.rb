@@ -208,9 +208,13 @@ module Lev
         result.outputs.send(@express_output)
       end
 
+      def set(options)
+        Lev::ActiveJob::ConfiguredJob.new(self, options)
+      end
+
       def perform_later(*args, &block)
         # Delegate to a subclass of Lev::Routine::ActiveJob::Base
-        Lev::ActiveJob::Base.perform_later(self, *args, &block)
+        Lev::ActiveJob::Base.new.perform_later(self, active_job_enqueue_options, *args, &block)
       end
 
       def active_job_enqueue_options
