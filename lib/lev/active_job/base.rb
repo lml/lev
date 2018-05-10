@@ -5,7 +5,7 @@ module Lev
 
       def perform_later(routine_class, options, *args, &block)
         # Create a new status object
-        status = Lev::create_status
+        status = routine_class.create_status
 
         # Push the routine class name on to the arguments
         # so that we can run the correct routine in `perform`
@@ -40,7 +40,7 @@ module Lev
         id = args.pop
         routine_class = Kernel.const_get(args.pop)
 
-        routine_instance = routine_class.new(Lev::find_status(id))
+        routine_instance = routine_class.new(routine_class.find_status(id))
 
         routine_instance.call(*args, &block)
       end

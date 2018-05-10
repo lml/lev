@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 class StatusedRoutine
-  lev_routine
+  lev_routine use_jobba: true
 
   protected
 
@@ -13,8 +13,6 @@ class StatusedRoutine
 end
 
 RSpec.describe 'Statused Routines' do
-
-  before { Lev::Jobba.use_jobba }
 
   let(:routine_class) { StatusedRoutine }
   let(:args)          { ['some arg'] }

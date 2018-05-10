@@ -2,11 +2,9 @@ require 'spec_helper'
 
 RSpec.describe 'ActiveJob routines' do
 
-  before { Lev::Jobba.use_jobba }
-
   context 'default configuration' do
     class LaterRoutine
-      lev_routine active_job_enqueue_options: { queue: :something_else }
+      lev_routine active_job_enqueue_options: { queue: :something_else }, use_jobba: true
 
       protected
       def exec; end
@@ -44,7 +42,7 @@ RSpec.describe 'ActiveJob routines' do
     after { ::ActiveJob::Base.queue_adapter = :test }
 
     class ExceptionalRoutine
-      lev_routine
+      lev_routine use_jobba: true
 
       protected
       def exec

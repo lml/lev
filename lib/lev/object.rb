@@ -25,6 +25,11 @@ class Object
 
       # Set this after dealing with "delegates_to" in case it set a value
       @express_output ||= options[:express_output] || self.name.demodulize.underscore
+
+      if options[:use_jobba]
+        self.create_status_proc = ->(*) { Jobba::Status.create! }
+        self.find_status_proc = ->(id) { Jobba::Status.find!(id) }
+      end
     end
   end
 
