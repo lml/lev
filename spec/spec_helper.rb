@@ -7,6 +7,7 @@
 require 'bundler'
 Bundler.require('default')
 require 'active_job'
+require 'jobba'
 
 ActiveJob::Base.queue_adapter = :test
 ActiveJob::Base.logger = ::Logger.new(nil)

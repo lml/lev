@@ -182,8 +182,7 @@ module Lev
   module Routine
 
     class Result
-      attr_reader :outputs
-      attr_reader :errors
+      attr_reader :outputs, :errors
 
       def initialize(outputs, errors)
         @outputs = outputs
@@ -195,6 +194,9 @@ module Lev
 
     def self.included(base)
       base.extend(ClassMethods)
+      base.class_attribute :create_status_proc, :find_status_proc
+      base.create_status_proc = ->(*) { NullStatus.new }
+      base.find_status_proc = ->(*) { NullStatus.new }
     end
 
     module ClassMethods
@@ -261,6 +263,14 @@ module Lev
 
       def class_to_symbol(klass)
         klass.name.underscore.gsub('/','_').to_sym
+      end
+
+      def create_status
+        create_status_proc.call
+      end
+
+      def find_status(id)
+        find_status_proc.call(id)
       end
     end
 

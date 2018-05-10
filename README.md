@@ -449,9 +449,11 @@ Routine status objects also have query methods to check if a status is in a give
 For plain vanilla routines not run as an active job, the status calls are no-ops.  When a routine is invoked with `perform_later`, the status object is created/found using two configuration options that must be set (if you care about the status):
 
 ```ruby
-Lev.configure do |config|
-  config.create_status_proc = ->(*) { Jobba::Status.create! }
-  config.find_status_proc = ->(id) { Jobba::Status.find!(id) }
+class SomeRoutine
+  lev_routine use_jobba: true
+  # This is the same as:
+  # self.create_status_proc = ->(*) { Jobba::Status.create! }
+  # self.find_status_proc = ->(id) { Jobba::Status.find!(id) }
 end
 ```
 

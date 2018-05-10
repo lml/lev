@@ -31,14 +31,6 @@ require 'lev/null_status'
 module Lev
   class << self
 
-    def create_status
-      configuration.create_status_proc.call
-    end
-
-    def find_status(id)
-      configuration.find_status_proc.call(id)
-    end
-
     ###########################################################################
     #
     # Configuration machinery.
@@ -71,8 +63,6 @@ module Lev
       attr_accessor :security_transgression_error
       attr_accessor :illegal_argument_error
       attr_accessor :raise_fatal_errors
-      attr_accessor :create_status_proc
-      attr_accessor :find_status_proc
       attr_accessor :job_class
 
       def initialize
@@ -80,8 +70,6 @@ module Lev
         @security_transgression_error = Lev::SecurityTransgression
         @illegal_argument_error = Lev::IllegalArgument
         @raise_fatal_errors = false
-        @create_status_proc = ->(*) { NullStatus.new }
-        @find_status_proc = ->(*) { NullStatus.new }
         @job_class = ::ActiveJob::Base
         super
       end
@@ -89,3 +77,5 @@ module Lev
 
   end
 end
+
+require "lev/active_job"
