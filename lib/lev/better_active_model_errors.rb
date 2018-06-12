@@ -349,13 +349,13 @@ module Lev
     # * <tt>errors.messages.blank</tt>
     #
     def generate_message(attribute, type = :invalid, options = {})
-      self.class.generate_message(@base, attribute.to_sym, type, options)
+      self.class.generate_message(@base, attribute, type, options)
     end
 
     # TODO maybe don't need this method split out any more?
     def self.generate_message(model, attribute, type = :invalid, options = {})
       type = options.delete(:message) if options[:message].is_a?(Symbol)
-
+      attribute = attribute.to_sym
       if model.class.respond_to?(:i18n_scope)
         defaults = model.class.lookup_ancestors.map do |klass|
           [ :"#{model.class.i18n_scope}.errors.models.#{klass.model_name.i18n_key}.attributes.#{attribute}.#{type}",
