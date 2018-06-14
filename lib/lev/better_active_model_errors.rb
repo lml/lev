@@ -105,27 +105,28 @@ module Lev
 
     # Do the error messages include an error with key +error+?
     def include?(error)
-      (v = messages[error]) && v.any?
+      (v = messages[error.to_sym]) && v.any?
     end
     alias :has_key? :include?
 
     # Get messages for +key+
     def get(key)
-      messages[key]
+      messages[key.to_sym]
     end
 
     def get_type(key)
-      types[key]
+      types[key.to_sym]
     end
 
     # Set messages for +key+ to +value+
     def set(key, value)
-      types[key] = (value == [] ? [] : (value.is_a?(Symbol) ? value : nil))
-      messages[key] = value
+      types[key.to_sym] = (value == [] ? [] : (value.is_a?(Symbol) ? value : nil))
+      messages[key.to_sym] = value
     end
 
     # Delete messages for +key+
     def delete(key)
+      key = key.to_sym
       types.delete(key)
       messages.delete(key)
     end
@@ -261,7 +262,7 @@ module Lev
       end
 
       self[attribute] << normalized_message
-      self.types[attribute] << message.try(:to_sym)
+      self.types[attribute.to_sym] << message.try(:to_sym)
     end
 
     # Will add an error message to each of the attributes in +attributes+ that is empty.
@@ -354,7 +355,7 @@ module Lev
     # TODO maybe don't need this method split out any more?
     def self.generate_message(model, attribute, type = :invalid, options = {})
       type = options.delete(:message) if options[:message].is_a?(Symbol)
-
+      attribute = attribute.to_sym
       if model.class.respond_to?(:i18n_scope)
         defaults = model.class.lookup_ancestors.map do |klass|
           [ :"#{model.class.i18n_scope}.errors.models.#{klass.model_name.i18n_key}.attributes.#{attribute}.#{type}",
