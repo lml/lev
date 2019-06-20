@@ -1,7 +1,9 @@
 module Lev
   class FormBuilder < ActionView::Helpers::FormBuilder
 
-    (field_helpers - %w(label check_box radio_button fields_for file_field)).each do |selector|
+    (
+      field_helpers.map(&:to_s) - %w(label check_box radio_button fields_for file_field)
+    ).each do |selector|
       class_eval <<-RUBY_EVAL, __FILE__, __LINE__ + 1
         def #{selector}(method, options = {})                       # def text_field(method, options = {})
           set_value_if_available(method, options)                   #   ... verbatim ...
@@ -26,11 +28,11 @@ module Lev
     def fields_for(record_name, record_object = nil, fields_options = {}, &block)
       raise "Didn't put fields_for into LevitateFormBuilder yet"
     end
- 
+
   protected
 
     def get_form_params_entry(name)
-      @options[:params].present? ? 
+      @options[:params].present? ?
         (@options[:params][@object_name].present? ?
           @options[:params][@object_name][name] :
           nil) :
