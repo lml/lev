@@ -298,12 +298,11 @@ module Lev
           block.call
         end
       rescue Exception => e
-        # Let exceptions escape but make sure to note the error in the status
-        # if not already done
+        # Let exceptions escape but make sure to note the error in the status if not already done
         if !e.is_a?(Lev::FatalError)
           error = Error.new(code: :exception,
                             message: e.message,
-                            data: e.backtrace.first)
+                            data: e.backtrace&.first)
           status.add_error(error)
           status.failed!
         end
