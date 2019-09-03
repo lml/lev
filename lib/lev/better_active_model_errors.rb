@@ -83,6 +83,14 @@ module Lev
       @messages = ActiveSupport::OrderedHash.new
     end
 
+    # match `ActiveModel::Errors.copy!` interface
+    def self.copy!(other)
+      Lev::BetterActiveModelErrors.new(other)
+    end
+    def self.details
+      {}
+    end
+
     def initialize_dup(other)
       @types = other.types.dup
       @messages = other.messages.dup
