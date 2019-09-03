@@ -1,7 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe 'Better active model errors' do
-
+RSpec.describe 'BetterActiveModelErrors' do
   class DummyModel
     def self.human_attribute_name(attr, default='')
       return attr.capitalize
@@ -22,4 +21,16 @@ RSpec.describe 'Better active model errors' do
     expect(errors.include?('crash')).to be true
   end
 
+  it 'duplicates when copy called' do
+    model = OpenStruct.new
+
+    error = Lev::BetterActiveModelErrors.new(model)
+    error.set(:code, 'error')
+    expect(error.get(:code)).to eq 'error'
+
+    other = Lev::BetterActiveModelErrors.new(model)
+    other.set(:code, 'warning')
+    error.copy!(other)
+    expect(error.get(:code)).to eq 'warning'
+  end
 end
