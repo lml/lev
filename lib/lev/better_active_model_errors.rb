@@ -84,10 +84,10 @@ module Lev
     end
 
     # copy & details are needed to match `ActiveModel::Errors` interface
-    def self.copy!(other)
-      Lev::BetterActiveModelErrors.new(other)
+    def copy!(other)
+      initialize_dup(other)
     end
-    def self.details
+    def details
       {}
     end
 
