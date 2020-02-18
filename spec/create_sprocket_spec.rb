@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe CreateSprocket do
-  
+RSpec.describe CreateSprocket do
+
   it "should transfer errors appropriately" do
     result = CreateSprocket.call(1,"42")
     errors = result.errors.collect { |error| error.translate }

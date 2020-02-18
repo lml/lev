@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Lev::Utilities do
+RSpec.describe Lev::Utilities do
 
   it "should merge properly" do
     default_options = {

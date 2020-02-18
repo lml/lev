@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ParamifyHandlerA do
+RSpec.describe ParamifyHandlerA do
   it 'should error out on badly formatted params' do
     result = ParamifyHandlerA.handle(params: {terms: {type: 'blah'}})
     errors = result.errors.collect { |error| error.translate }
@@ -8,7 +8,7 @@ describe ParamifyHandlerA do
   end
 end
 
-describe ParamifyHandlerB do
+RSpec.describe ParamifyHandlerB do
   it 'should error out on badly formatted ungrouped params' do
     result = ParamifyHandlerB.handle(params: {type: 'blah'})
     errors = result.errors.collect { |error| error.translate }

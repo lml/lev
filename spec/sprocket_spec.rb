@@ -1,6 +1,6 @@
 require 'spec_helper.rb'
 
-describe Sprocket do
+RSpec.describe Sprocket do
 
   it "should not be valid with bad inputs" do
     sprocket = Sprocket.new(integer_gt_2: 1, text_only_letters: 'abcd4')

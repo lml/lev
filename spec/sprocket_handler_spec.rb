@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe SprocketHandler do
+RSpec.describe SprocketHandler do
   it 'should return fatal error messages' do
     allow_any_instance_of(SprocketHandler).to(
       receive(:params).and_return({

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Lev::Outputs do
+RSpec.describe Lev::Outputs do
 
   let(:outputs) { Lev::Outputs.new }
 
@@ -60,7 +60,7 @@ describe Lev::Outputs do
       :y
     end
 
-    other_outputs.add(:y, 6)    
+    other_outputs.add(:y, 6)
     expect(other_outputs.y).to eq [4,5,6]
   end
 
@@ -72,7 +72,7 @@ describe Lev::Outputs do
 
     outputs.transfer_to(other_outputs)
 
-    other_outputs.add(:y, 6)    
+    other_outputs.add(:y, 6)
     expect(other_outputs.x).to eq [4,5]
     expect(other_outputs.y).to eq 6
   end
