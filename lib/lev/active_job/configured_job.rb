@@ -13,7 +13,7 @@ module Lev
       end
 
       def perform_later(*args, &block)
-        Lev::ActiveJob::Base.new.perform_later(routine_class, options, *args, &block)
+        routine_class.job_class.new.perform_later(routine_class, options, *args, &block)
       end
     end
   end

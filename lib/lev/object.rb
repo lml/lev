@@ -8,6 +8,7 @@ class Object
       options[:transaction] ||= Lev::TransactionIsolation.mysql_default.symbol
       @transaction_isolation = Lev::TransactionIsolation.new(options[:transaction])
 
+      @job_class = options[:job_class]
       @active_job_enqueue_options = options[:active_job_enqueue_options]
 
       @raise_fatal_errors = options[:raise_fatal_errors]

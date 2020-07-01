@@ -214,13 +214,17 @@ module Lev
         Lev::ActiveJob::ConfiguredJob.new(self, options)
       end
 
-      def perform_later(*args, &block)
-        # Delegate to a subclass of Lev::Routine::ActiveJob::Base
-        Lev::ActiveJob::Base.new.perform_later(self, active_job_enqueue_options, *args, &block)
+      def job_class
+        @job_class || Lev::ActiveJob::Base
       end
 
       def active_job_enqueue_options
         @active_job_enqueue_options || { queue: :default }
+      end
+
+      def perform_later(*args, &block)
+        # Delegate to a subclass of Lev::Routine::ActiveJob::Base
+        job_class.new.perform_later(self, active_job_enqueue_options, *args, &block)
       end
 
       # Called at a routine's class level to foretell which other routines will
@@ -229,8 +233,7 @@ module Lev
       def uses_routine(routine_class, options={})
         symbol = options[:as] || class_to_symbol(routine_class)
 
-        raise Lev.configuration.illegal_argument_error, "Routine #{routine_class} has already been registered" \
-          if nested_routines[symbol]
+        warn("Routine #{routine_class} has already been registered") if nested_routines[symbol]
 
         nested_routines[symbol] = {
           routine_class: routine_class,
