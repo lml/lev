@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe 'BetterActiveModelErrors' do
+RSpec.describe 'ActiveModelErrors' do
   class DummyModel
     def self.human_attribute_name(attr, default='')
       return attr.capitalize
@@ -8,10 +8,11 @@ RSpec.describe 'BetterActiveModelErrors' do
   end
 
   let(:test_model) { DummyModel.new }
-  let(:errors) { Lev::BetterActiveModelErrors.new(test_model) }
+  let(:errors) { ActiveModel::Errors.new(test_model) }
 
   it 'can record errors' do
-    errors[:foo] = 'bar'
+    errors.add(:foo, 'bar')
+    expect(errors[:foo]).to eq ['bar']
     expect(errors.any?).to be(true)
   end
 
@@ -24,13 +25,13 @@ RSpec.describe 'BetterActiveModelErrors' do
   it 'duplicates when copy called' do
     model = OpenStruct.new
 
-    error = Lev::BetterActiveModelErrors.new(model)
-    error.set(:code, 'error')
-    expect(error.get(:code)).to eq 'error'
+    error = ActiveModel::Errors.new(model)
+    error.add(:code, 'error')
+    expect(error[:code]).to eq ['error']
 
-    other = Lev::BetterActiveModelErrors.new(model)
-    other.set(:code, 'warning')
+    other = ActiveModel::Errors.new(model)
+    other.add(:code, 'warning')
     error.copy!(other)
-    expect(error.get(:code)).to eq 'warning'
+    expect(error[:code]).to eq ['warning']
   end
 end

@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*"] + ['LICENSE.txt', 'Rakefile', 'README.md']
   spec.test_files    = Dir["spec/**/*"]
 
-  spec.add_runtime_dependency "activemodel", ">= 4.2"
+  spec.add_runtime_dependency "activemodel", ">= 6.1"
   spec.add_runtime_dependency "activerecord", ">= 4.2"
   spec.add_runtime_dependency "actionpack", ">= 4.2"
   spec.add_runtime_dependency "activejob"

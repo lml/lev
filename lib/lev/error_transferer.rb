@@ -5,16 +5,16 @@ module Lev
     def self.transfer(source, target_routine, input_mapper, fail_if_errors=false)
       case source
       when ActiveRecord::Base, Lev::Paramifier
-        source.errors.each_with_type_and_message do |attribute, type, message|
+        source.errors.each do |error|
           target_routine.nonfatal_error(
-            code: type,
+            code: error.type,
             data: {
               model: source,
-              attribute: attribute
+              attribute: error.attribute
             },
             kind: :activerecord,
-            message: message,
-            offending_inputs: input_mapper.map(attribute)
+            message: error.message,
+            offending_inputs: input_mapper.map(error.attribute)
           )
         end
       when Lev::Errors
