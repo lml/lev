@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "actionpack", ">= 4.2"
   spec.add_runtime_dependency "activejob"
   spec.add_runtime_dependency "transaction_isolation"
-  spec.add_runtime_dependency "transaction_retry"
+  spec.add_runtime_dependency "openstax_transaction_retry"
   spec.add_runtime_dependency "active_attr"
   spec.add_runtime_dependency "hashie"
 
