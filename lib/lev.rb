@@ -1,7 +1,7 @@
 require "action_view"
 require "active_job"
 require "transaction_isolation"
-require "transaction_retry"
+require "open_stax_transaction_retry"
 require "active_attr"
 require "hashie"
 
