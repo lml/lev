@@ -7,7 +7,7 @@ on:
 jobs:
   tests:
     timeout-minutes: 30
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     services:
       redis:
         image: redis
@@ -19,17 +19,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-ruby@v1
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.6
-      - uses: actions/cache@v2
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gems-
-      - name: Setup
-        run: bundle install
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          ruby-version: 3.0
       - name: Test
         run: bundle exec rake spec

@@ -26,9 +26,9 @@ end
 require 'lev'
 require 'byebug'
 
-require 'transaction_retry'
+require 'open_stax_transaction_retry'
 
-TransactionRetry.apply_activerecord_patch
+OpenStaxTransactionRetry.apply_activerecord_patch
 
 Dir[(File.expand_path('../support', __FILE__)) + ("/**/*.rb")].each { |f| require f }
 
