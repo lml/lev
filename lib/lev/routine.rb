@@ -495,7 +495,14 @@ module Lev
     def in_transaction(options={})
       if transaction_run_by?(self)
         isolation_symbol = self.class.transaction_isolation.symbol
-        if ActiveRecord::VERSION::MAJOR >= 4
+        if ActiveRecord::VERSION::MAJOR >= 7 && ActiveRecord::VERSION::MINOR >= 1 &&
+           ActiveRecord::Base.connection.transaction_open?
+          # Don't even try to set transaction isolation if the transaction is already open
+          ActiveRecord::Base.transaction do
+            yield
+            raise ActiveRecord::Rollback if errors?
+          end
+        elsif ActiveRecord::VERSION::MAJOR >= 4
           begin
             ActiveRecord::Base.transaction(isolation: isolation_symbol) do
               yield
