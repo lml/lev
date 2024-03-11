@@ -12,8 +12,8 @@ module Lev
         routine_class.active_job_enqueue_options.merge(@options)
       end
 
-      def perform_later(*args, &block)
-        routine_class.job_class.new.perform_later(routine_class, options, *args, &block)
+      def perform_later(*args, **kwargs, &block)
+        routine_class.job_class.new.perform_later(routine_class, options, *args, **kwargs, &block)
       end
     end
   end
