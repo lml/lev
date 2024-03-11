@@ -14,7 +14,7 @@ class Lev::NullStatus
     @kill_requested
   end
 
-  def method_missing(*args, &block)
+  def method_missing(*args, **kwargs, &block)
     nil
   end
 

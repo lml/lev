@@ -3,7 +3,7 @@ module Lev
     class Base < Lev.configuration.job_class
       attr_accessor(:provider_job_id) unless respond_to?(:provider_job_id)
 
-      def perform_later(routine_class, options, *args, &block)
+      def perform_later(routine_class, options, *args, **kwargs, &block)
         # Create a new status object
         status = routine_class.create_status
 
@@ -25,7 +25,7 @@ module Lev
         # Queue up the job and set the provider_job_id
         # For delayed_job, requires either Rails 5 or
         # http://stackoverflow.com/questions/29855768/rails-4-2-get-delayed-job-id-from-active-job
-        provider_job_id = self.class.send(:job_or_instantiate, *args, &block)
+        provider_job_id = self.class.send(:job_or_instantiate, *args, **kwargs, &block)
                                     .enqueue(options)
                                     .provider_job_id
         status.set_provider_job_id(provider_job_id) \
@@ -35,14 +35,14 @@ module Lev
         status.id
       end
 
-      def perform(*args, &block)
+      def perform(*args, **kwargs, &block)
         # Pop arguments added by perform_later
         id = args.pop
         routine_class = Kernel.const_get(args.pop)
 
         routine_instance = routine_class.new(routine_class.find_status(id))
 
-        routine_instance.call(*args, &block)
+        routine_instance.call(*args, **kwargs, &block)
       end
     end
   end

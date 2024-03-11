@@ -200,12 +200,12 @@ module Lev
     end
 
     module ClassMethods
-      def call(*args, &block)
-        new.call(*args, &block)
+      def call(*args, **kwargs, &block)
+        new.call(*args, **kwargs, &block)
       end
 
-      def [](*args, &block)
-        result = call(*args, &block)
+      def [](*args, **kwargs, &block)
+        result = call(*args, **kwargs, &block)
         result.errors.raise_exception_if_any!
         result.outputs.send(@express_output)
       end
@@ -222,9 +222,9 @@ module Lev
         @active_job_enqueue_options || { queue: :default }
       end
 
-      def perform_later(*args, &block)
+      def perform_later(*args, **kwargs, &block)
         # Delegate to a subclass of Lev::Routine::ActiveJob::Base
-        job_class.new.perform_later(self, active_job_enqueue_options, *args, &block)
+        job_class.new.perform_later(self, active_job_enqueue_options, *args, **kwargs, &block)
       end
 
       # Called at a routine's class level to foretell which other routines will
@@ -279,7 +279,7 @@ module Lev
 
     attr_reader :runner
 
-    def call(*args, &block)
+    def call(*args, **kwargs, &block)
       @after_transaction_blocks = []
 
       status.started!
@@ -290,9 +290,9 @@ module Lev
 
           catch :fatal_errors_encountered do
             if self.class.delegates_to
-              run(self.class.delegates_to, *args, &block)
+              run(self.class.delegates_to, *args, **kwargs, &block)
             else
-              exec(*args, &block)
+              exec(*args, **kwargs, &block)
             end
           end
         end
@@ -324,7 +324,7 @@ module Lev
       who == topmost_runner && who.class.transaction_isolation != TransactionIsolation.no_transaction
     end
 
-    def run(other_routine, *args, &block)
+    def run(other_routine, *args, **kwargs, &block)
       options = {}
 
       if other_routine.is_a? Array
@@ -395,7 +395,7 @@ module Lev
       #
 
       other_routine.runner = self
-      run_result = other_routine.call(*args, &block)
+      run_result = other_routine.call(*args, **kwargs, &block)
 
       run_result.outputs.transfer_to(outputs) do |name|
         output_mapper.map(name)
