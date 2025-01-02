@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activerecord', '>= 4.2'
   spec.add_runtime_dependency 'hashie'
   spec.add_runtime_dependency 'openstax_transaction_retry'
-  spec.add_runtime_dependency 'transaction_isolation'
+  spec.add_runtime_dependency 'openstax_transaction_isolation'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'jobba', '>= 2.0'
